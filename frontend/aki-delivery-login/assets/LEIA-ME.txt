@@ -1,0 +1,1 @@
+Substitua assets/logo1.png pela logo oficial da AKI. O arquivo incluído é apenas um exemplo para a página funcionar.
