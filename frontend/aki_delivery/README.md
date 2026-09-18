@@ -28,7 +28,7 @@ Projeto estático de pedidos e entregas com perfis de Administrador, Colaborador
 - Perfil de Colaborador com acesso operacional limitado.
 - Perfil de Cliente com cardápio, carrinho, acompanhamento e checkout.
 - Perfil de Entregador com entregas, histórico, ganhos e forma de pagamento.
-- Cardápio com fotos reais hospedadas por URLs de imagens, detalhes em modal, descrição, quantidade e adição ao carrinho.
+- Cardápio com detalhes em modal, descrição, quantidade e adição ao carrinho.
 - Produtos: hambúrgueres, porções, hot dogs, combos, bebidas, sucos, açaí, sorvete e pudim.
 - Formas de pagamento: Pix, cartões, dinheiro e vale-refeição.
 
