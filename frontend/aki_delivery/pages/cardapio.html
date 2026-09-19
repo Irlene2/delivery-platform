@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Cardápio online AKI Delivery com fotos, categorias e carrinho integrado.">
+  <title>AKI Delivery | Cardápio</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/toast.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><div class="brand-mark"><span class="material-symbols-outlined">lunch_dining</span></div><div class="brand-text">Aki<small>DELIVERY</small></div></div>
+    <nav class="nav" aria-label="Menu principal">
+      <a href="cliente.html"><span class="material-symbols-outlined">home</span><span>Início</span></a>
+      <a class="active" href="cardapio.html"><span class="material-symbols-outlined">restaurant_menu</span><span>Cardápio</span></a>
+      <a href="cliente.html#carrinho"><span class="material-symbols-outlined">shopping_cart</span><span>Carrinho</span><b class="nav-badge" data-cart-count>0</b></a>
+      <a href="pedidos.html"><span class="material-symbols-outlined">receipt_long</span><span>Meus Pedidos</span></a>
+      <a href="cliente.html#conta"><span class="material-symbols-outlined">person</span><span>Minha Conta</span></a>
+    </nav>
+    <div class="sidebar-footer"><div class="theme-row"><span class="material-symbols-outlined">light_mode</span>Modo escuro<button class="switch" id="themeToggle" aria-label="Alternar tema"><i></i></button></div>Entrega rápida<br><b>Todos os dias, 18h às 00h</b></div>
+  </aside>
+  <main class="main">
+    <header class="topbar"><div class="topbar-title"><button id="menuBtn" class="icon-btn mobile-menu" aria-label="Abrir menu"><span class="material-symbols-outlined">menu</span></button><div><h1>Cardápio</h1><p>Escolha seus favoritos e monte seu pedido.</p></div></div><div class="top-actions"><a class="icon-btn notification" href="cliente.html#carrinho" aria-label="Carrinho"><span class="material-symbols-outlined">shopping_cart</span><b data-cart-count>0</b></a><div class="avatar">CL</div><span class="role">Cliente</span></div></header>
+    <div class="page">
+      <section class="menu-hero professional-banner">
+        <img src="https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=1800&q=90" alt="Sanduíche artesanal com batatas">
+        <div class="menu-hero-content"><span class="eyebrow">AKI LANCHES • DELIVERY</span><h2>O sabor que você<br><strong>estava esperando.</strong></h2><p>Hambúrgueres, combos, porções, hot dogs, bebidas e sobremesas.</p><a class="btn btn-primary" href="#menuContent"><span class="material-symbols-outlined">restaurant_menu</span>Explorar cardápio</a></div>
+      </section>
+
+      <section class="menu-intro"><div><span class="eyebrow orange-text">CARDÁPIO ONLINE</span><h2>Escolha seu próximo favorito</h2><p>Fotos, descrição, preço e adição rápida ao carrinho em poucos cliques.</p></div><div class="menu-highlights"><span><span class="material-symbols-outlined">local_fire_department</span> Mais pedidos</span><span><span class="material-symbols-outlined">schedule</span> Preparo rápido</span><span><span class="material-symbols-outlined">verified</span> Pedido seguro</span></div></section>
+
+      <section id="categorias" class="category-section"><div class="section-title"><div class="title-icon"><span class="material-symbols-outlined">category</span></div><div><small>EXPLORE</small><h2>Categorias</h2><p>Encontre rapidamente o que deseja.</p></div></div><div class="category-pills" id="categoryPills"></div></section>
+
+      <div class="menu-toolbar"><div class="search"><span class="material-symbols-outlined">search</span><input id="searchInput" placeholder="Buscar hambúrguer, combo, bebida..."></div><select class="select" id="categoryFilter" aria-label="Filtrar categoria"></select></div>
+      <section id="menuContent" class="products" aria-live="polite"></section>
+
+      <section id="carrinho" class="panel cart-section">
+        <div class="section-title"><div class="title-icon"><span class="material-symbols-outlined">shopping_cart</span></div><div><small>SEU PEDIDO</small><h2>Carrinho</h2><p>Os valores são atualizados automaticamente.</p></div></div>
+        <div class="cart-layout"><div class="cart-panel"><div id="cartItems"></div><div class="cart-actions"><a href="#menuContent" class="btn btn-light"><span class="material-symbols-outlined">add</span>Continuar escolhendo</a><button type="button" class="btn btn-danger-soft" data-clear-cart><span class="material-symbols-outlined">delete_sweep</span>Limpar</button></div></div><aside class="order-summary"><div class="summary-heading"><span>Resumo do pedido</span><span class="summary-live"><i></i> Atualizado</span></div><div class="summary-row"><span>Subtotal</span><b data-subtotal>R$ 0,00</b></div><div class="summary-row"><span>Taxa de entrega</span><b data-fee>R$ 0,00</b></div><div class="summary-divider"></div><div class="summary-row total"><span>Total</span><b data-total>R$ 0,00</b></div><div class="payment-checkout menu-payment-checkout">
+  <div class="summary-heading"><span>Forma de pagamento</span><span class="material-symbols-outlined section-icon">payments</span></div>
+  <label class="payment-select-label" for="clientPaymentMethod">Escolha como deseja pagar</label>
+  <select id="clientPaymentMethod" class="payment-select">
+    <option value="Pix">Pix</option>
+    <option value="Cartão de crédito">Cartão de crédito</option>
+    <option value="Cartão de débito">Cartão de débito</option>
+    <option value="Dinheiro">Dinheiro</option>
+    <option value="Vale-refeição">Vale-refeição</option>
+  </select>
+  <label class="cash-change-option" id="cashChangeWrap" hidden for="cashChange">Troco para (opcional)<input id="cashChange" type="number" min="0" step="0.01" placeholder="Ex.: 50,00"></label>
+</div>
+<button type="button" class="btn btn-primary full checkout-btn" onclick="createOrder()"><span class="material-symbols-outlined">shopping_bag</span>Finalizar pedido</button><a class="go-orders" href="pedidos.html"><span class="material-symbols-outlined">receipt_long</span>Ver meus pedidos</a></aside></div>
+      </section>
+<div class="product-modal" id="productModal" hidden aria-hidden="true">
+  <div class="product-modal-backdrop" data-close-modal></div>
+  <div class="product-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modalProductName">
+    <button class="modal-close" type="button" data-close-modal aria-label="Fechar detalhes"><span class="material-symbols-outlined">close</span></button>
+    <div class="modal-product-image-wrap"><img id="modalProductImage" src="" alt=""><span id="modalProductTag" class="badge" hidden></span></div>
+    <div class="modal-product-content">
+      <span id="modalProductCategory" class="product-category"></span>
+      <h2 id="modalProductName"></h2>
+      <div id="modalProductPrice" class="modal-product-price"></div>
+      <p id="modalProductDescription"></p>
+      <div class="modal-highlights"><span><span class="material-symbols-outlined">verified</span> Produto selecionado</span><span><span class="material-symbols-outlined">shopping_cart</span> Adição rápida ao carrinho</span></div>
+      <div class="modal-product-actions"><div class="modal-qty"><button type="button" id="modalQtyMinus">−</button><strong id="modalQty">1</strong><button type="button" id="modalQtyPlus">+</button></div><button type="button" class="btn btn-primary modal-add-btn" id="modalAddButton"><span class="material-symbols-outlined">shopping_cart</span>Adicionar ao carrinho</button></div>
+    </div>
+  </div>
+</div>
+      <footer class="footer"><b>AKI Delivery</b> © 2026 — Cardápio online</footer>
+    </div>
+  </main>
+</div>
+<script src="../js/data.js"></script>
+<script src="../js/app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+  const pills=document.querySelector('#categoryPills'); const select=document.querySelector('#categoryFilter');
+  categories.forEach(([name,icon],i)=>{
+    const pill=document.createElement('button'); pill.className='category-pill'+(i===0?' active':''); pill.dataset.category=name; pill.innerHTML=`<span class="material-symbols-outlined">${icon}</span>${name}`;
+    pill.addEventListener('click',()=>{document.querySelectorAll('.category-pill').forEach(x=>x.classList.remove('active'));pill.classList.add('active');select.value=name;renderMenu();}); pills.appendChild(pill);
+    const option=document.createElement('option'); option.value=name; option.textContent=name; select.appendChild(option);
+  });
+  select.addEventListener('change',()=>{document.querySelectorAll('.category-pill').forEach(x=>x.classList.toggle('active',x.dataset.category===select.value));});
+});
+</script>
+</body>
+</html>

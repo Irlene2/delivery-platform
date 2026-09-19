@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Painel do colaborador AKI Delivery"><title>AKI Delivery | Colaborador</title>
+<link rel="stylesheet" href="../css/style.css"><link rel="stylesheet" href="../css/toast.css">
+</head>
+<body>
+<div class="app-shell">
+<aside class="sidebar" id="sidebar">
+  <div class="brand"><div class="brand-mark"><span class="material-symbols-outlined">lunch_dining</span></div><div class="brand-text">Aki<small>DELIVERY</small></div></div>
+  <nav class="nav" aria-label="Menu do colaborador">
+    <a class="active" href="colaborador.html"><span class="material-symbols-outlined">dashboard</span><span>Painel</span></a>
+    <a href="pedidos.html"><span class="material-symbols-outlined">receipt_long</span><span>Pedidos</span></a>
+    <a href="cardapio.html"><span class="material-symbols-outlined">restaurant_menu</span><span>Cardápio</span></a>
+    <a href="administrador.html#estoque"><span class="material-symbols-outlined">inventory_2</span><span>Consultar estoque</span></a>
+  </nav>
+  <div class="sidebar-footer"><div class="theme-row"><span class="material-symbols-outlined">light_mode</span>Modo escuro<button class="switch" id="themeToggle" aria-label="Alternar tema"><i></i></button></div>Perfil com acesso limitado<br><b>Colaborador</b></div>
+</aside>
+<main class="main">
+<header class="topbar"><div class="topbar-title"><button id="menuBtn" class="icon-btn mobile-menu" aria-label="Abrir menu"><span class="material-symbols-outlined">menu</span></button><div><h1>Painel do colaborador</h1><p>Acompanhe os pedidos e consulte informações operacionais.</p></div></div><div class="top-actions"><div class="avatar">CO</div><span class="role">Colaborador</span></div></header>
+<div class="page">
+<section class="hero-banner"><div><span class="eyebrow orange-text">ÁREA OPERACIONAL</span><h1>Olá, colaborador!</h1><p>Você possui acesso às funções necessárias para apoiar o atendimento e a operação da AKI Delivery.</p></div><span class="material-symbols-outlined hero-icon">badge</span></section>
+<section class="stats">
+ <article class="stat panel"><div class="stat-top"><span>Pedidos registrados</span><span class="stat-icon"><span class="material-symbols-outlined">receipt_long</span></span></div><strong id="collabOrders">0</strong><small>Pedidos no sistema</small></article>
+ <article class="stat panel"><div class="stat-top"><span>Em preparo</span><span class="stat-icon"><span class="material-symbols-outlined">soup_kitchen</span></span></div><strong id="collabPrep">0</strong><small>Acompanhamento operacional</small></article>
+ <article class="stat panel"><div class="stat-top"><span>Em entrega</span><span class="stat-icon"><span class="material-symbols-outlined">delivery_dining</span></span></div><strong id="collabDelivery">0</strong><small>Pedidos em rota</small></article>
+ <article class="stat panel"><div class="stat-top"><span>Acesso</span><span class="stat-icon"><span class="material-symbols-outlined">lock</span></span></div><strong style="font-size:18px">Limitado</strong><small>Sem configurações administrativas</small></article>
+</section>
+<div class="dashboard-grid">
+ <section class="panel table-panel"><div class="table-title"><div><h2>Pedidos recentes</h2><p class="admin-muted">Visualização para acompanhamento da operação.</p></div><a class="btn btn-light" href="pedidos.html">Ver pedidos</a></div><div style="overflow:auto"><table class="orders-table"><thead><tr><th>Pedido</th><th>Cliente</th><th>Status</th><th>Total</th></tr></thead><tbody id="collabOrdersTable"></tbody></table></div></section>
+ <section class="panel quick-panel"><div class="table-title"><h2>Acessos disponíveis</h2></div><div class="quick-list"><a class="quick-card" href="pedidos.html"><span class="material-symbols-outlined">receipt_long</span><span><strong>Consultar pedidos</strong><small>Visualizar pedidos e seus status.</small></span></a><a class="quick-card" href="cardapio.html"><span class="material-symbols-outlined">restaurant_menu</span><span><strong>Consultar cardápio</strong><small>Ver produtos e valores cadastrados.</small></span></a><a class="quick-card" href="administrador.html#estoque"><span class="material-symbols-outlined">inventory_2</span><span><strong>Consultar estoque</strong><small>Acompanhar disponibilidade dos itens.</small></span></a></div><div class="support" style="margin-top:15px"><div class="support-icon"><span class="material-symbols-outlined">info</span></div><div><strong>Permissões do perfil</strong><p>O colaborador não possui acesso a pagamentos, configurações, usuários ou gestão administrativa completa.</p></div></div></section>
+</div><footer class="footer"><b>AKI Delivery</b> © 2026 — Painel do colaborador</footer>
+</div></main></div>
+<script src="../js/app.js"></script><script>
+document.addEventListener('DOMContentLoaded',()=>{const orders=typeof getOrders==='function'?getOrders():[];const brl=new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});document.querySelector('#collabOrders').textContent=orders.length;document.querySelector('#collabPrep').textContent=orders.filter(o=>String(o.status||'').toLowerCase().includes('preparo')).length;document.querySelector('#collabDelivery').textContent=orders.filter(o=>String(o.status||'').toLowerCase().includes('entrega')).length;const body=document.querySelector('#collabOrdersTable');body.innerHTML=orders.slice(0,8).map(o=>`<tr><td><strong>#${o.number||'---'}</strong></td><td>${o.customer||'Cliente'}</td><td><span class="status orange">${o.status||'Pedido recebido'}</span></td><td>${brl.format(Number(o.total||0))}</td></tr>`).join('')||'<tr><td colspan="4">Nenhum pedido registrado.</td></tr>';});
+</script></body></html>
