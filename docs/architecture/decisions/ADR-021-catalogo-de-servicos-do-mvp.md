@@ -3,7 +3,9 @@
 **Status:** Aceita — 21/08/2026 · **emendada em 24/09/2026**: o `merchant` não
 tem Redis, e a persistência além do banco principal passa a apontar a decisão
 que a pôs ali (ver "Emenda de 24/09/2026") · **emendada em 26/09/2026**: o `order` e o
-`delivery` também não têm Redis (ver "Emenda de 26/09/2026")
+`delivery` também não têm Redis (ver "Emenda de 26/09/2026") · **emendada em
+27/09/2026**: o `catalog` perde o starter do Redis, e o motivo escrito dele continua de pé
+(ver "Emenda de 27/09/2026")
 **Relacionada:** ADR-004 (um estabelecimento por pedido), ADR-020 (taxa por área), ADR-022 (remuneração)
 **Fonte:** Resposta ao Adendo Crítico · Arquitetura v1.1, §5.3
 **Premissas do PRD que sustentam esta decisão:** P1, P2, P3, P5, P6
@@ -35,7 +37,7 @@ Oito serviços de negócio e um gateway.
 | `gateway` | 8080 | — | | Roteamento, CORS, limite de taxa |
 | `identity` | 8081 | PostgreSQL | | Conta, autenticação, emissão de JWT (ADR-015) |
 | `merchant` | 8082 | PostgreSQL | | Estabelecimento, equipe, permissões, áreas e taxas, vínculo de entregador |
-| `catalog` | 8083 | MongoDB + Redis | Redis: cache do cardápio público — ADR-005, `catalogo.md` §7 | Produto, opções, disponibilidade qualitativa, cotação |
+| `catalog` | 8083 | MongoDB | Redis: **motivo escrito** — cache do cardápio público, ADR-005 e `catalogo.md` §7. **Starter removido em 27/09/2026 (G-B1)**: o leitor desse cache é do marco 7. **Gatilho:** volta com o primeiro leitor, com contêiner nos testes | Produto, opções, disponibilidade qualitativa, cotação |
 | `settlement` | 8084 | PostgreSQL | | Jornada, custódia, divergência, extrato, fechamento |
 | `order` | 8085 | PostgreSQL | | Pedido, valores, liquidação registrada, Saga |
 | `payment` | 8086 | PostgreSQL | | Fronteira com o PSP: Pix com `txid`, webhook |
@@ -200,6 +202,32 @@ e o resumo executivo (`ArquiteturaResumoExecutivo.pdf`) desenham `order` e
 `delivery` como "PostgreSQL · Redis". **Ficam desatualizados nesse ponto**: são
 publicados e não se reescrevem. Quem ler os dois lê esta emenda por cima — a
 v2 também desenha o `merchant` com Redis, que a emenda de 24/09 tirou.
+
+## Emenda de 27/09/2026 — o Redis sai do `catalog`, e este caso é diferente dos outros três
+
+**O que muda.** O `catalog` perde o `delivery.redis-conventions` no build, o
+bloco `spring.data.redis` no `application.yml`, e o `REDIS_URL` e o
+`depends_on: redis` no `docker-compose.yml`. O README acompanha a tabela.
+
+> **A diferença deste caso para os outros três.** No `merchant`, no `order` e no
+> `delivery` o Redis saiu porque **não havia motivo escrito** — a célula dizia
+> "PostgreSQL + Redis" e mais nada. Aqui há: a §7 do `catalogo.md` manda cachear
+> o cardápio público. O motivo continua de pé e a decisão continua tomada; o que
+> sai é a **dependência**, que é outra coisa. Decisão mora em documento;
+> dependência mora no `build.gradle.kts`, e dependência sem uso vira indicador
+> de saúde mentindo — foi assim que o `/actuator/health` do `merchant` passou a
+> responder 503 e alguém desligou o indicador, que é a pior saída possível.
+
+**Gatilho:** o starter volta com o primeiro leitor do cardápio em cache, no
+marco 7 — e volta com contêiner nos testes de integração, não com indicador
+desligado.
+
+**O que esta emenda deixa em aberto.** A emenda de 26/09 manteve o contêiner
+`redis` no compose "porque o `catalog` o declara". Isso deixou de ser verdade:
+**nenhum serviço usa o Redis hoje**, e o contêiner sobe no perfil `core` sem
+consumidor. Ele não foi tocado nesta rodada, e a decisão — tirá-lo junto com a
+variável `REDIS_PASSWORD` e a linha do perfil `core` no README, ou mantê-lo até
+o marco 7 — fica registrada aqui para não se perder.
 
 ## Alternativas consideradas
 

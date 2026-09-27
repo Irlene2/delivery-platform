@@ -116,7 +116,7 @@ Em revisão manual, a arquitetura erode em duas semanas.
 | gateway | 8080 | — | — |
 | identity-service | 8081 | PostgreSQL | [`usuario.md`](docs/dominio/usuario.md) |
 | merchant-service | 8082 | PostgreSQL | [`estabelecimento.md`](docs/dominio/estabelecimento.md) |
-| catalog-service | 8083 | MongoDB + Redis | [`catalogo.md`](docs/dominio/catalogo.md) |
+| catalog-service | 8083 | MongoDB | [`catalogo.md`](docs/dominio/catalogo.md) |
 | settlement-service | 8084 | PostgreSQL | [`liquidacao.md`](docs/dominio/liquidacao.md) |
 | order-service | 8085 | PostgreSQL | [`pedido.md`](docs/dominio/pedido.md) |
 | payment-service | 8086 | PostgreSQL | — (fronteira com o PSP; ver ADR-021) |

@@ -1,6 +1,7 @@
 # ADR-009 — Modelo de valores do pedido
 
-**Status:** Aceita — 16/08/2026 · **emendada em 21/08/2026** pela arquitetura v1.1
+**Status:** Aceita — 16/08/2026 · **emendada em 21/08/2026** pela arquitetura v1.1 · **emendada em
+27/09/2026**: em MongoDB, `Money` grava como dois textos
 **Relacionada:** ADR-018 (snapshot dos itens), ADR-020 (taxa por área), ADR-022 (remuneração do entregador)
 **Substitui internamente:** a referência à ADR-019, revogada
 **Premissas do PRD que sustentam esta decisão:** P1, P2, P5
@@ -271,3 +272,30 @@ qualquer jeito pelo colapso do campo.
 `pedido.md` §1, I1, I2, I3, I10, I12, a prosa do I12 e a tabela do §6;
 **ADR-028**, cuja guarda de pedido mínimo é escrita sobre `itemsSubtotal`;
 ADR-022 e ADR-024, que citam o campo antigo e ganharam nota.
+
+## Emenda de 27/09/2026 — em documento, `Money` é texto
+
+No lado relacional a coluna é `numeric(…,2)` e o assunto está resolvido. No
+MongoDB não há tipo decimal exato por omissão, e o mapeamento automático de
+`BigDecimal` depende do conversor configurado — o Spring Boot 4 expõe até uma
+propriedade para isso, `spring.data.mongodb.representation.big-decimal` — e não
+é uma coisa que se queira descobrir num extrato.
+
+Em documento, `Money` grava como:
+
+```json
+"precoBase": { "valor": "49.90", "moeda": "BRL" }
+```
+
+Dois textos. `valor` é `toPlainString()`, exato e sem notação científica;
+`moeda` é o código ISO.
+
+**A moeda é conferida na leitura, não usada para construir.** A fábrica do
+`Money` decide a moeda dela; se o documento disser outra, isso é divergência e
+estoura. Calar seria ler um preço em dólar como se fosse em real.
+
+**Custo assumido:** não dá para somar nem ordenar por preço no banco. O
+catálogo não faz nem um nem outro — a cotação soma em memória, com `Money`.
+**Gatilho escrito:** quando alguém precisar ordenar o cardápio por preço no
+banco, o campo vira `Decimal128` e isso é um `changeUnit` de transformação, não
+uma mudança de código.

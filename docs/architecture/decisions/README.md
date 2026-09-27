@@ -8,9 +8,9 @@
 | 004 | Um pedido pertence a exatamente um estabelecimento | ✅ aceita |
 | 005 | ~~PostGIS e Redis GEO~~ | ⛔ sem objeto — geoprocessamento saiu do MVP (020) |
 | 006 | O rascunho pertence à conversa; não existe carrinho | ✅ aceita |
-| 007 | Mongock para versionamento de esquema no MongoDB | ✅ aceita |
-| 008 | MongoDB como replica set de nó único | ✅ aceita |
-| 009 | Modelo de valores do pedido | ✅ aceita · **emendada pela v1.1** |
+| 007 | Mongock para versionamento de esquema no MongoDB | ✅ aceita · **emendada** (27/09/2026: `@EnableMongock`, DDL em `@BeforeExecution`, convenção de id) |
+| 008 | MongoDB como replica set de nó único | ✅ aceita · **emendada** (27/09/2026: `withReplicaSet()` na Testcontainers 2; `spring.mongodb.uri` no Boot 4) |
+| 009 | Modelo de valores do pedido | ✅ aceita · **emendada pela v1.1** · **emendada** (27/09/2026: `Money` em documento é texto) |
 | 010 | Saga do pedido: pivô em `PRONTO`, pagamento fora da transação | ✅ aceita · **reescrita pela v1.1** |
 | 011 | Autorização comercial: cache em processo, invalidação por evento, fail-closed | ✅ aceita · **emendada** (26/09/2026: a porta não recebe `usuarioId` — ADR-045) |
 | 012 | Roteamento do gateway por recurso, não por serviço | ✅ aceita · **emendada** (24/09/2026: limite de taxa e `correlationId` fora do marco 1) |
@@ -22,7 +22,7 @@
 | 018 | Snapshot de opções no item e cotação pelo catálogo | ✅ aceita |
 | 019 | `DeliveryQuotePort`: cotação por distância geodésica | ⛔ **revogada** — ver 020 |
 | 020 | Taxa de entrega por área nomeada (bairro / faixa de CEP) | ✅ aceita |
-| 021 | Catálogo de serviços do MVP — oito serviços | ✅ aceita · **emendada** (24/09/2026: `merchant` sem Redis; 26/09/2026: `order` e `delivery` sem Redis) |
+| 021 | Catálogo de serviços do MVP — oito serviços | ✅ aceita · **emendada** (24/09/2026: `merchant` sem Redis; 26/09/2026: `order` e `delivery` sem Redis; 27/09/2026: `catalog` sem o starter, motivo mantido) |
 | 022 | A remuneração do entregador pertence ao vínculo | ✅ aceita |
 | 023 | Fronteira `order` × `payment`: pedido é dono do registro | ✅ aceita |
 | 024 | Desconto de retirada, não preço por modalidade | ✅ aceita |

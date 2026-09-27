@@ -342,8 +342,10 @@ acabou depois da abertura.
 > `GrupoDeOpcoes`. C6 é `Produto.vendavel()`, sem campo. C11 tem o predicado,
 > `Disponibilidade.deveReativarNoExpediente(LocalDate)`, para produto e opção;
 > o ato — o consumidor do `ExpedienteAlteradoV1` — é da G-C. C12 é o sistema de
-> tipos (nota da §1). **Ainda só texto:** C7, C8 e C9 pela forma do agregado,
-> sem regra própria; C10 na cotação (G-C); C13 com a persistência (G-B).
+> tipos (nota da §1). C13 é o `changeUnit` do Mongock, com o `MongockIT`
+> afirmando que os dois índices da §7 existem (G-B1, 27/09/2026). **Ainda só
+> texto:** C7, C8 e C9 pela forma do agregado, sem regra própria; C10 na
+> cotação (G-C).
 >
 > **C2 tem conta.** "Toda combinação válida": o menor preço unitário é o preço
 > base mais, em cada grupo, os `minEscolhas` acréscimos mais baratos, mais todo
