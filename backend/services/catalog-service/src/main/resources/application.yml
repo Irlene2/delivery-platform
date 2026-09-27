@@ -5,11 +5,28 @@ spring:
   application:
     name: catalog-service
 
-  data:
-    mongodb:
-      uri: ${MONGO_URI:mongodb://localhost:27017/catalog_db?replicaSet=rs0}
-    redis:
-      url: ${REDIS_URL:redis://localhost:6379}
+  # spring.mongodb, e NÃO spring.data.mongodb. No Spring Boot 4 a chave antiga
+  # está depreciada com nível `error` (substituta: spring.mongodb.uri) — o que
+  # quer dizer que ela não é mais lida. Com ela, o serviço ignora esta URI em
+  # silêncio e conecta no padrão `mongodb://localhost/test`. Descoberto na G-B1:
+  # o primeiro teste que subiu contexto neste serviço gravou no Mongo do
+  # compose, e não no contêiner do teste.
+  mongodb:
+    # O ?replicaSet=rs0 não é enfeite: sem ele o driver conecta em modo
+    # avulso mesmo contra um servidor em replica set, e a falha só aparece na
+    # primeira transação — ADR-008.
+    #
+    # ARMADILHA CONHECIDA (G-B1): rodando bootRun da máquina, este endereço
+    # não funciona. O mongo-init registra o membro do replica set como
+    # `mongodb:27017`, nome que só resolve dentro da rede do Docker; o driver
+    # descobre esse nome e tenta falar com ele. Contêiner e Testcontainers não
+    # são afetados. Está anotado no CLAUDE.md com gatilho.
+    uri: ${MONGO_URI:mongodb://localhost:27017/catalog_db?replicaSet=rs0}
+    representation:
+      # O padrão do Boot 4 é `unspecified`, e com ele o driver se recusa a
+      # gravar qualquer UUID. `standard` é o subtipo binário 4, o formato
+      # interoperável — e o único que outro driver lê igual.
+      uuid: standard
 
   rabbitmq:
     addresses: ${RABBITMQ_ADDRESSES:localhost:5672}
@@ -35,6 +52,11 @@ spring:
 # ATENÇÃO: este bloco é irmão de `spring`, não filho. Estava aninhado por
 # engano, e com ele iam junto rabbitmq, redis e a configuração de JWT — o
 # Spring ignorava os três em silêncio.
+#
+# E ATENÇÃO DE NOVO: este bloco sozinho não faz nada. Até a G-B1 não existia
+# @EnableMongock em lugar nenhum, o jar do mongock-springboot não traz
+# autoconfiguração, e nenhum changeUnit jamais rodou — com este YAML aqui,
+# correto, desde o primeiro commit. Ver config/MongockConfig.
 mongock:
   migration-scan-package:
     - com.deliveryplatform.catalog.infrastructure.persistence.migration

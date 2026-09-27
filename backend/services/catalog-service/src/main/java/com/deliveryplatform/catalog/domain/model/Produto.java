@@ -95,6 +95,60 @@ public final class Produto {
                 precoBase, modoDeControle, ordem);
     }
 
+    /**
+     * Remonta um produto que já existe, vindo do banco.
+     *
+     * <p><b>Por que existe.</b> Até a G-B1 o {@code Produto} só sabia nascer:
+     * {@link #rascunho} gera id novo e começa {@code RASCUNHO} e
+     * {@code DISPONIVEL}. Não havia caminho de volta, e um agregado que não
+     * sabe ser lido é um agregado que nunca foi persistido.
+     *
+     * <p><b>O que ela verifica, e o que ela não verifica.</b> Repete as
+     * verificações de nulidade e a de preço não-negativo — nenhuma delas foi
+     * gravável de outro jeito, então um documento que as viole está corrompido.
+     * <b>Não</b> repete as regras de publicação (C1, C2, C4, C5): essas são
+     * regras de <i>transição</i>, cobradas em {@link #publicar()}. Uma regra
+     * nova não pode tornar ilegível um documento gravado sob a regra antiga —
+     * o lugar de recusar é a escrita, nunca a leitura. Senão, o dia em que a C2
+     * ficar mais estrita, o cardápio inteiro de quem já publicou para de abrir.
+     *
+     * <p>É pública porque o mapeador mora em outro pacote e o Java não tem
+     * {@code friend}. A alternativa seria pôr persistência dentro do domínio,
+     * que é pior.
+     */
+    public static Produto reconstituir(UUID id,
+                                       UUID estabelecimentoId,
+                                       UUID categoriaId,
+                                       String nome,
+                                       String descricao,
+                                       String imagemRef,
+                                       Money precoBase,
+                                       int ordem,
+                                       EstadoDePublicacao estadoDePublicacao,
+                                       ModoDeControle modoDeControle,
+                                       Disponibilidade disponibilidade,
+                                       List<GrupoDeOpcoes> gruposDeOpcoes) {
+        if (id == null) {
+            throw new RegraDoCatalogoViolada("produto sem id");
+        }
+        if (estadoDePublicacao == null) {
+            throw new RegraDoCatalogoViolada("produto sem estado de publicação");
+        }
+        if (disponibilidade == null) {
+            throw new RegraDoCatalogoViolada("produto sem disponibilidade");
+        }
+        Produto produto = new Produto(id, estabelecimentoId, categoriaId, nome,
+                precoBase, modoDeControle, ordem);
+        produto.descricao = descricao;
+        produto.imagemRef = imagemRef;
+        produto.estadoDePublicacao = estadoDePublicacao;
+        produto.disponibilidade = disponibilidade;
+        if (gruposDeOpcoes != null) {
+            gruposDeOpcoes.forEach(produto::acrescentarGrupo);
+        }
+        return produto;
+    }
+
     // ── publicação ──────────────────────────────────────────────────────────
 
     /**

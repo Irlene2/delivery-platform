@@ -214,7 +214,6 @@ services:
     environment:
       SERVER_PORT: "8083"
       MONGO_URI: mongodb://mongodb:27017/catalog_db?replicaSet=rs0
-      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
       RABBITMQ_ADDRESSES: rabbitmq:5672
       RABBITMQ_USERNAME: ${RABBITMQ_USER}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
@@ -226,8 +225,6 @@ services:
         condition: service_healthy
       mongo-init:
         condition: service_completed_successfully
-      redis:
-        condition: service_healthy
       rabbitmq:
         condition: service_healthy
     restart: unless-stopped
