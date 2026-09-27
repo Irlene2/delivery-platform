@@ -15,7 +15,7 @@
 | 011 | Autorização comercial: cache em processo, invalidação por evento, fail-closed | ✅ aceita · **emendada** (26/09/2026: a porta não recebe `usuarioId` — ADR-045) |
 | 012 | Roteamento do gateway por recurso, não por serviço | ✅ aceita · **emendada** (24/09/2026: limite de taxa e `correlationId` fora do marco 1) |
 | 013 | Retenção, anonimização e exclusão de dados pessoais | ✅ aceita |
-| 014 | Não adotar H2; Testcontainers como fonte de verdade | ✅ aceita · **emendada pela v1.1** |
+| 014 | Não adotar H2; Testcontainers como fonte de verdade | ✅ aceita · **emendada pela v1.1** · **emendada** (27/09/2026: todo contêiner prova que é o usado — `ConteinerDeVerdadeIT`) |
 | 015 | Emitir JWT com `NimbusJwtEncoder` | ✅ aceita |
 | 016 | Front-end mínimo antes da PWA completa | ✅ aceita |
 | 017 | MongoDB como decisão de aprendizado | ✅ aceita |
