@@ -218,6 +218,9 @@ services:
       RABBITMQ_USERNAME: ${RABBITMQ_USER}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
       JWT_JWKS_URI: http://identity-service:8081/.well-known/jwks.json
+      JWT_ISSUER: ${JWT_ISSUER:-http://localhost:8081}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-delivery-platform}
+      MERCHANT_URI: http://merchant-service:8082
     ports:
       - "127.0.0.1:8083:8083"
     depends_on:

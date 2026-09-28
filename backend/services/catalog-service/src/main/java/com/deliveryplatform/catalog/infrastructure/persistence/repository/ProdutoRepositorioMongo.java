@@ -4,9 +4,10 @@ import com.deliveryplatform.catalog.application.port.out.ProdutoRepositorio;
 import com.deliveryplatform.catalog.domain.model.EstadoDePublicacao;
 import com.deliveryplatform.catalog.domain.model.Produto;
 import com.deliveryplatform.catalog.infrastructure.persistence.mapper.ProdutoMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -39,12 +40,13 @@ public class ProdutoRepositorioMongo implements ProdutoRepositorio {
     }
 
     @Override
-    public List<Produto> publicadosDe(UUID estabelecimentoId) {
+    public Page<Produto> publicadosDe(UUID estabelecimentoId, Pageable paginacao) {
+        // Page.map preserva o total. Converter para lista e reembrulhar num
+        // PageImpl perderia o getTotalElements(), que é justamente o que o
+        // cliente não consegue recalcular.
         return documentos
                 .findByEstabelecimentoIdAndEstadoDePublicacao(
-                        estabelecimentoId, EstadoDePublicacao.ATIVO.name())
-                .stream()
-                .map(ProdutoMapper::paraDominio)
-                .toList();
+                        estabelecimentoId, EstadoDePublicacao.ATIVO.name(), paginacao)
+                .map(ProdutoMapper::paraDominio);
     }
 }

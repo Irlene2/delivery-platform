@@ -48,6 +48,25 @@ spring:
         jwt:
           jwk-set-uri: ${JWT_JWKS_URI:http://localhost:8081/.well-known/jwks.json}
 
+  data:
+    web:
+      pageable:
+        # O teto não é decoração: sem ele, ?size=1000000 é uma consulta que
+        # carrega o cardápio inteiro na memória do serviço — e o CLAUDE.md manda
+        # paginar justamente para que isso não seja possível.
+        max-page-size: 100
+
+delivery:
+  jwt:
+    issuer: ${JWT_ISSUER:http://localhost:8081}
+    audience: ${JWT_AUDIENCE:delivery-platform}
+  # A porta da ADR-011, com o token de quem pediu encaminhado (ADR-045). Nada
+  # aqui é credencial: endereço de serviço interno e tempo limite.
+  autorizacao:
+    merchant-uri: ${MERCHANT_URI:http://localhost:8082}
+    tempo-de-conexao: 1s
+    tempo-de-leitura: 2s
+
 # Mongock cumpre para o MongoDB o papel do Flyway no SQL — ADR-017.
 # ATENÇÃO: este bloco é irmão de `spring`, não filho. Estava aninhado por
 # engano, e com ele iam junto rabbitmq, redis e a configuração de JWT — o

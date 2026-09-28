@@ -1,0 +1,91 @@
+package com.deliveryplatform.catalog.api.controller;
+
+import com.deliveryplatform.catalog.api.dto.PaginaResponse;
+import com.deliveryplatform.catalog.api.dto.ProdutoResumoResponse;
+import com.deliveryplatform.catalog.application.port.in.ListarProdutos;
+import io.swagger.v3.oas.annotations.Operation;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.UUID;
+
+/**
+ * A primeira rota do {@code catalog-service}. Até esta classe existir, o
+ * serviço tinha nove classes de domínio, um {@code changeUnit}, persistência
+ * com transação — e {@code api/} com quatro pastas vazias.
+ *
+ * <h2>O caminho, e cada pedaço dele</h2>
+ *
+ * <pre>
+ * GET /api/v1/merchants/{estabelecimentoId}/catalog/produtos
+ * </pre>
+ *
+ * <p>É o que a ADR-012 já reservou no gateway: o predicado
+ * {@code Path=/api/v1/merchants/{merchantId}/catalog/**} está lá desde o commit
+ * inicial, roteando para a porta 8083, e o {@code RoteamentoIT} da E-A já prova
+ * que qualquer coisa sob esse prefixo chega aqui sem reescrita. <b>Nenhuma linha
+ * nova de gateway nesta rodada.</b>
+ *
+ * <p>A mistura de idiomas é a regra, e não um descuido. O {@code CLAUDE.md}:
+ * <i>"Prefixo e serviço em inglês (…) Identificador e recurso em português"</i>.
+ * Aqui {@code catalog} é o segmento do serviço, {@code estabelecimentoId} é o
+ * identificador e {@code produtos} é o recurso.
+ *
+ * <h2>O {@code estabelecimentoId} da URL é entrada, não contexto</h2>
+ *
+ * <p>Ele não vira filtro de consulta nenhuma antes de passar pelo caso de uso,
+ * que o manda ao {@code merchant} junto com o token do portador. É a mesma
+ * invariante 9 que o {@code EquipeController} materializa — com a diferença de
+ * que aqui quem confronta o identificador com o vínculo é outro serviço.
+ */
+@RestController
+@RequestMapping("/api/v1/merchants/{estabelecimentoId}/catalog/produtos")
+public class ProdutoController {
+
+    private final ListarProdutos produtos;
+
+    public ProdutoController(ListarProdutos produtos) {
+        this.produtos = produtos;
+    }
+
+    /**
+     * Os produtos publicados da loja, paginados.
+     *
+     * <p><b>Publicados, e não vendáveis.</b> O comerciante precisa ver
+     * exatamente o que não está vendável para poder agir — a pizza cujo grupo
+     * "Tamanho" esgotou inteiro aparece na lista, com {@code vendavel: false}.
+     * Esconder seria a tela deixar de mostrar o problema que ela existe para
+     * resolver.
+     *
+     * <p>O tamanho padrão é vinte, e o teto vem de
+     * {@code spring.data.web.pageable.max-page-size} — sem ele, um
+     * {@code ?size=1000000} vira uma consulta que carrega o cardápio inteiro na
+     * memória e um corpo que ninguém consegue renderizar.
+     *
+     * <p><b>O {@code @ParameterObject} é o que faz o contrato ser usável.</b>
+     * Sem ele o springdoc descreve o {@code Pageable} como um parâmetro de
+     * consulta só, chamado {@code paginacao}, do tipo objeto e obrigatório — um
+     * contrato que nenhum cliente consegue seguir, para uma rota que funciona
+     * sem parâmetro nenhum. Com ele saem {@code page}, {@code size} e
+     * {@code sort}, opcionais, que é o que a rota de fato lê.
+     */
+    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Lista os produtos publicados do estabelecimento",
+            description = "Exige vínculo ativo com VER_PRODUTO, resolvido no merchant-service "
+                    + "com o token de quem pediu. Sem vínculo, sem permissão, loja inexistente "
+                    + "e merchant indisponível devolvem a mesma recusa.")
+    public PaginaResponse<ProdutoResumoResponse> listar(
+            @PathVariable UUID estabelecimentoId,
+            @ParameterObject @PageableDefault(size = 20) Pageable paginacao) {
+
+        return PaginaResponse.de(
+                produtos.publicadosDaLoja(estabelecimentoId, paginacao),
+                ProdutoResumoResponse::de);
+    }
+}

@@ -2,7 +2,9 @@ package com.deliveryplatform.catalog.application.port.out;
 
 import com.deliveryplatform.catalog.domain.model.Produto;
 
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.util.Optional;
 import java.util.UUID;
 
@@ -33,6 +35,16 @@ public interface ProdutoRepositorio {
      * <p>Devolve os {@code ATIVO}, e não os <i>vendáveis</i>: vendável é
      * derivado (§5) e não é campo, então filtrar por ele é trabalho de quem
      * chamou, sobre o que voltou daqui.
+     *
+     * <p><b>Ganhou {@code Pageable} na G-B3, e devia ter nascido com ele.</b> O
+     * {@code CLAUDE.md} diz <i>"Paginação obrigatória em toda listagem. Nada de
+     * {@code findAll()} sem {@code Pageable}"</i>. Na G-B1 este método nasceu
+     * devolvendo {@code List} — antes de existir qualquer listagem por HTTP, o
+     * que escondeu a violação — e a primeira rota que o chama é a desta rodada.
+     *
+     * <p>O tipo do Spring Data está nesta camada de propósito: o ArchUnit
+     * protege o {@code domain}, não o {@code application}, e todo adaptador
+     * desta porta é Spring Data de qualquer maneira.
      */
-    List<Produto> publicadosDe(UUID estabelecimentoId);
+    Page<Produto> publicadosDe(UUID estabelecimentoId, Pageable paginacao);
 }

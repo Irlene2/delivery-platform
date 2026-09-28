@@ -1,9 +1,10 @@
 package com.deliveryplatform.catalog.infrastructure.persistence.repository;
 
 import com.deliveryplatform.catalog.infrastructure.persistence.entity.ProdutoDocumento;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -19,6 +20,6 @@ import java.util.UUID;
  */
 public interface ProdutoSpringDataRepository extends MongoRepository<ProdutoDocumento, UUID> {
 
-    List<ProdutoDocumento> findByEstabelecimentoIdAndEstadoDePublicacao(
-            UUID estabelecimentoId, String estadoDePublicacao);
+    Page<ProdutoDocumento> findByEstabelecimentoIdAndEstadoDePublicacao(
+            UUID estabelecimentoId, String estadoDePublicacao, Pageable paginacao);
 }

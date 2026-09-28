@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
 import java.time.Instant;
@@ -207,7 +208,7 @@ class ProdutoRepositorioIT extends Infraestrutura {
             deOutraLoja.publicar();
             produtos.salvar(deOutraLoja);
 
-            assertThat(produtos.publicadosDe(LOJA))
+            assertThat(produtos.publicadosDe(LOJA, PageRequest.of(0, 20)).getContent())
                     .extracting(Produto::getId)
                     .containsExactly(ativo.getId());
         }
@@ -216,7 +217,7 @@ class ProdutoRepositorioIT extends Infraestrutura {
         void loja_sem_produto_publicado_volta_vazia() {
             produtos.salvar(margherita());
 
-            assertThat(produtos.publicadosDe(LOJA)).isEmpty();
+            assertThat(produtos.publicadosDe(LOJA, PageRequest.of(0, 20))).isEmpty();
         }
     }
 }

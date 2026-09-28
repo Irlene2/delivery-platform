@@ -29,8 +29,7 @@ class HexagonalArchitectureTest {
             .whereLayer("api").mayNotBeAccessedByAnyLayer()
             .whereLayer("infrastructure").mayNotBeAccessedByAnyLayer()
             .whereLayer("application").mayOnlyBeAccessedByLayers("api", "infrastructure")
-            .whereLayer("domain").mayOnlyBeAccessedByLayers("api", "application", "infrastructure")
-            .allowEmptyShould(true);
+            .whereLayer("domain").mayOnlyBeAccessedByLayers("api", "application", "infrastructure");
 
     @ArchTest
     static final ArchRule dominioNaoConheceSpring = noClasses()

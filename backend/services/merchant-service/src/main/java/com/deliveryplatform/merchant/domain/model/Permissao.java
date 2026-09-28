@@ -10,6 +10,14 @@ package com.deliveryplatform.merchant.domain.model;
  * serviço que precise <i>nomear</i> uma permissão, e não o que apenas recebe a
  * resposta de sim-ou-não da {@code AutorizacaoComercialPort} (ADR-011) — esse
  * não conta, como o {@code catalog} não conta para o dia operacional.
+ *
+ * <p><b>O gatilho disparou na G-B3, e a resposta foi não.</b> A porta acabou
+ * não devolvendo sim-ou-não: devolve a lista de permissões (ADR-045), e o
+ * {@code catalog-service} passou a nomear as quatro de produto, com o próprio
+ * enum no recorte que usa. Mesma palavra, recortes diferentes — o mesmo
+ * argumento com que a ADR-040 recusou o {@code Telefone}. O que está entre os
+ * dois serviços é o texto, no corpo da resposta HTTP, e o consumidor descarta o
+ * que não conhece. Ver a emenda de 28/09/2026 à ADR-040.
  */
 public enum Permissao {
 
