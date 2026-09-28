@@ -4,7 +4,8 @@
 "em processo" mora em cada serviço que pergunta, não no `merchant`, e nasce junto
 com o primeiro consumidor do `VinculoAlteradoV1` · **emendada pela ADR-045** (26/09/2026): a
 credencial entre serviços é o token de quem pediu, e por isso `contexto` deixa
-de receber `usuarioId`
+de receber `usuarioId` · **emendada em 28/09/2026**: a porta tem consumidor
+desde a G-B3; o cache fica para a G-B4, com o evento que o invalida
 **Relacionada:** ADR-012 (roteamento do gateway), ADR-015 (JWT com `NimbusJwtEncoder`)
 **Detalha:** `docs/dominio/estabelecimento.md` §2 e §3
 **Invariantes do `CLAUDE.md`:** 8 (nenhum serviço lê o banco de outro), 9 (identificador da URL não é confiável)
@@ -207,3 +208,64 @@ existe HTTP, e testa contra um duplo em memória.
 `docs/dominio/estabelecimento.md` §3 e a tabela de armadilhas do `CLAUDE.md`
 dizem "cache curto **no Redis**". Estava errado — ou melhor, estava indeciso, e
 esta ADR decide. Os dois textos precisam passar a dizer **cache em processo**.
+
+## Emenda de 28/09/2026 — o primeiro consumidor, e por que ele não tem cache
+
+O `AutorizacaoComercialPort` desenhado aqui em agosto ganhou implementação na
+G-B3: o `catalog` pergunta ao `merchant` por
+`GET /internal/merchants/{estabelecimentoId}/me/contexto-de-acesso`,
+encaminhando o token de quem pediu (ADR-045).
+
+### O cache ficou para a rodada seguinte, e o argumento é desta ADR
+
+Esta ADR aceita os 60 segundos como *"o pior caso de acesso indevido depois de
+uma revogação cujo evento se perdeu"*. **Sem consumidor do
+`VinculoAlteradoV1`, toda revogação é esse pior caso** — o que estava escrito
+como exceção tolerada viraria o comportamento normal, e a frase que a justifica
+deixaria de ser verdade.
+
+A ADR-043 já tinha dito o mesmo por outro caminho: *"o cache sem o evento é um
+cache que não invalida, e um cache de autorização que não invalida é uma falha
+de segurança com nome de otimização"*.
+
+Então na G-B3 cada requisição do catálogo pergunta ao `merchant`. O custo de
+carga que esta ADR calculou — uma consulta por clique em vez de uma por minuto
+— é real e é aceitável no MVP, com uma loja e um atendente. O cache entra na
+G-B4, **junto** com o consumidor que o invalida.
+
+### Vazio e indisponível são coisas diferentes, e a porta já as separa
+
+A emenda de 28/09 à ADR-045 escreveu a tabela; a G-B3 a implementou:
+
+| resposta do `merchant` | a porta | por quê |
+| --- | --- | --- |
+| **200** | contexto | |
+| **403** | `Optional.empty()` | é uma resposta: o produtor consultou e disse não |
+| **401** | `AutorizacaoIndisponivel` | **não é resposta** — ver abaixo |
+| 5xx, tempo esgotado, conexão recusada | `AutorizacaoIndisponivel` | ausência de resposta |
+
+**O 401 é o caso que não estava escrito.** Ele significa que o `merchant`
+recusou um token que o `catalog` acabou de aceitar: os dois serviços discordam
+sobre emissor ou audiência. Isso é erro de configuração entre ambientes, não
+resposta sobre vínculo. Tratá-lo como "sem acesso" faria o defeito se disfarçar
+de regra de negócio — e, com o cache da G-B4, ficaria escondido por dez
+segundos a cada tentativa.
+
+Os quatro terminam em **403 para o cliente**. Falha fechada, sem janela de
+graça: *"Fail-closed que abre sob pressão não é fail-closed"*. O que muda é o
+que se poderá guardar.
+
+### Uma conferência que esta ADR não pedia e o adaptador faz
+
+A resposta traz o `estabelecimentoId`, e o adaptador confere contra o que
+perguntou. Divergência é `AutorizacaoIndisponivel`, não contexto. Autorizar com
+o contexto de outra loja é a pior falha que esta porta pode ter, e sem a
+conferência ela seria invisível.
+
+### O que o `catalog` guarda do contexto
+
+Três dos quatro campos que o `estabelecimento.md` desenha: `usuarioId`,
+`estabelecimentoId` e as permissões — estas no recorte que o `catalog` nomeia
+(ver a emenda de 28/09 à ADR-040). O `papel` vem no corpo e não é lido: o
+`catalog` não tem regra que o consulte, e o mesmo documento diz que *"toda
+autorização real é feita pela lista de permissões"*.

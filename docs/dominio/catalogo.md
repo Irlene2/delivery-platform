@@ -281,6 +281,18 @@ grupos e opções é uma árvore lida inteira, gravada inteira.
 O cache do cardápio pode servir dado de segundos atrás. É aceitável **porque a
 cotação não usa cache** — a listagem é vitrine, a cotação é contrato.
 
+> **28/09/2026 — a primeira rota.**
+> `GET /api/v1/merchants/{estabelecimentoId}/catalog/produtos` lista os
+> produtos **publicados** da loja, paginados (`page`, `size`, teto de 100), e
+> exige `VER_PRODUTO`.
+>
+> Publicados, e não vendáveis: o comerciante precisa ver o que não está
+> vendável para poder agir. Cada item traz `vendavel` calculado, porque o
+> cliente não consegue derivá-lo sem os grupos — e o resumo não os carrega.
+>
+> A autorização não é local. Ela vem do `merchant`, com o token de quem pediu
+> encaminhado (ADR-045), e **não há cache até a G-B4**.
+
 ---
 
 ## 8. Eventos

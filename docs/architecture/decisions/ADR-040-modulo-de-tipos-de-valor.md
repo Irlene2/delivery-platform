@@ -1,6 +1,7 @@
 # ADR-040 — Um módulo de tipos de valor, e a regra que impede ele de crescer
 
-**Status:** Aceita — 08/09/2026
+**Status:** Aceita — 08/09/2026 · **emendada em 28/09/2026**: o gatilho da `Permissao`
+disparou, e a resposta é que ela **não** entra no módulo
 **Relacionada:** ADR-001 (monorepo), ADR-002 (banco por serviço), ADR-009
 (modelo de valores), ADR-024 (desconto de retirada), ADR-028 (pedido mínimo),
 ADR-035 (idioma)
@@ -205,3 +206,30 @@ não o dá por analogia.
 
 **A verificação de dependência entre serviços no build.** Continua sendo a
 pendência da ADR-001, agora com uma exceção a acomodar.
+
+## Emenda de 28/09/2026 — a `Permissao` não entra, e o gatilho fica respondido
+
+O javadoc da `Permissao` do `merchant` escreveu o gatilho: *"O gatilho para
+mudar é o segundo serviço que precise nomear uma permissão"*. Na G-B3 o
+`catalog` passou a precisar nomear `VER_PRODUTO`. A resposta é a mesma que esta
+ADR deu ao `Telefone`: **mesma palavra, recortes diferentes**.
+
+O `merchant` tem dez permissões porque ele as concede, revoga e valida umas
+contra as outras (A2). O `catalog` tem regra sobre quatro — as de produto — e
+sobre nenhuma outra. Um enum compartilhado com dez valores daria ao `catalog`
+seis nomes que nenhuma regra dele consulta, que é a promessa com sintaxe de
+código que este repositório recusa.
+
+**O que cada serviço tem:** o enum do recorte que usa.
+**O que está entre eles:** o texto, no corpo da resposta HTTP.
+
+E é por isso que o consumidor **tem de perdoar**: o contrato do `merchant`
+congelou `permissoes` como enum fechado, e a ADR-027 diz que acrescentar valor
+a enum é mudança compatível — o que só é verdade se quem lê descartar o que não
+conhece. No `catalog`, `PermissaoDoCatalogo.de(String)` devolve vazio para o
+desconhecido, e o adaptador descarta com registro.
+
+**Descartar nunca é conceder.** Uma permissão que o consumidor não entende some
+do conjunto; ela não vira acesso.
+
+O módulo continua com `Money`. Só.
