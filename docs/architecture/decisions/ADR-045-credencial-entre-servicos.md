@@ -1,12 +1,13 @@
 # ADR-045 — A credencial entre serviços é o token de quem pediu
 
-- **Estado:** aceita
+- **Estado:** aceita · **emendada em 28/09/2026**: a primeira rota interna existe, e o
+  adaptador do consumidor tem de separar "negado" de "produtor fora"
 - **Data:** 26/09/2026
 - **Fecha:** a pendência que a ADR-043 criou — *"a credencial entre serviços nunca foi decidida"*
 - **Emenda:** ADR-011 (a assinatura do `AutorizacaoComercialPort`)
 - **Relacionadas:** ADR-012, ADR-015 emendada, ADR-037, ADR-044
-- **Não implementada nesta rodada.** O primeiro consumidor é o `catalog-service`,
-  no marco 2, e é lá que o código nasce.
+- **Produtor implementado na G-B2** (28/09/2026): a rota `/internal/` do `merchant`.
+  O consumidor — o adaptador com cache e falha fechada — nasce no `catalog`, na G-B3.
 
 ## Contexto
 
@@ -142,3 +143,74 @@ Tudo o mais da ADR-011 fica de pé: cache Caffeine em processo, 60 s positivo,
 - **Segredo compartilhado por serviço.** O mais fácil de escrever e o pior de
   sustentar: sem expiração, sem rotação, e não diz *quem* chamou — só *qual
   serviço*. Viraria o padrão copiado oito vezes.
+
+## Emenda de 28/09/2026 — o primeiro caminho `/internal/`, e o que ele exige do consumidor
+
+Esta ADR fixava o **prefixo** e não o caminho. O primeiro nasceu na G-B2:
+
+```
+GET /internal/merchants/{estabelecimentoId}/me/contexto-de-acesso
+```
+
+Três escolhas, cada uma com a regra que a sustenta:
+
+- **`{estabelecimentoId}`**, e não `{merchantId}`. A ADR-035 e o `CLAUDE.md`
+  mandam identificador e recurso em português, e o `EquipeController` já usa
+  esse nome. O `merchantId` existe só como variável de predicado no gateway —
+  que não vê `/internal/`.
+- **`/me/`**, com o sentido que o gateway já lhe dá em `/api/v1/me/**` e
+  `/api/v1/couriers/me/**`: o portador do token. Ele **fecha uma porta**: com
+  `me` no caminho, ninguém acrescenta depois um `/{usuarioId}/contexto-de-acesso`
+  sem perceber que está criando outro recurso — e é justamente essa porta que a
+  seção "Por que isto é melhor, e não só menor" desta ADR quer fechada: *"não
+  existe `usuarioId` no caminho"*.
+- **`contexto-de-acesso`**, em português, pelo mesmo motivo do primeiro item. O
+  `/team` da C-A diverge dessa regra e está congelado em contrato; corrigi-lo é
+  quebra de contrato e assunto de outra rodada.
+
+A rota entra no contrato congelado (`contracts/openapi/merchant-service.json`,
+ADR-039) com a tag `interno`, e com o requisito `bearerAuth` que o contrato do
+`merchant` declara na raiz. A diferença de `/api/v1/` fica marcada no contrato,
+e não por exclusão dele — o precedente é o `/.well-known/jwks.json` do
+contrato do `identity`, também consumido por serviço e também fora do gateway.
+
+### A rota não exige permissão, e é por isso que ela não pode receber `usuarioId`
+
+Pedir permissão para descobrir permissão é circular: qualquer requisito aqui
+teria de ser resolvido por esta mesma consulta. O que torna a ausência de
+requisito segura é a outra metade: **não existe `usuarioId` na entrada** — nem
+no caminho, nem em parâmetro, nem em cabeçalho. A rota responde sobre o portador
+e sobre mais ninguém, e o portador já descobre o próprio vínculo tentando usar a
+loja.
+
+**As duas metades são uma decisão só.** Quem algum dia acrescentar uma forma de
+perguntar pelo contexto de *outro* usuário transforma esta rota, que hoje não
+exige nada, num vazamento das permissões de todo mundo. É por isso que o `me`
+está no caminho e não implícito.
+
+### Quatro recusas, uma resposta
+
+Loja inexistente, sem vínculo, vínculo `SUSPENSO` e vínculo `REMOVIDO` dão o
+mesmo **403** com o mesmo corpo (M7). Os dois últimos exigem filtro explícito no
+caso de uso: o repositório do `merchant` devolve o vínculo em qualquer estado.
+
+"Mesmo corpo" tem uma exceção medida, e ela não vaza nada: o `instance` do
+`ProblemDetail` é o caminho da requisição, que o Spring preenche sozinho — cada
+recusa ecoa o caminho que o próprio chamador pediu. O
+`ContextoDeAcessoControllerIT` confere o `instance` contra o caminho e compara o
+resto do corpo.
+
+### O que o consumidor tem de distinguir, e esta ADR não dizia
+
+A ADR-011 descreve dois comportamentos diferentes e não diz como separá-los:
+
+| o que aconteceu | o consumidor faz | por quê |
+| --- | --- | --- |
+| **403** — não há vínculo ativo | nega, e **pode cachear** por 10 s | é uma resposta: o produtor sabe e disse |
+| **timeout, 5xx, conexão recusada** | nega, e **não cacheia** | não é resposta: é ausência de resposta, e o TTL de 60 s já é a janela de tolerância a queda |
+
+Cachear a indisponibilidade como se fosse negação estenderia uma queda de dois
+segundos em dez segundos de recusa para todo mundo. E cachear positivo depois de
+um erro é o contrário disso, e pior.
+
+**Falha fechada nos dois casos** — o que muda é só o que se guarda.

@@ -247,6 +247,21 @@ record ContextoDeAcesso(UUID usuarioId, UUID estabelecimentoId,
 > continua devolvendo o `usuarioId`, como resposta. A forma final nasce com o
 > primeiro consumidor, o `catalog`, no marco 2.
 
+> **28/09/2026 — o endereço do produtor.** O `merchant` expõe
+> `GET /internal/merchants/{estabelecimentoId}/me/contexto-de-acesso`, que
+> devolve os quatro campos do record acima em JSON e **403 para as quatro
+> recusas**. Só vínculo `ATIVO` recebe resposta — suspenso e removido respondem
+> como ausência.
+>
+> O record fica onde está desenhado, do lado de quem pergunta. No `merchant` ele
+> é uma **projeção** do `Membro`, não um segundo conceito de domínio: sem
+> `membroId`, sem `criadoEm` e sem `estado` — este último porque seria a
+> constante `ATIVO` em toda resposta que existe.
+>
+> **As permissões são as gravadas.** Nenhuma dedução a partir do papel, pelo
+> motivo que a §2 já dá: papel não é lista de permissões, e o `promover` muda só
+> o papel.
+
 | Aspecto | Regra | Por quê |
 |---|---|---|
 | Cache | **Em processo** (Caffeine), 60 s para resposta positiva e 10 s para negativa, chave `(usuarioId, estabelecimentoId)` — ADR-011 | Toda requisição de todo serviço passa aqui, e a cache existe para não sair do processo |
