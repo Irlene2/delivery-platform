@@ -8,7 +8,40 @@
   "security" : [ {
     "bearerAuth" : [ ]
   } ],
+  "tags" : [ {
+    "name" : "interno",
+    "description" : "Consumido por outro serviço, com o token de quem pediu encaminhado. Não roteado pelo gateway — ADR-045."
+  } ],
   "paths" : {
+    "/internal/merchants/{estabelecimentoId}/me/contexto-de-acesso" : {
+      "get" : {
+        "tags" : [ "interno" ],
+        "summary" : "O contexto de acesso do portador do token nesta loja",
+        "description" : "Exige apenas token válido — nenhuma permissão. Responde sobre o portador e sobre mais ninguém: não existe usuarioId na entrada. Sem vínculo ativo e loja inexistente devolvem a mesma recusa.",
+        "operationId" : "doPortador",
+        "parameters" : [ {
+          "name" : "estabelecimentoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ContextoDeAcesso"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/merchants/{estabelecimentoId}/team" : {
       "get" : {
         "tags" : [ "equipe-controller" ],
@@ -41,6 +74,31 @@
   },
   "components" : {
     "schemas" : {
+      "ContextoDeAcesso" : {
+        "type" : "object",
+        "properties" : {
+          "usuarioId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "estabelecimentoId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "papel" : {
+            "type" : "string",
+            "enum" : [ "ADMINISTRADOR", "COLABORADOR" ]
+          },
+          "permissoes" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "VER_PRODUTO", "CRIAR_PRODUTO", "ALTERAR_PRODUTO", "DESATIVAR_PRODUTO", "VER_PEDIDO", "ALTERAR_STATUS", "VER_VENDAS", "VER_ENTREGA", "GERENCIAR_EQUIPE", "GERENCIAR_JORNADA" ]
+            },
+            "uniqueItems" : true
+          }
+        }
+      },
       "EquipeResponse" : {
         "type" : "object",
         "properties" : {

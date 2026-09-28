@@ -27,11 +27,12 @@ import java.util.UUID;
  * não há "em caso de dúvida, deixa passar". M8 diz que indisponibilidade nega —
  * e o jeito de garantir isso é não escrever o ramo que perdoa.
  *
- * <p><b>Sem cache, e é decisão desta rodada.</b> A ADR-011 prevê cache em
- * processo de 60 s para esta resolução, invalidado por {@code VinculoAlteradoV1}.
- * O evento não existe, o outbox não existe, e cache sem invalidação não é
- * otimização: é permissão revogada continuando a valer por um minuto, em
- * silêncio. Entra junto com o evento, na rodada seguinte.
+ * <p><b>Sem cache, e agora por outro motivo.</b> A ADR-011 previa cache em
+ * processo de 60 s para esta resolução. A ADR-043 emendou: o {@code merchant} é
+ * a fonte da verdade do vínculo, e um cache aqui serviria para o serviço não
+ * perguntar a si mesmo. O cache mora em <b>cada serviço que pergunta</b>,
+ * alimentado pelo {@code VinculoAlteradoV1} — que existe desde a C-B. O
+ * primeiro consumidor é o {@code catalog}, na G-B3.
  */
 @Service
 public class ConsultarEquipeService implements ConsultarEquipe {

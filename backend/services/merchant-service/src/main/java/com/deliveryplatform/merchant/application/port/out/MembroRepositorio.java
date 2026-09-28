@@ -24,7 +24,15 @@ public interface MembroRepositorio {
 
     Membro salvar(Membro membro);
 
-    /** O caminho quente da autorização contextual. Sem cadeado, sem a equipe. */
+    /**
+     * O caminho quente da autorização contextual. Sem cadeado, sem a equipe.
+     *
+     * <p><b>Devolve o vínculo em qualquer estado</b> — ativo, suspenso e
+     * removido. Quem resolve acesso a partir daqui e <b>não</b> passa por
+     * {@code Membro.pode(...)} precisa filtrar {@code ativo()} na mão: o
+     * {@code pode(...)} confere estado por dentro, e quem não o chama fica sem
+     * rede. Ver a armadilha no {@code CLAUDE.md}.
+     */
     Optional<Membro> buscarPorUsuarioELoja(UUID usuarioId, UUID estabelecimentoId);
 
     /**
