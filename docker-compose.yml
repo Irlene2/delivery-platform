@@ -143,7 +143,7 @@ services:
       # em silêncio. ADR-044 §3.
       JWT_ISSUER: ${JWT_ISSUER:-http://localhost:8081}
       JWT_AUDIENCE: ${JWT_AUDIENCE:-delivery-platform}
-      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173}
       SERVICE_IDENTITY_URI: http://identity-service:8081
       SERVICE_MERCHANT_URI: http://merchant-service:8082
       SERVICE_CATALOG_URI: http://catalog-service:8083

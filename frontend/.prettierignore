@@ -1,0 +1,4 @@
+src/api/generated/
+dist/
+.tsbuild/
+.tsbuild-node/

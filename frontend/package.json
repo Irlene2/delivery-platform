@@ -1,0 +1,53 @@
+{
+  "name": "delivery-platform-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Painel do comerciante. O consumidor real da API — ADR-016, escopo 15.A.",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --build && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --build --force",
+    "lint": "eslint .",
+    "format": "prettier --check .",
+    "format:write": "prettier --write .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "tipos": "openapi-typescript ../contracts/openapi/identity-service.json -o src/api/generated/identity.ts && openapi-typescript ../contracts/openapi/merchant-service.json -o src/api/generated/merchant.ts && openapi-typescript ../contracts/openapi/catalog-service.json -o src/api/generated/catalog.ts",
+    "tipos:conferir": "npm run tipos && git diff --exit-code --stat src/api/generated"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.62.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-router": "^7.1.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "@tailwindcss/vite": "^4.0.0",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.6.0",
+    "@testing-library/react": "^16.1.0",
+    "@testing-library/user-event": "^14.5.0",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.0",
+    "eslint": "^9.17.0",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "eslint-plugin-react-refresh": "^0.4.16",
+    "globals": "^15.14.0",
+    "jsdom": "^25.0.0",
+    "openapi-typescript": "^7.5.0",
+    "prettier": "^3.4.0",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.7.0",
+    "typescript-eslint": "^8.19.0",
+    "vite": "^7.0.0",
+    "vitest": "^3.0.0"
+  }
+}
