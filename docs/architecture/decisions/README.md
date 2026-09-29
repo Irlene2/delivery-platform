@@ -12,7 +12,7 @@
 | 008 | MongoDB como replica set de nó único | ✅ aceita · **emendada** (27/09/2026: `withReplicaSet()` na Testcontainers 2; `spring.mongodb.uri` no Boot 4) |
 | 009 | Modelo de valores do pedido | ✅ aceita · **emendada pela v1.1** · **emendada** (27/09/2026: `Money` em documento é texto) |
 | 010 | Saga do pedido: pivô em `PRONTO`, pagamento fora da transação | ✅ aceita · **reescrita pela v1.1** |
-| 011 | Autorização comercial: cache em processo, invalidação por evento, fail-closed | ✅ aceita · **emendada** (26/09/2026: a porta não recebe `usuarioId` — ADR-045; 28/09/2026: primeiro consumidor, sem cache até a G-B4) |
+| 011 | Autorização comercial: cache em processo, invalidação por evento, fail-closed | ✅ aceita · **emendada** (26/09/2026: a porta não recebe `usuarioId` — ADR-045; 28/09/2026: primeiro consumidor, sem cache até a G-B4; 29/09/2026: `topic` com fila exclusiva, e o cache existe) |
 | 012 | Roteamento do gateway por recurso, não por serviço | ✅ aceita · **emendada** (24/09/2026: limite de taxa e `correlationId` fora do marco 1) |
 | 013 | Retenção, anonimização e exclusão de dados pessoais | ✅ aceita |
 | 014 | Não adotar H2; Testcontainers como fonte de verdade | ✅ aceita · **emendada pela v1.1** · **emendada** (27/09/2026: todo contêiner prova que é o usado — `ConteinerDeVerdadeIT`) |
@@ -27,7 +27,7 @@
 | 023 | Fronteira `order` × `payment`: pedido é dono do registro | ✅ aceita |
 | 024 | Desconto de retirada, não preço por modalidade | ✅ aceita |
 | 025 | Fuso horário do estabelecimento e o dia operacional | ✅ aceita · **emendada** (26/09/2026: um evento de abertura por dia operacional — ADR-046) |
-| 026 | Fila morta, retentativa e reprocessamento | ✅ aceita |
+| 026 | Fila morta, retentativa e reprocessamento | ✅ aceita · **emendada** (29/09/2026: consumidor de invalidação não tem retentativa nem fila morta) |
 | 027 | O que conta como mudança compatível num evento | ✅ aceita |
 | 028 | Pedido mínimo por modalidade, sobre o subtotal dos itens | ✅ aceita |
 | 029 | Recuperação do administrador único | ✅ aceita |
@@ -44,13 +44,14 @@
 | 040 | Um módulo de tipos de valor, e a regra que impede ele de crescer | ✅ aceita · **emendada** (28/09/2026: a `Permissao` não entra — cada serviço nomeia o seu recorte) |
 | 041 | Observabilidade sai do repositório, e a volta é por condição | ✅ aceita |
 | 042 | O código de verificação do cadastro, e quem o entrega | ✅ aceita |
-| 043 | O outbox e o relay | ✅ aceita · **emenda a 011** |
+| 043 | O outbox e o relay | ✅ aceita · **emenda a 011** · **emendada** (29/09/2026: o relay espera a confirmação, e `mandatory` revela mensagem sem destino) |
 | 044 | A cadeia de filtros do gateway, e o que passa sem token | ✅ aceita · **emenda a 012 e 037** |
 | 045 | A credencial entre serviços é o token de quem pediu | ✅ aceita · **emenda a 011** · **emendada** (28/09/2026: o primeiro caminho `/internal/`, e 403 contra 5xx no consumidor) |
 | 046 | Quem observa a abertura do expediente | ✅ aceita · **emenda a 025** · **emendada** (26/09/2026: o expediente é o do início da faixa; o evento significa "um expediente começou") |
 | 047 | Onde o token do painel mora no navegador | ✅ aceita |
+| 048 | O primeiro consumidor de evento: topologia, idempotência e falha | ✅ aceita · **emenda a 011, 026 e 043** |
 
-**Quarenta e cinco escritas, duas sem objeto — estas com registro próprio desde
+**Quarenta e seis escritas, duas sem objeto — estas com registro próprio desde
 25/08/2026 —, nenhuma a escrever.**
 
 ## Onde mora o quê

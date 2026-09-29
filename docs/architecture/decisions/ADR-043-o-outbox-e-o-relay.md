@@ -3,6 +3,8 @@
 - **Estado:** aceita
 - **Data:** 2026-09-24
 - **Emenda:** esclarece a ADR-011 (onde mora o cache de autorização)
+- **Emendada em 29/09/2026:** o relay passa a esperar a confirmação do broker, e
+  `mandatory` revela mensagem sem destino
 - **Relacionadas:** ADR-011, ADR-012, ADR-021, ADR-026, ADR-027, ADR-035, ADR-041
 - **Invariante que ela cumpre:** invariante 7 — *nenhum evento é publicado fora do outbox*
 
@@ -208,3 +210,35 @@ perceber que se está decidindo.
 **Gatilho escrito:** o mesmo da emenda acima — o primeiro serviço com rota
 protegida. Ele chega precisando das duas coisas ao mesmo tempo, e aí a credencial
 é o assunto da rodada em vez de um detalhe dela.
+
+## Emenda de 29/09/2026 — o relay marcava como publicado o que o broker descartava
+
+Os sete serviços declaram `publisher-confirm-type: correlated` e
+`publisher-returns: true` desde a C-B. **Nenhuma linha de código registrava
+callback, passava `CorrelationData`, ligava `mandatory` ou esperava
+confirmação.** O relay marcava `publicado_em` assim que o `send` devolvia — ou
+seja, assim que os bytes saíam pelo socket.
+
+E havia uma consequência pior do que "talvez não tenha chegado": **mensagem sem
+fila de destino é descartada pelo broker em silêncio.** Como nenhuma fila estava
+ligada à `delivery.eventos` até esta rodada, **todo `VinculoAlteradoV1`
+publicado desde a C-B foi descartado, e o outbox marcou cada um como entregue.**
+
+O relay passa a esperar, com `mandatory` ligado:
+
+| o que o broker fez | o que se conclui |
+| --- | --- |
+| `ack`, sem devolução | chegou numa fila: **publicado** |
+| `ack`, **com** devolução | aceitou e não tinha para onde mandar: **pendente** |
+| `nack`, ou nada dentro do prazo | não se sabe: **pendente** |
+
+A segunda linha é a que engana: **o `ack` vem mesmo quando a mensagem é
+descartada.** Confirmação diz "recebi", não "entreguei".
+
+Manda-se o lote inteiro primeiro e espera-se depois: confirmação por mensagem
+faria o pior caso ser cem vezes o tempo limite, dentro de uma transação
+segurando cem cadeados.
+
+A ADR-043 §3 continua valendo — a entrega é pelo menos uma vez. O que muda é que
+agora ela é pelo menos uma vez **de verdade**, em vez de no máximo uma.
+

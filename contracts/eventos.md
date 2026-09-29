@@ -120,9 +120,14 @@ carrega a versão, que vive em `eventVersion`:
 e o `usuarioId` basta para dizer *o que a pessoa pode fazer*. A tabela `outbox` é
 cópia durável do evento, e a regra do `CLAUDE.md` sobre log vale para ela.
 
-**Quem consome.** Ninguém ainda. O cache de autorização da ADR-011 mora em cada
-serviço que pergunta (emenda na ADR-043), e o primeiro serviço com rota protegida
-é o gatilho escrito.
+**Quem consome.** O `catalog-service`, desde a G-B4 — `OuvinteDeVinculoAlterado`,
+fila exclusiva por instância ligada a `merchant.vinculo.#`. Ele **invalida** a
+entrada do cache de autorização e não lê `papel`, `estado` nem `permissoes`.
+
+**As cláusulas 3 e 4 ficam vazias para ele**, e isso está decidido na ADR-048
+§2: remover uma entrada de cache é idempotente e independe de ordem, então não
+há o que deduplicar por `eventId` nem o que descartar por `occurredAt`. As duas
+voltam inteiras para o primeiro consumidor que **escreva** alguma coisa.
 
 ### `ExpedienteAlteradoV1` — o contrato
 

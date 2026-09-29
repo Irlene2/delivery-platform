@@ -5,7 +5,9 @@
 com o primeiro consumidor do `VinculoAlteradoV1` · **emendada pela ADR-045** (26/09/2026): a
 credencial entre serviços é o token de quem pediu, e por isso `contexto` deixa
 de receber `usuarioId` · **emendada em 28/09/2026**: a porta tem consumidor
-desde a G-B3; o cache fica para a G-B4, com o evento que o invalida
+desde a G-B3; o cache fica para a G-B4, com o evento que o invalida ·
+**emendada em 29/09/2026**: a topologia é `topic` com fila exclusiva, e o
+cache existe desde a G-B4
 **Relacionada:** ADR-012 (roteamento do gateway), ADR-015 (JWT com `NimbusJwtEncoder`)
 **Detalha:** `docs/dominio/estabelecimento.md` §2 e §3
 **Invariantes do `CLAUDE.md`:** 8 (nenhum serviço lê o banco de outro), 9 (identificador da URL não é confiável)
@@ -92,7 +94,7 @@ correspondente** da sua cache.
 ```
 Marli remove o Rafa
         │
-merchant-service  ──▶ VinculoAlteradoV1 (fanout)
+merchant-service  ──▶ VinculoAlteradoV1 (topic, fila exclusiva por instância)
         │
         ├──▶ order-service     evict(rafa, pizzaria)
         ├──▶ catalog-service   evict(rafa, pizzaria)
@@ -103,7 +105,7 @@ Efeito em segundos. O TTL cobre o caso do evento perdido — e evento **se perde
 por isso as duas coisas existem.
 
 **Cada instância precisa receber o evento.** Cache em processo com N instâncias
-significa N caches. O evento vai para um *exchange* fanout, e cada instância se
+significa N caches. O evento vai para um *exchange* **topic**, e cada instância se
 liga a ele com uma **fila exclusiva e temporária**, não a uma fila compartilhada
 — fila compartilhada entrega para uma instância só, e as outras N−1 ficam com
 dado velho até o TTL.
@@ -269,3 +271,40 @@ Três dos quatro campos que o `estabelecimento.md` desenha: `usuarioId`,
 (ver a emenda de 28/09 à ADR-040). O `papel` vem no corpo e não é lido: o
 `catalog` não tem regra que o consulte, e o mesmo documento diz que *"toda
 autorização real é feita pela lista de permissões"*.
+
+## Emenda de 29/09/2026 — o cache existe, e três números desta ADR foram lidos tarde
+
+A G-B4 ligou o cache que esta ADR desenhou em agosto, junto com o consumidor do
+`VinculoAlteradoV1` que o invalida.
+
+### `fanout` era a palavra errada, e a frase seguinte já dizia o certo
+
+Esta ADR dizia *fanout*; o `merchant` publica num *topic* desde a C-B. **A
+propriedade que esta ADR protege é a segunda metade da própria frase** — *"não a
+uma fila compartilhada"* —, e uma fila exclusiva ligada a um `topic` pela chave
+certa entrega a cada instância exatamente como a `fanout` entregaria. A palavra
+trocou; o comportamento exigido ficou inteiro. Ver a ADR-048 §1.
+
+### Três parâmetros desta tabela ficaram de fora da G-B3
+
+A tabela de parâmetros acima tem seis linhas. A G-B3 implementou a porta lendo
+três delas e **sem notar as outras três**:
+
+| parâmetro | esta ADR | o que a G-B3 entregou | o que a G-B4 faz |
+| --- | --- | --- | --- |
+| tempo limite | **300 ms** | 1 s de conexão, 2 s de leitura | volta a 300 ms nos dois |
+| tamanho máximo | **10 000** | não havia cache | 10 000, configurável |
+| disjuntor | "abre após falhas consecutivas" | não existe | **continua não existindo** |
+
+O tempo limite é o que mais importa, e o argumento é o desta ADR: *"Além disso,
+a requisição do usuário já está lenta"*. Com cache, a chamada ao `merchant`
+deixa de ser o caminho comum — esperar dois segundos por ela passa a ser esperar
+dois segundos numa exceção, e não numa regra.
+
+**O disjuntor fica sem implementação, e agora com gatilho.** Ele depende do
+`resilience4j`, declarado no catálogo de versões e que **não resolve em Boot 4**
+— o artefato é o `-spring-boot3`. O gatilho já está escrito lá: *"quando a queda
+de um serviço derrubar dois em cascata, ou quando alguém medir que o tempo
+limite sozinho não basta"*. O cache reduz a pressão para que ele exista, porque
+uma queda do `merchant` passa a ser invisível durante 60 s — que é o que esta
+ADR chama de *"a janela de tolerância"*.

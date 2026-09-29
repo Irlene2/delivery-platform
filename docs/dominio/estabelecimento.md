@@ -67,9 +67,11 @@ exige uma coisa com identidade própria e histórico próprio.
 coisa, que teria de concordar com `Convite.PENDENTE` para sempre. `REMOVIDO`
 não apaga a linha: o vínculo é registro de quem teve acesso à loja e quando, e
 o `UNIQUE (usuario_id, estabelecimento_id)` faz a recontratação reusar o mesmo
-vínculo. Quem **sai** e quem **é removido** terminam no mesmo `REMOVIDO`: a
-diferença entre as duas coisas pertence ao `motivo` do `VinculoAlteradoV1`, não
-a um quarto estado que todo filtro do sistema teria de tratar para sempre.
+vínculo. Quem **sai** e quem **é removido** terminam no mesmo `REMOVIDO`, e não
+em um quarto estado que todo filtro do sistema teria de tratar para sempre. A
+diferença entre as duas coisas **não está no evento**, e não precisa estar: o
+`VinculoAlteradoV1` carrega estado, não motivo, e quem o consome só precisa
+saber que o vínculo mudou. Quem quiser a diferença a lê no registro da operação.
 
 ---
 
@@ -653,8 +655,10 @@ num intervalo que atravessa a hora de corte todo dia.
 
 Hoje o `motivo` tem **um** valor, `ABERTURA_DE_EXPEDIENTE`, que é o único com
 produtor. Fechamento, pausa e retomada entram quando alguém os emitir —
-acrescentar valor a enum é mudança compatível (ADR-027), e valor sem emissor é
-promessa com sintaxe de código. O contrato completo está em
+valor sem emissor é promessa com sintaxe de código — e acrescentar um depois não
+é de graça: a ADR-027 §2 trata valor novo em enum como **incompatível por
+padrão** — *"valor novo em enum exige versão nova, salvo se todos os
+consumidores tratarem valor desconhecido como "ignorar""*. O contrato completo está em
 [`contracts/eventos.md`](../../contracts/eventos.md).
 
 `VinculoAlteradoV1` é o mais crítico: é ele que faz a revogação de acesso valer
