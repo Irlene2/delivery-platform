@@ -1,6 +1,19 @@
 # Front-end
 
-Ainda não scaffoldado — **entra no marco 3**, conforme ADR-016.
+Scaffoldado na rodada **W-A**, em 29/09/2026 — um marco antes do que a ADR-016
+previa, pelo motivo que ela mesma dá (_"tela cedo expõe API mal desenhada
+rápido"_). Ver a emenda de 29/09/2026 à ADR-016.
+
+**Antes de escrever tela**, leia `docs/front/premissas-do-front.md`: ele lista o
+que este produto **decidiu não ter**, e por qual premissa.
+
+## Como rodar
+
+    npm install
+    npm run tipos      # gera src/api/generated/ de contracts/openapi/*.json
+    npm run dev        # porta 5173, fixa — é a origem que o gateway aceita
+
+O back precisa estar no ar: `identity-service` em 8081 e o `gateway` em 8080.
 
 ## 15.A — front mínimo (marco 3)
 

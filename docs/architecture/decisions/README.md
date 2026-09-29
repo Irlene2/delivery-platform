@@ -2,7 +2,7 @@
 
 | ADR | Decisão | Status |
 |---|---|---|
-| 001 | Monorepo para os oito serviços, o gateway e os contratos | ✅ aceita · **emendada** (26/09/2026: a regra existe no build) |
+| 001 | Monorepo para os oito serviços, o gateway e os contratos | ✅ aceita · **emendada** (26/09/2026: a regra existe no build; 29/09/2026: `frontend/` na árvore) |
 | 002 | Um banco por serviço, sem exceção | ✅ aceita |
 | 003 | ~~Mensageria híbrida RabbitMQ + MQTT~~ | ⛔ sem objeto — MQTT saiu do MVP (020, 021) |
 | 004 | Um pedido pertence a exatamente um estabelecimento | ✅ aceita |
@@ -17,7 +17,7 @@
 | 013 | Retenção, anonimização e exclusão de dados pessoais | ✅ aceita |
 | 014 | Não adotar H2; Testcontainers como fonte de verdade | ✅ aceita · **emendada pela v1.1** · **emendada** (27/09/2026: todo contêiner prova que é o usado — `ConteinerDeVerdadeIT`) |
 | 015 | Emitir JWT com `NimbusJwtEncoder` | ✅ aceita |
-| 016 | Front-end mínimo antes da PWA completa | ✅ aceita |
+| 016 | Front-end mínimo antes da PWA completa | ✅ aceita · **emendada** (29/09/2026: o 15.A começa no marco 2) |
 | 017 | MongoDB como decisão de aprendizado | ✅ aceita |
 | 018 | Snapshot de opções no item e cotação pelo catálogo | ✅ aceita |
 | 019 | `DeliveryQuotePort`: cotação por distância geodésica | ⛔ **revogada** — ver 020 |
@@ -48,8 +48,9 @@
 | 044 | A cadeia de filtros do gateway, e o que passa sem token | ✅ aceita · **emenda a 012 e 037** |
 | 045 | A credencial entre serviços é o token de quem pediu | ✅ aceita · **emenda a 011** · **emendada** (28/09/2026: o primeiro caminho `/internal/`, e 403 contra 5xx no consumidor) |
 | 046 | Quem observa a abertura do expediente | ✅ aceita · **emenda a 025** · **emendada** (26/09/2026: o expediente é o do início da faixa; o evento significa "um expediente começou") |
+| 047 | Onde o token do painel mora no navegador | ✅ aceita |
 
-**Quarenta e quatro escritas, duas sem objeto — estas com registro próprio desde
+**Quarenta e cinco escritas, duas sem objeto — estas com registro próprio desde
 25/08/2026 —, nenhuma a escrever.**
 
 ## Onde mora o quê

@@ -1,7 +1,9 @@
 # ADR-001 — Monorepo para os oito serviços, o gateway e os contratos
 
 **Status:** Aceita — 16/08/2026 · **formalizada em 23/08/2026** · **emendada em
-26/09/2026**: a regra existe no build (ver "Emenda de 26/09/2026")
+26/09/2026**: a regra existe no build (ver "Emenda de 26/09/2026") · **emendada em
+29/09/2026**: `frontend/` entra na árvore, e a regra de dependência entre módulos
+não a alcança
 **Relacionada:** ADR-002 (banco por serviço), ADR-021 (catálogo de serviços)
 **Em vigor desde o primeiro commit** — esta ADR registra o porquê, que faltava
 
@@ -226,3 +228,41 @@ ADR, e fica registrado como tal. **Gatilho escrito:** o dia em que houver uma
 segunda regra de build. Aí o `build-logic` passa a merecer suíte própria,
 pendurada no `check` da raiz, e as duas são exercitadas juntas — hoje, uma suíte
 para uma regra seria mais cerimônia do que verificação.
+
+## Emenda de 29/09/2026 — `frontend/` na árvore, e o que a regra não alcança
+
+A árvore desenhada nesta ADR não tem `frontend/`. A pasta **existe desde o
+commit inicial** — com um `README.md` que já descrevia a pilha —, e a W-A a
+preencheu. A árvore passa a ser:
+
+```
+delivery-platform/
+├── backend/            build Gradle multi-projeto
+├── frontend/           projeto Node — painel do comerciante (ADR-016)
+├── contracts/          OpenAPI, AsyncAPI e JSON Schema dos eventos
+├── docs/               PRD, domínio, ADRs, runbook
+├── infra/              Postgres, Mongo
+└── .github/workflows/  um pipeline por serviço, mais frontend e contracts
+```
+
+(De passagem: a linha de `infra/` dizia "observabilidade", que a ADR-041 tirou do
+marco 1.)
+
+### A regra de dependência não alcança o front, e isso é correto
+
+`VerificarDependenciaEntreModulos` lê o grafo do Gradle. O `frontend/` não é
+módulo Gradle — não está no `settings.gradle.kts`, que usa `include` explícito —,
+então a regra não o vê. **Não há o que consertar:** a regra existe para impedir
+que um serviço compile junto com outro, e o front não compila com nenhum.
+
+O que o front pode importar do back é **contrato**, e o caminho é
+`contracts/openapi/*.json`, lido por gerador de tipos. Isso não é dependência de
+módulo: é consumo do artefato que esta ADR já manda morar junto — *"`contracts/`
+fica no mesmo repositório porque o esquema de um evento muda com o código que o
+publica"*. O mesmo raciocínio vale para o OpenAPI e para o consumidor dele.
+
+### A defesa que esta ADR nomeia continua sendo a mesma
+
+*"Os filtros de caminho por pipeline são a defesa"* contra publicar tudo junto. O
+front tem pipeline próprio, `frontend.yml`, com filtro em `frontend/**` — e em
+`contracts/openapi/**`, porque é de lá que os tipos dele vêm.
