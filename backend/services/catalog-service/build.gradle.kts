@@ -23,4 +23,9 @@ dependencies {
     // bibliotecas externas -- e nada mais. Um segundo project(...) aqui é
     // violação da ADR-001, não uma linha a mais.
     implementation(project(":value-types"))
+
+    // O cache de autorização da ADR-011, em processo. Sem versão: o BOM do
+    // Spring Boot a gerencia. Sem o spring-boot-starter-cache: não há
+    // @Cacheable aqui, só um Cache montado à mão (ADR-048).
+    implementation("com.github.ben-manes.caffeine:caffeine")
 }

@@ -28,6 +28,15 @@ public record OutboxProperties(
         @DefaultValue("100") int tamanhoDoLote,
 
         /** Liga e desliga o agendador. Desligado nos testes que não publicam. */
-        @DefaultValue("true") boolean habilitado
+        @DefaultValue("true") boolean habilitado,
+
+        /**
+         * Quanto esperar pela confirmação do broker, por lote.
+         *
+         * <p>Curto de propósito: este método roda dentro de uma transação
+         * segurando os cadeados do lote. Não confirmar não perde nada — a linha
+         * fica pendente e volta no lote seguinte.
+         */
+        @DefaultValue("2000") long tempoDeConfirmacaoMs
 ) {
 }

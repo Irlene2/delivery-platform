@@ -151,10 +151,13 @@ public class AutorizacaoComercialHttp implements AutorizacaoComercialPort {
      * A tradução que perdoa — e que nunca concede.
      *
      * <p>Permissão que este serviço não conhece é <b>descartada</b>, com
-     * registro. É o que a ADR-027 exige do consumidor para que acrescentar valor
-     * a enum continue sendo mudança compatível: sem isso, o dia em que o
-     * {@code merchant} ganhasse uma permissão nova seria o dia em que ninguém
-     * conseguiria ver o cardápio.
+     * registro. A ADR-027 §2 trata valor novo em enum como <b>incompatível por
+     * padrão</b> — <i>"valor novo em enum exige versão nova, salvo se todos os
+     * consumidores tratarem valor desconhecido como 'ignorar'"</i> — e é
+     * exatamente essa a ressalva que estas linhas compram: enquanto todo
+     * consumidor descartar o que não conhece, o {@code merchant} pode
+     * acrescentar uma permissão sem versão nova. Sem isso, o dia em que ele
+     * ganhasse uma seria o dia em que ninguém conseguiria ver o cardápio.
      *
      * <p>O {@code papel} vem no corpo e não é lido, pela mesma razão: o
      * {@code catalog} não tem regra que o consulte, e o

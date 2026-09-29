@@ -1,9 +1,9 @@
 package com.deliveryplatform.catalog.integration;
 
-import com.deliveryplatform.catalog.application.port.out.AutorizacaoComercialPort;
 import com.deliveryplatform.catalog.application.port.out.AutorizacaoIndisponivel;
 import com.deliveryplatform.catalog.application.port.out.ContextoDeAcesso;
 import com.deliveryplatform.catalog.application.port.out.PermissaoDoCatalogo;
+import com.deliveryplatform.catalog.infrastructure.client.AutorizacaoComercialHttp;
 import com.deliveryplatform.catalog.support.Infraestrutura;
 import com.deliveryplatform.catalog.support.MerchantDeMentira;
 import org.junit.jupiter.api.AfterAll;
@@ -66,7 +66,13 @@ class AutorizacaoComercialHttpIT extends Infraestrutura {
         MERCHANT.close();
     }
 
-    @Autowired AutorizacaoComercialPort autorizacao;
+    /**
+     * O adaptador, e não a porta. Desde a G-B4 a porta injetada é o decorador
+     * com cache (@Primary), e ele guardaria a resposta de um caso para o
+     * seguinte. Este arquivo testa o que o HTTP faz; o cache tem os seus
+     * ({@code CacheDaAutorizacaoTest}, {@code InvalidacaoPorEventoIT}).
+     */
+    @Autowired AutorizacaoComercialHttp autorizacao;
 
     /**
      * O adaptador lê o portador do contexto de segurança (ADR-038), então o

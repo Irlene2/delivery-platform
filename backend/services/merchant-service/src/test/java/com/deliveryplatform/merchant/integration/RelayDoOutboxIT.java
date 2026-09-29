@@ -212,4 +212,46 @@ class RelayDoOutboxIT extends Infraestrutura {
     void sem_nada_pendente_o_relay_nao_faz_nada() {
         assertThat(relay.publicarPendentes()).isZero();
     }
+
+    /**
+     * O defeito que a G-B4 achou: até ela, o relay marcava como publicada uma
+     * mensagem que o broker <b>descartava</b> por não ter fila de destino — e
+     * nenhuma fila estava ligada à {@code delivery.eventos} fora deste teste.
+     *
+     * <p>O {@code ack} do broker vem mesmo para mensagem descartada. O que
+     * revela o descarte é a <b>devolução</b>, que só existe com
+     * {@code mandatory}. Este caso só passa se a devolução já estiver na
+     * {@code CorrelationData} quando o future da confirmação completa.
+     *
+     * <p>A segunda metade — ligar a fila e publicar de novo — é o que impede um
+     * relay que nunca publica nada de passar por este teste.
+     */
+    @Test
+    void mensagem_sem_fila_de_destino_nao_e_marcada_como_publicada() {
+        admin.removeBinding(BindingBuilder.bind(new Queue(FILA))
+                .to(eventosDoDelivery)
+                .with("merchant.vinculo.#"));
+
+        equipes.suspender(loja, marli, bia);
+
+        assertThat(relay.publicarPendentes())
+                .as("sem fila de destino o broker descarta, e o relay não pode "
+                        + "contar isso como publicado")
+                .isZero();
+
+        OutboxJpaEntity pendente = outbox.findAll().getFirst();
+        assertThat(pendente.getPublicadoEm()).isNull();
+        assertThat(pendente.getTentativas()).isEqualTo((short) 1);
+        assertThat(pendente.getUltimoErro()).contains("sem fila de destino");
+
+        admin.declareBinding(BindingBuilder.bind(new Queue(FILA))
+                .to(eventosDoDelivery)
+                .with("merchant.vinculo.#"));
+
+        assertThat(relay.publicarPendentes())
+                .as("com a fila ligada, a mesma linha sai no lote seguinte")
+                .isEqualTo(1);
+        assertThat(outbox.findAll().getFirst().getPublicadoEm()).isNotNull();
+        assertThat(receber()).as("e chega de fato").isNotNull();
+    }
 }

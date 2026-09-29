@@ -41,7 +41,8 @@ import java.util.List;
  * do {@code merchant}.
  */
 @Configuration
-@EnableConfigurationProperties({JwtProperties.class, AutorizacaoProperties.class})
+@EnableConfigurationProperties({JwtProperties.class, AutorizacaoProperties.class,
+        CacheDaAutorizacaoProperties.class})
 public class SecurityConfig {
 
     /**

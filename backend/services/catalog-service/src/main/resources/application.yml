@@ -64,8 +64,18 @@ delivery:
   # aqui é credencial: endereço de serviço interno e tempo limite.
   autorizacao:
     merchant-uri: ${MERCHANT_URI:http://localhost:8082}
-    tempo-de-conexao: 1s
-    tempo-de-leitura: 2s
+    # 300 ms: o número da tabela da ADR-011.
+    tempo-de-conexao: 300ms
+    tempo-de-leitura: 300ms
+    # O cache em processo da ADR-011, invalidado pelo VinculoAlteradoV1 (ADR-048).
+    cache:
+      prazo-positivo: 60s
+      prazo-negativo: 10s
+      maximo-de-entradas: 10000
+  # A exchange que o catalog escuta — os mesmos argumentos do merchant, ou o
+  # serviço não sobe (ADR-048 §1).
+  escuta:
+    exchange: delivery.eventos
 
 # Mongock cumpre para o MongoDB o papel do Flyway no SQL — ADR-017.
 # ATENÇÃO: este bloco é irmão de `spring`, não filho. Estava aninhado por

@@ -21,9 +21,10 @@ import java.time.Duration;
  * do que segurar e negar</b> — o resultado para o usuário é o mesmo 403, e a
  * diferença é o serviço continuar de pé.
  *
- * <p>Dois segundos de leitura são folgados para uma consulta que é um
- * {@code select} por chave primária numa rede interna. Se esse número precisar
- * crescer, o que mudou é o {@code merchant}, e é lá que se olha.
+ * <p><b>300 ms, e o número é da ADR-011</b> — que eu não tinha lido quando
+ * escrevi 1 s e 2 s na G-B3. O argumento dela: <i>"Além disso, a requisição do
+ * usuário já está lenta"</i>. Com o cache da G-B4, esta chamada deixou de ser o
+ * caminho comum: esperar por ela é esperar numa exceção, não numa regra.
  *
  * <p><b>O que estes tempos NÃO são:</b> um substituto para o circuit breaker
  * que a ADR-018 menciona (<i>"timeout e circuit breaker no CatalogPort"</i>,
@@ -40,9 +41,9 @@ public record AutorizacaoProperties(
         @DefaultValue("http://localhost:8082") String merchantUri,
 
         /** Tempo para abrir a conexão. */
-        @DefaultValue("1s") Duration tempoDeConexao,
+        @DefaultValue("300ms") Duration tempoDeConexao,
 
         /** Tempo para a resposta chegar depois de a conexão abrir. */
-        @DefaultValue("2s") Duration tempoDeLeitura
+        @DefaultValue("300ms") Duration tempoDeLeitura
 ) {
 }
