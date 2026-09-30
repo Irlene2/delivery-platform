@@ -117,8 +117,23 @@ ExpedienteAlteradoV1 (merchant-service)
       ↓
 catalog-service reativa todo produto e opção com:
       estado == ESGOTADO_HOJE
-   ∧  expedienteDeReferencia != expediente atual
+   ∧  expedienteDeReferencia < expediente atual
 ```
+
+`<`, e não `≠` (corrigido na G-C1, 30/09/2026). A diferença aparece quando um
+evento de abertura **velho** é reentregue — redelivery, fila morta reprocessada,
+ordem não garantida (ADR-043 §4). Com `≠`, o evento do dia `D` chegando no dia
+`D+1`, depois de alguém marcar "acabou" hoje, compara `D ≠ D+1`, dá verdadeiro,
+e **reativa o que acabou agora** — que é literalmente o que a C11 promete
+impedir, na coluna "o que quebra sem ela". Com `<`, só reativa o que foi marcado
+**antes** do expediente que abriu.
+
+A comparação é entre datas, e o texto ISO gravado no Mongo ordena
+lexicograficamente — `$lt` serve, se um dia a consulta precisar dele.
+
+E o carimbo de quem **marca** com a loja fechada é o expediente da **próxima
+abertura** (ADR-049): a calabresa marcada às 10h carrega o dia da abertura das
+18h, e continua esgotada a noite inteira.
 
 Três consequências que precisam estar no código:
 
@@ -343,7 +358,7 @@ acabou depois da abertura.
 | C8 | Produto pertence a **um** estabelecimento (ADR-004) | Cardápio vaza entre lojas |
 | C9 | Produto nunca é apagado — `INATIVO` | Pedido antigo com referência morta |
 | C10 | `RASCUNHO` e `INATIVO` nunca cotizam | Cliente pede o que não está à venda |
-| C11 | Reativação de `ESGOTADO_HOJE` é idempotente por `expedienteDeReferencia` | Mensagem repetida reativa o que acabou agora |
+| C11 | Reativação de `ESGOTADO_HOJE` é idempotente por `expedienteDeReferencia`, e a comparação é `carimbo < expediente que abriu` | Mensagem repetida reativa o que acabou agora |
 | C12 | `QUANTITATIVO` não existe até o marco 10 — o enum tem dois valores (nota da §1) | Promete contagem que não existe |
 | C13 | Toda estrutura e índice via Mongock | Ambiente diverge do outro em silêncio |
 

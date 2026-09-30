@@ -360,17 +360,42 @@ vira acesso irrestrito aos dados de todas as lojas. Mitigação é disponibilida
 (réplicas, cache com TTL que sobrevive a queda curta), não relaxamento da regra.
 Os detalhes de TTL, invalidação e janela de tolerância estão na **ADR-011**.
 
-### As três portas, e a política de cache de cada uma
+### As quatro portas, e a política de cache de cada uma
 
 | Porta | Cache | Por quê |
 |---|---|---|
 | `AutorizacaoComercialPort` | 60 s positivo · 10 s negativo | ADR-011 |
 | `OperacaoDoEstabelecimentoPort` | idem | Resposta usada e descartada |
 | `DeliveryQuotePort` (ADR-019, ADR-020) | **nenhum** | A resposta é **congelada** no pedido como `taxaSnapshot` — cache aqui grava dado velho para sempre. ADR-034 |
+| `GET /internal/…/expediente-corrente` (ADR-049) — a porta do `catalog` que a chama nasce na G-C2 | **nenhum** | A resposta **muda de valor quando a faixa fecha** — às 01h59 a pizzaria aberta responde terça; às 02h01, fechada, responde quarta. Com cache, o que se marca logo depois de fechar carregaria o expediente que acabou de terminar, e voltaria ao cardápio na abertura seguinte |
 
 **Porta sem essa coluna preenchida não está documentada.** O padrão das três
 decisões anteriores é "consulte e guarde"; a terceira linha existe para que
 ninguém o aplique por analogia onde ele corrompe.
+
+### O expediente corrente, e por que ele não tem cache
+
+`GET /internal/merchants/{estabelecimentoId}/expediente-corrente` (G-C1,
+30/09/2026) devolve o dia operacional a gravar como `expedienteDeReferencia`
+numa marcação de disponibilidade. Quem pergunta é o `catalog`, e ele pergunta
+porque **não pode calcular**: o cálculo tem um dono só (ADR-046 §6).
+
+A resposta é o expediente **em curso** quando a loja está dentro do horário, e o
+da **próxima abertura** quando ela está fechada — ADR-049. `409` quando a loja
+não abre por horário.
+
+**Sem cache**, e é a quarta linha da tabela acima com motivo próprio: a resposta
+**muda de valor quando a faixa fecha**. Às 01h59 a pizzaria de 18h–02h, aberta,
+responde terça; às 02h01, fechada, responde quarta — a próxima abertura. Sessenta
+segundos de cache carimbariam com terça o que se marca ao limpar o balcão, e o
+item voltaria ao cardápio na abertura de quarta, que é o erro da madrugada que a
+ADR-049 existe para evitar. É o mesmo raciocínio
+da `DeliveryQuotePort`, por outro caminho: lá o dano é gravar um valor velho
+para sempre; aqui também.
+
+Exige **vínculo ativo** e nenhuma permissão específica: quem chama já confere a
+permissão do ato que vai praticar. Sem vínculo é 403, inclusive quando a loja não
+existe — a diferença entre 403 e 404 enumeraria lojas.
 
 ### Identificador na URL nunca é confiável
 

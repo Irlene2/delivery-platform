@@ -5,7 +5,8 @@
   atravessa a hora de corte") · **emendada em 26/09/2026**: o `ExpedienteAlteradoV1`
   significa "um expediente começou", não "a loja abriu ou fechou" — e dois
   consumidores contam com o segundo (ver "Emenda de 26/09/2026 — o que este evento
-  passou a significar")
+  passou a significar") · **emendada em 30/09/2026**: a porta que esta ADR disse
+  existir não existia, e o §6 ganhou rota (ver "Emenda de 30/09/2026")
 - **Data:** 26/09/2026
 - **Fecha:** o buraco entre `catalogo.md` §3 e `estabelecimento.md` §4 — o evento
   de abertura é exigido por um e não tem produtor no outro
@@ -292,3 +293,27 @@ perguntar.
 Até lá, a regra é a do parágrafo final do contrato: **este evento diz que um
 expediente começou, não que a loja segue aberta.** Quem precisar do segundo,
 pergunta.
+
+## Emenda de 30/09/2026 — a porta que esta ADR disse existir, e o §6 que ganhou rota
+
+Duas correções e um acréscimo.
+
+**A `OperacaoDoEstabelecimentoPort` não existe.** A emenda de 26/09 escreveu que
+ela *"já existe e já calcula na leitura"*. Não há tal interface em código, nem
+`expedienteCorrente`, nem `diaOperacionalCorrente`: antes da G-C1, o nome
+aparecia em dez documentos e em dois javadocs do `merchant`, e em nenhuma
+declaração. O gatilho que aquela emenda escreveu — o `order` ganhar código, no
+marco 3 — continua valendo; o que muda é que ele aponta para **escrever** a
+porta, e não para usá-la.
+
+**O §6 ganhou o chamador que faltava.** Ele dizia que o `catalog` *"recebe o
+valor no evento e o recebe de novo pela porta quando precisa carimbar"*, e essa
+porta era a única peça do parágrafo que não existia. A G-C1 a escreveu:
+`GET /internal/merchants/{estabelecimentoId}/expediente-corrente`.
+
+**E o caso da loja fechada, que esta ADR não cobria.** A regra da emenda de
+26/09 — *"o expediente é o dia operacional do início da faixa que contém o
+instante"* — vale para quem pergunta com a loja **aberta**, que é o único caso
+da varredura. Quem carimba pergunta também com ela fechada, e aí
+`inicioDaFaixaEm` devolve vazio. **A ADR-049 decide**: o carimbo passa a ser o
+dia operacional da **próxima abertura**.

@@ -176,17 +176,30 @@ sem a versão:
    carimbo do envelope como dia vai errar uma vez por dia, na madrugada** — que
    é exatamente quando a pizzaria está vendendo.
 2. **A reativação compara, nunca calcula.** O consumidor reativa produto e
-   opção com `estado == ESGOTADO_HOJE ∧ expedienteDeReferencia != o que veio
+   opção com `estado == ESGOTADO_HOJE ∧ expedienteDeReferencia < o que veio
    aqui`. Ele não precisa do fuso da loja nem da hora de corte, e não deve
    tentar derivá-los: o cálculo tem um dono só, o `merchant` (ADR-046 §6).
-3. **O consumidor é idempotente por `eventId`.** A entrega é pelo menos uma vez
-   (ADR-043 §3). A marca d'água do produtor garante que **uma abertura gera um
-   evento**, não que **um evento chega uma vez**.
-4. **`motivo` desconhecido é ignorado, não é erro.** Hoje só existe
-   `ABERTURA_DE_EXPEDIENTE`; fechamento, pausa e retomada entram quando tiverem
-   produtor. Acrescentar valor a enum é mudança compatível (ADR-027), e um
-   consumidor que estoure com valor novo transforma uma mudança compatível em
-   incidente.
+   **`<`, e não `≠`** (G-C1): com desigualdade, um evento velho reentregue
+   depois de uma marcação de hoje reativaria o que acabou agora.
+3. **O consumidor é idempotente por `expedienteDeReferencia`, e não por
+   `eventId`** — é o que o `catalogo.md` §8 e a C11 já diziam, e esta cláusula
+   dizia o contrário até 30/09/2026. A entrega é pelo menos uma vez
+   (ADR-043 §3), e a marca d'água do produtor garante que **uma abertura gera
+   um evento**, não que **um evento chega uma vez**. O que torna o
+   reprocessamento inofensivo é a comparação da cláusula 2: o evento repetido do
+   mesmo expediente não acha nada para reativar, e o evento velho de um
+   expediente anterior também não, porque a comparação é `<`. **Se isso
+   dispensa a `processed_messages` não está decidido**: a invariante 7 do
+   `CLAUDE.md` só tem a exceção da ADR-048, para efeito em memória, e este
+   consumidor escreve em banco. Decide-se com o consumidor, na rodada que o
+   escrever.
+4. **`motivo` desconhecido é ignorado, não é erro** — e isto é uma escolha
+   **deste** consumidor, não uma regra geral. A ADR-027 §2 decide que valor novo
+   em enum é **incompatível por padrão**, *"salvo se todos os consumidores
+   tratarem valor desconhecido como "ignorar""*. Aqui há um consumidor só, e ele
+   trata: hoje existe apenas `ABERTURA_DE_EXPEDIENTE`, e fechamento, pausa e
+   retomada entram quando tiverem produtor. Um consumidor que estourasse com
+   valor novo transformaria uma mudança planejada em incidente.
 
 **Uma abertura por dia operacional, e não por transição.** A loja que abre duas
 vezes no mesmo dia — a padaria de 6h–14h e 18h–22h — publica **um** evento, o da
