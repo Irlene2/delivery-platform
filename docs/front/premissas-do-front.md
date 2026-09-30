@@ -146,12 +146,13 @@ tela, com o gatilho de cada um.
 
 | O que falta | Consequência na tela | Gatilho |
 | --- | --- | --- |
-| Rota que diga **quais lojas o portador tem** | Não há tela depois do login. Todas as rotas de negócio começam com `{estabelecimentoId}` | G-B5 |
-| Rota **pública** de contexto de acesso | O menu do painel não se monta. A que existe é `/internal/`, que o gateway não roteia | G-B5 |
-| Rota que devolva **o usuário do token** | O painel não sabe o nome de quem entrou | G-B5 |
+| ~~Rota que diga **quais lojas o portador tem**~~ | ~~Não há tela depois do login. Todas as rotas de negócio começam com `{estabelecimentoId}`~~ | **resolvido na G-B5** — `GET /api/v1/me/estabelecimentos` |
+| ~~Rota **pública** de contexto de acesso~~ | ~~O menu do painel não se monta. A que existe é `/internal/`, que o gateway não roteia~~ | **resolvido na G-B5**, e não vai existir: seria uma segunda verdade sobre o mesmo vínculo. `GET /api/v1/me/estabelecimentos` já traz papel e permissões de cada loja; o `/internal/…/contexto-de-acesso` continua só para serviço |
+| Rota que devolva **o usuário do token** | O painel não sabe o nome de quem entrou | a G-B5 **não** a entregou; sem rodada marcada |
 | **Refresh token** | Trinta minutos e login outra vez, no meio do expediente | ADR-037 registra como dívida assumida |
 | `exposedHeaders` no CORS | O front não lê `Location` nem `WWW-Authenticate` de outra origem | a primeira rota que responda `201` com `Location` |
-| `required` nos esquemas do `catalog` | Todo campo do tipo gerado é opcional, e a tela precisa tratar ausência que não acontece | a primeira tela que leia produto |
+| `required` nos esquemas do `catalog` e na `LojaDoUsuario` do `merchant` | Todo campo do tipo gerado é opcional, e a tela precisa tratar ausência que não acontece | a primeira tela que leia produto |
+| O **estado da operação** — a loja está aberta agora? | O seletor não pode mostrar aberta/fechada. A `OperacaoDoEstabelecimentoPort` do `estabelecimento.md` §3 não existe em código | a G-C |
 
 **Enquanto um item desta tabela não tiver rota, a tela que depende dele não é
 escrita** — e não é simulada com valor de configuração temporário. Um

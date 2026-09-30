@@ -224,6 +224,60 @@ vínculo reativa o mesmo registro e o rebaixa — senão um gerente restauraria 
 `ADMINISTRADOR` removido sem nenhum administrador na operação, que é escalada
 com aparência de gentileza.
 
+### As minhas lojas
+
+Uma pessoa pode ter vínculo com mais de uma loja, e o sistema nunca soube
+responder a pergunta mais simples do produto: **de quais lojas eu faço parte?**
+
+`GET /api/v1/me/estabelecimentos` responde (G-B5, 30/09/2026), e devolve, por
+loja: o identificador, o **nome**, o **papel** e as **permissões gravadas no
+vínculo**.
+
+**Só vínculo ATIVO aparece.** Quem foi suspenso ou removido não vê a loja no
+seletor. Isso não é cosmético: sem o filtro, uma pessoa afastada abriria o
+painel da loja e só descobriria o afastamento no 403 da primeira ação — e a
+mensagem que ela leria seria "você não pode fazer isso", quando a verdadeira é
+"você não está mais aqui". O `MembroRepositorio.buscarPorUsuario` devolve
+qualquer estado, como os vizinhos; quem filtra é o caso de uso.
+
+**Quem não tem vínculo nenhum recebe `200` e lista vazia.** É o estado de todo
+mundo no instante seguinte ao cadastro, e é resposta, não ausência de recurso.
+
+#### Por que papel e permissões vêm juntos
+
+O front precisa de duas coisas ao entrar: qual loja abrir, e que itens mostrar
+no menu. As duas saem do mesmo vínculo. Separá-las em duas rotas criaria duas
+verdades sobre o mesmo vínculo, obrigadas a concordar para sempre.
+
+As permissões são **as gravadas**, não as deduzidas do papel — o que esta
+seção já diz: *"`papel` não é uma lista de permissões"*.
+
+#### Por que esta rota não exige permissão
+
+Todas as outras rotas de negócio começam com
+`/api/v1/merchants/{estabelecimentoId}/…` e confrontam esse identificador com o
+usuário autenticado. **Esta é a rota que responde qual identificador usar** —
+ela não recebe nenhum, e por isso mora sob `/me`.
+
+Exigir permissão numa loja para descobrir de quais lojas se faz parte seria
+circular. O que a torna segura é não haver entrada: o usuário sai do `sub` do
+token, pelo `SujeitoDoToken` (ADR-038), e de mais lugar nenhum. Um `sub` que
+não é `UUID` é 403, como nas outras rotas.
+
+#### O que ela não responde
+
+Se a loja está **aberta agora**. A porta que compõe horário, pausa e dia
+operacional para quem pergunta — a `OperacaoDoEstabelecimentoPort` da §3 —
+ainda não existe em código. Um valor calculado por engano aqui seria o segundo
+lugar a errar na virada das 04:00, antes de o primeiro existir.
+
+#### E o gêmeo interno
+
+`/internal/…/contexto-de-acesso` responde sobre **uma** loja e existe para
+serviço perguntar a serviço com o token encaminhado (ADR-045). Esta responde
+sobre **todas** e existe para o navegador. Duas superfícies, dois donos,
+nenhuma duplicada.
+
 ---
 
 ## 3. Como os outros serviços perguntam

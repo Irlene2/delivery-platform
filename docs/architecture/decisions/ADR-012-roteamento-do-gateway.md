@@ -1,6 +1,6 @@
 # ADR-012 — Roteamento do gateway por recurso, não por serviço
 
-**Status:** Aceita — 23/08/2026
+**Status:** Aceita — 23/08/2026 · **emendada em 30/09/2026**: `/api/v1/me` passa a ser prefixo compartilhado, e a ordem dos predicados decide
 **Relacionada:** ADR-011 (autorização), ADR-015 (JWT), ADR-021 (catálogo de serviços), ADR-023 (fronteira com o PSP)
 **Invariantes do `CLAUDE.md`:** 9 (identificador da URL não é confiável)
 **Muda o esqueleto:** `backend/infra/gateway/src/main/resources/application.yml`
@@ -188,3 +188,36 @@ da URL nunca é confiável* — falar da mesma coisa que o domínio chama de
 `estabelecimentoId`, sem tradução no meio de um raciocínio de segurança.
 
 Regra completa em **ADR-035**.
+
+## Emenda de 30/09/2026 — um prefixo, dois serviços, e a ordem resolve
+
+Esta ADR decidiu rotear **por recurso**, e `/api/v1/me/**` foi inteiro para o
+`identity` no primeiro commit do gateway. Na prática o `identity` nunca teve
+controlador algum sob `/me`.
+
+A G-B5 acrescentou `GET /api/v1/me/estabelecimentos`, e ela mora no
+`merchant` — porque o que ela responde é **vínculo entre pessoa e loja**, e
+vínculo é do `merchant` desde que o `Membro` nasceu. Pôr a rota no `identity`
+significaria o serviço de identidade consultar a equipe de outro serviço para
+responder, que é exatamente o acoplamento que "rotear por recurso" existe para
+evitar.
+
+O `/me` passa então a ser um prefixo **compartilhado**: uma rota exata vai
+para o `merchant`, e o `/api/v1/me/**` genérico continua indo para o
+`identity`. O que garante isso é a ordem dos predicados no `application.yml` —
+o primeiro que casa vence, e o específico está acima.
+
+**A consequência que fica escrita:** a partir de agora, `/me` não identifica um
+serviço. Quem acrescentar rota sob esse prefixo tem de decidir o serviço pelo
+recurso, como esta ADR manda, e **pôr o predicado no lugar certo da ordem**.
+O `RoteamentoIT` tem três casos, e cada um pega uma falha diferente: o
+predicado abaixo do genérico (`/api/v1/me/estabelecimentos → merchant`), o
+predicado que engoliu o `/me` inteiro (`/api/v1/me/perfil → identity`) e o
+predicado com `/**` no fim (`/api/v1/me/estabelecimentos/qualquer-coisa →
+identity`). O primeiro foi provado falhando: com a rota movida para baixo da
+genérica, ele ficou vermelho, e só ele.
+
+**O que continua valendo sem mudança:** o gateway autentica, o serviço
+autoriza. Esta rota não é exceção — ela exige token válido como qualquer outra
+e não exige permissão nenhuma, pelo motivo que o `estabelecimento.md` §2
+explica ("As minhas lojas").

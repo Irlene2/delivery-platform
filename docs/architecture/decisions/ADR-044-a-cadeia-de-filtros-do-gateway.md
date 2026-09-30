@@ -4,6 +4,7 @@
 - **Data:** 24/09/2026
 - **Fecha:** a exigência escrita na tabela de armadilhas do `CLAUDE.md` — *"precisa liberar exatamente esse prefixo e exigir autenticação no resto. Ainda não escrito — requisito do marco 1"*
 - **Emenda:** ADR-037 §1 (a lista que dizia "nada além disso"), ADR-012 (o limite de taxa)
+- **Emendada em 30/09/2026:** o `/actuator/gateway` sai da exposição
 - **Relacionadas:** ADR-011, ADR-015 emendada, ADR-021 emendada, ADR-037, ADR-042
 
 ## Contexto
@@ -201,3 +202,29 @@ dizer onde o conjunto é mantido**, ou ela vira uma afirmação que envelhece em
 silêncio — do mesmo jeito que a coluna "PostgreSQL + Redis" da ADR-021
 sobreviveu um mês à decisão que a invalidou. A ADR-037 passa a apontar para esta
 tabela como a lista viva.
+
+## Emenda de 30/09/2026 — o endpoint que desenhava o mapa da casa
+
+O §7 desta ADR manteve o `/actuator/gateway` exposto, *"e agora protegido por
+autenticação"*. Ele existia para conferir os predicados durante o
+desenvolvimento, e ficou.
+
+Autenticação não bastava. O `/actuator/gateway` responde **o mapa inteiro das
+rotas internas**: quais serviços existem, que prefixo cada um atende e para que
+URI o tráfego vai. E o gateway **autentica, não autoriza** — então qualquer
+portador de token o lia. Desde a W-A, "qualquer portador de token" é qualquer
+comerciante que se cadastrou.
+
+Fica `include: health,info`. O `health` é o que o compose consulta; o `info` é
+o que diz qual versão subiu.
+
+O teste que existia (`o_actuator_do_gateway_exige_token`, 401 sem token) passava
+com o endpoint exposto ou não — sem token, o 401 vem antes de qualquer coisa. Foi
+trocado por `o_actuator_do_gateway_nao_existe_nem_com_token`: **com** token
+válido, `404`. É com token que a ausência se prova.
+
+**O gatilho para reabrir:** no dia em que houver rota demais para conferir de
+cabeça. E aí ele volta atrás de **autorização**, não só de autenticação —
+autenticação foi o que este §7 já tinha, e não protegia nada. Enquanto isso,
+quem quiser o mapa lê o `application.yml`, que é a fonte, e roda o
+`RoteamentoIT`, que é a prova.
