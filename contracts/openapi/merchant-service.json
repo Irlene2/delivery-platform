@@ -9,6 +9,9 @@
     "bearerAuth" : [ ]
   } ],
   "tags" : [ {
+    "name" : "eu",
+    "description" : "O que o portador do token é, neste serviço."
+  }, {
     "name" : "interno",
     "description" : "Consumido por outro serviço, com o token de quem pediu encaminhado. Não roteado pelo gateway — ADR-045."
   } ],
@@ -64,6 +67,29 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/EquipeResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/estabelecimentos" : {
+      "get" : {
+        "tags" : [ "eu" ],
+        "summary" : "As lojas de que o portador do token faz parte",
+        "description" : "Só vínculos ATIVOS. Traz papel e permissões de cada uma, para o front montar o seletor de loja e o menu numa chamada só. Lista vazia quando não há vínculo ativo em nenhuma loja.",
+        "operationId" : "minhasLojas",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/LojaDoUsuario"
+                  }
                 }
               }
             }
@@ -148,6 +174,29 @@
           }
         },
         "required" : [ "desde", "estado", "id", "papel", "permissoes", "usuarioId" ]
+      },
+      "LojaDoUsuario" : {
+        "type" : "object",
+        "properties" : {
+          "estabelecimentoId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "nome" : {
+            "type" : "string"
+          },
+          "papel" : {
+            "type" : "string",
+            "enum" : [ "ADMINISTRADOR", "COLABORADOR" ]
+          },
+          "permissoes" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "VER_PRODUTO", "CRIAR_PRODUTO", "ALTERAR_PRODUTO", "DESATIVAR_PRODUTO", "VER_PEDIDO", "ALTERAR_STATUS", "VER_VENDAS", "VER_ENTREGA", "GERENCIAR_EQUIPE", "GERENCIAR_JORNADA" ]
+            }
+          }
+        }
       }
     },
     "securitySchemes" : {

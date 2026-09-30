@@ -48,7 +48,13 @@ class RoteamentoIT extends GatewayNoAr {
     @DisplayName("cada recurso chega no serviço que a ADR-012 nomeia")
     @ParameterizedTest(name = "{0} → {1}")
     @CsvSource({
-            "/api/v1/me/vinculos,                             identity",
+            // O vínculo mora no merchant (G-B5), e o predicado exato vem ANTES
+            // do /api/v1/me/** genérico: os três casos seguintes pegam, cada um,
+            // uma falha diferente — rota abaixo da genérica, rota que engoliu o
+            // /me inteiro, e rota com /** no fim.
+            "/api/v1/me/estabelecimentos,                     merchant",
+            "/api/v1/me/perfil,                               identity",
+            "/api/v1/me/estabelecimentos/qualquer-coisa,      identity",
             "/api/v1/merchants/{loja}/settings,               merchant",
             "/api/v1/merchants/{loja}/team,                   merchant",
             "/api/v1/merchants/{loja}/areas,                  merchant",

@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -59,6 +60,11 @@ class ConsultarContextoDeAcessoServiceTest {
             @Override
             public Optional<Membro> buscarPorUsuarioELoja(UUID usuarioId, UUID estabelecimentoId) {
                 return Optional.ofNullable(vinculo);
+            }
+
+            @Override
+            public List<Membro> buscarPorUsuario(UUID usuarioId) {
+                throw new UnsupportedOperationException("não usado neste teste");
             }
 
             @Override

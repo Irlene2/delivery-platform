@@ -34,6 +34,15 @@ spring:
               predicates:
                 - Path=/api/v1/auth/**
 
+            # A ordem importa: este predicado é mais específico que o
+            # /api/v1/me/** logo abaixo, e precisa vir antes dele. O vínculo
+            # entre pessoa e loja mora no merchant; o resto do /me continua
+            # sendo do identity. Sem /** no fim: a rota é exata (G-B5).
+            - id: me-estabelecimentos
+              uri: ${SERVICE_MERCHANT_URI:http://localhost:8082}
+              predicates:
+                - Path=/api/v1/me/estabelecimentos
+
             - id: me
               uri: ${SERVICE_IDENTITY_URI:http://localhost:8081}
               predicates:
@@ -135,10 +144,11 @@ management:
   endpoints:
     web:
       exposure:
-        # `gateway` exposto de propósito: é o diagnóstico de primeira pergunta
-        # quando uma rota deixa de casar. Exige autenticação (ADR-044 §1) e sai
-        # desta lista antes de qualquer ambiente exposto.
-        include: health,info,gateway
+        # `gateway` saiu na G-B5: ele lista o mapa inteiro de rotas internas —
+        # que serviço atende o quê — e qualquer comerciante com token o lia,
+        # porque o gateway autentica e não autoriza. Quem precisar conferir
+        # predicados usa o RoteamentoIT, que prova rota por rota.
+        include: health,info
   endpoint:
     health:
       probes:

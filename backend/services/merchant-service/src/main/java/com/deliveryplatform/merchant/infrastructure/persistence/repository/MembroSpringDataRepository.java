@@ -20,6 +20,8 @@ interface MembroSpringDataRepository extends JpaRepository<MembroJpaEntity, UUID
 
     List<MembroJpaEntity> findByEstabelecimentoId(UUID estabelecimentoId);
 
+    List<MembroJpaEntity> findByUsuarioId(UUID usuarioId);
+
     /**
      * O cadeado de A3, e ele é <b>SQL nativo de propósito</b>.
      *

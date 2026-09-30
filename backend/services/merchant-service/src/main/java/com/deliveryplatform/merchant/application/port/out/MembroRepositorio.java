@@ -3,6 +3,7 @@ package com.deliveryplatform.merchant.application.port.out;
 import com.deliveryplatform.merchant.domain.model.Equipe;
 import com.deliveryplatform.merchant.domain.model.Membro;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -34,6 +35,19 @@ public interface MembroRepositorio {
      * rede. Ver a armadilha no {@code CLAUDE.md}.
      */
     Optional<Membro> buscarPorUsuarioELoja(UUID usuarioId, UUID estabelecimentoId);
+
+    /**
+     * Todos os vínculos de uma pessoa, <b>em qualquer estado</b>.
+     *
+     * <p>Devolve SUSPENSO e REMOVIDO junto com ATIVO, como
+     * {@link #buscarPorUsuarioELoja} — e vale para ele o mesmo aviso: quem
+     * resolve acesso a partir daqui filtra {@code ativo()} na mão. Nasceu na
+     * G-B5, para a rota das lojas do portador.
+     *
+     * <p>Lista vazia quando não há vínculo nenhum — nunca {@code null}, nunca
+     * exceção. Não ter vínculo é o estado de quem acabou de se cadastrar.
+     */
+    List<Membro> buscarPorUsuario(UUID usuarioId);
 
     /**
      * A equipe <b>para ler</b> — sem cadeado.

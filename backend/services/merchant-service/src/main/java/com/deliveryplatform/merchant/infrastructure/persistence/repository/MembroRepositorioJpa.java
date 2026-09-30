@@ -38,6 +38,16 @@ public class MembroRepositorioJpa implements MembroRepositorio {
     }
 
     @Override
+    public List<Membro> buscarPorUsuario(UUID usuarioId) {
+        // Sem filtro de estado, de propósito: a porta devolve qualquer estado e
+        // quem resolve acesso filtra. Um adaptador que filtrasse esconderia o
+        // defeito que o teste do vínculo suspenso existe para pegar.
+        return springDataRepository.findByUsuarioId(usuarioId).stream()
+                .map(mapper::paraDominio)
+                .toList();
+    }
+
+    @Override
     public Equipe equipeDe(UUID estabelecimentoId) {
         return montar(estabelecimentoId);
     }

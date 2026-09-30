@@ -62,12 +62,14 @@ class CadeiaDeFiltrosIT extends GatewayNoAr {
     }
 
     @Test
-    void o_actuator_do_gateway_exige_token() {
-        // Ele lista as URIs internas dos oito serviços. É diagnóstico, não
-        // informação pública — e sai da lista de exposição antes de qualquer
-        // ambiente exposto (ADR-044 §7).
+    void o_actuator_do_gateway_nao_existe_nem_com_token() {
+        // Ele listava as URIs internas dos oito serviços, e qualquer portador
+        // de token o lia — o gateway autentica e não autoriza. Saiu da lista de
+        // exposição na G-B5. Sem token a resposta seria 401 de qualquer jeito;
+        // é COM token que a ausência se prova.
         cliente().get().uri("/actuator/gateway/routes")
-                .exchange().expectStatus().isUnauthorized();
+                .header("Authorization", "Bearer " + IDENTITY.tokenDe(UUID.randomUUID()))
+                .exchange().expectStatus().isNotFound();
     }
 
     // ── o que o token precisa declarar ──────────────────────────────────────
