@@ -131,6 +131,20 @@ Seis bancos PostgreSQL e dois MongoDB — oito bancos lógicos.
 > Quem publica o quê está em `docs/dominio/<serviço>.md`, na seção de eventos,
 > que é onde a informação é mantida.
 
+### A documentação viva (Swagger UI)
+
+Fechada por padrão. Com `DELIVERY_DOCS_ABERTAS=true` no `.env`, só no seu
+computador (ADR-050):
+
+| Serviço | Página |
+|---|---|
+| merchant-service | `http://127.0.0.1:8082/swagger-ui.html` |
+| catalog-service | `http://127.0.0.1:8083/swagger-ui.html` |
+
+Não passa pelo gateway, de propósito. O token para as rotas protegidas vem de
+`POST /api/v1/auth/login` no gateway (8080) e vai no botão **Authorize**. O
+`identity-service` ainda não tem a página — gatilho na ADR-050 §1.
+
 ### Serviços adiados
 
 | Serviço | Volta em | Por quê saiu |

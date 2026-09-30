@@ -1,7 +1,8 @@
 # ADR-016 — Entregar front-end mínimo antes da PWA completa
 
 **Status:** Aceita — 16/08/2026 · **emendada em 29/09/2026**: o 15.A começa no
-marco 2, e não no 3 — pelo motivo que esta ADR já dava
+marco 2, e não no 3 — pelo motivo que esta ADR já dava · **emendada em
+30/09/2026**: o TanStack Query sai da pilha do 15.A
 
 ## Contexto
 
@@ -68,3 +69,9 @@ O marco 2 é o catálogo. O front consome o `identity` — que é do marco 1 e e
 fechado — e não consome nada do catálogo, porque a rota do cardápio precisa de um
 `estabelecimentoId` que o sistema ainda não sabe responder. **A W-A não avança o
 marco 2 em nada**; ela paga a dívida de contrato do marco 1 e prepara a do 3.
+
+## Emenda de 30/09/2026 — o TanStack Query sai do 15.A
+
+A pilha acima o nomeia. A W-B, primeira tela com dados, o tirou: duas leituras e
+nenhuma escrita não pagam a biblioteca. O motivo e o gatilho de volta estão no
+`frontend/README.md`, junto da mesma lista.

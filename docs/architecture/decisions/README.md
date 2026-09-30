@@ -17,7 +17,7 @@
 | 013 | Retenção, anonimização e exclusão de dados pessoais | ✅ aceita |
 | 014 | Não adotar H2; Testcontainers como fonte de verdade | ✅ aceita · **emendada pela v1.1** · **emendada** (27/09/2026: todo contêiner prova que é o usado — `ConteinerDeVerdadeIT`) |
 | 015 | Emitir JWT com `NimbusJwtEncoder` | ✅ aceita |
-| 016 | Front-end mínimo antes da PWA completa | ✅ aceita · **emendada** (29/09/2026: o 15.A começa no marco 2) |
+| 016 | Front-end mínimo antes da PWA completa | ✅ aceita · **emendada** (29/09/2026: o 15.A começa no marco 2) · **emendada** (30/09/2026: o TanStack Query sai do 15.A) |
 | 017 | MongoDB como decisão de aprendizado | ✅ aceita |
 | 018 | Snapshot de opções no item e cotação pelo catálogo | ✅ aceita |
 | 019 | `DeliveryQuotePort`: cotação por distância geodésica | ⛔ **revogada** — ver 020 |
@@ -51,8 +51,9 @@
 | 047 | Onde o token do painel mora no navegador | ✅ aceita |
 | 048 | O primeiro consumidor de evento: topologia, idempotência e falha | ✅ aceita · **emenda a 011, 026 e 043** |
 | 049 | O carimbo com a loja fechada | ✅ aceita · **emenda a 046** |
+| 050 | A documentação viva, e só no seu computador | ✅ aceita |
 
-**Quarenta e sete escritas, duas sem objeto — estas com registro próprio desde
+**Quarenta e oito escritas, duas sem objeto — estas com registro próprio desde
 25/08/2026 —, nenhuma a escrever.**
 
 ## Onde mora o quê
