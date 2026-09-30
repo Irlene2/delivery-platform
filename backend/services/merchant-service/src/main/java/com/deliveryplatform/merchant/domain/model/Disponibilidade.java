@@ -101,6 +101,52 @@ public record Disponibilidade(Map<DayOfWeek, List<Faixa>> horarioDeFuncionamento
     }
 
     /**
+     * A primeira abertura <b>depois</b> deste instante — vazio quando a loja não
+     * abre por horário.
+     *
+     * <p>É a irmã do {@link #inicioDaFaixaEm}: aquela responde "que faixa me
+     * contém", esta responde "qual é a próxima que começa". As duas juntas
+     * cobrem o dia inteiro, e é dessa soma que a ADR-049 tira o carimbo.
+     *
+     * <p>Devolve <b>instante</b>, e não data. Esta classe não sabe o que é hora
+     * de corte — quem converte é o {@code Estabelecimento}, que tem o fuso.
+     *
+     * <p>Varre oito dias porque o horário é semanal: uma faixa que só existe na
+     * segunda-feira, perguntada numa segunda-feira à noite, está a sete dias.
+     * Se o horário deixar de ser semanal, esta busca muda junto — está escrito
+     * na ADR-049.
+     *
+     * <p><b>Uma faixa que já começou não conta</b>, mesmo que ainda esteja
+     * aberta: a comparação é {@code isAfter}, estrita. Quem quer a que contém o
+     * instante pergunta ao {@link #inicioDaFaixaEm}.
+     *
+     * <p>As faixas de cada dia já vêm ordenadas por início ({@code normalizar}),
+     * e a primeira que passasse no teste seria a mais cedo. A comparação pelo
+     * {@code oMaisAntigo} fica assim mesmo, pelo motivo que o
+     * {@code inicioDaFaixaLocal} escreve: não confiar na ordem dos laços.
+     */
+    public Optional<Instant> proximaAberturaApos(Instant agora, FusoHorario fuso) {
+        Objects.requireNonNull(agora, "agora");
+        Objects.requireNonNull(fuso, "fuso");
+        LocalDateTime local = LocalDateTime.ofInstant(agora, fuso.zona());
+        LocalDate dia = local.toLocalDate();
+        for (int i = 0; i <= 7; i++) {
+            LocalDateTime maisCedo = null;
+            for (Faixa faixa : faixasDe(dia.getDayOfWeek())) {
+                LocalDateTime candidato = dia.atTime(faixa.inicio());
+                if (candidato.isAfter(local)) {
+                    maisCedo = oMaisAntigo(maisCedo, candidato);
+                }
+            }
+            if (maisCedo != null) {
+                return Optional.of(maisCedo.atZone(fuso.zona()).toInstant());
+            }
+            dia = dia.plusDays(1);
+        }
+        return Optional.empty();
+    }
+
+    /**
      * O percurso único das faixas, de que {@link #dentroDoHorario} e
      * {@link #inicioDaFaixaEm} saem. Faixa do dia anterior que cobre o dia
      * seguinte começou ontem, e portanto sempre antes de qualquer faixa de hoje

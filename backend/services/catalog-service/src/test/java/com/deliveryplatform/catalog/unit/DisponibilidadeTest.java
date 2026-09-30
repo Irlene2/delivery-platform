@@ -95,6 +95,19 @@ class DisponibilidadeTest {
         }
 
         @Test
+        @DisplayName("evento de abertura VELHO não reativa o que acabou hoje")
+        void c11_evento_velho_nao_reativa() {
+            // Marcado no expediente de sábado; chega de novo o evento de sexta.
+            Disponibilidade acabouHoje = Disponibilidade.esgotadoHoje(SABADO_A_01H, SABADO);
+
+            assertThat(acabouHoje.deveReativarNoExpediente(SEXTA))
+                    .as("a mensagem de ontem chega de novo hoje — redelivery, fila morta, "
+                            + "ordem não garantida (ADR-043 §4) — e com != ela reativaria "
+                            + "o que acabou de ser marcado. É a coluna direita da C11")
+                    .isFalse();
+        }
+
+        @Test
         @DisplayName("ESGOTADO_INDETERMINADO não volta sozinho, nem em expediente novo")
         void esgotado_indeterminado_nao_reativa() {
             Disponibilidade d = Disponibilidade.esgotadoIndeterminado(SABADO_A_01H, SEXTA);

@@ -24,6 +24,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/internal/merchants/{estabelecimentoId}/expediente-corrente": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * O dia operacional a carimbar numa marcação de disponibilidade
+         * @description Devolve o expediente em curso quando a loja está dentro do horário, e o da próxima abertura quando ela está fechada (ADR-049). 409 quando a loja não abre por horário. Exige vínculo ativo, e nenhuma permissão específica.
+         */
+        get: operations["expedienteCorrente"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/merchants/{estabelecimentoId}/team": {
         parameters: {
             query?: never;
@@ -76,6 +96,20 @@ export interface components {
             /** @enum {string} */
             papel?: "ADMINISTRADOR" | "COLABORADOR";
             permissoes?: ("VER_PRODUTO" | "CRIAR_PRODUTO" | "ALTERAR_PRODUTO" | "DESATIVAR_PRODUTO" | "VER_PEDIDO" | "ALTERAR_STATUS" | "VER_VENDAS" | "VER_ENTREGA" | "GERENCIAR_EQUIPE" | "GERENCIAR_JORNADA")[];
+        };
+        /** @description O expediente a carimbar numa marcação de disponibilidade. */
+        ExpedienteCorrenteResponse: {
+            /**
+             * Format: uuid
+             * @description A loja sobre a qual esta resposta fala.
+             */
+            estabelecimentoId?: string;
+            /**
+             * Format: date
+             * @description O dia operacional a gravar como expedienteDeReferencia.
+             * @example 2026-09-30
+             */
+            expedienteDeReferencia?: string;
         };
         EquipeResponse: {
             /** Format: uuid */
@@ -130,6 +164,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ContextoDeAcesso"];
+                };
+            };
+        };
+    };
+    expedienteCorrente: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                estabelecimentoId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpedienteCorrenteResponse"];
                 };
             };
         };

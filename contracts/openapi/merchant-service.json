@@ -45,6 +45,35 @@
         }
       }
     },
+    "/internal/merchants/{estabelecimentoId}/expediente-corrente" : {
+      "get" : {
+        "tags" : [ "interno" ],
+        "summary" : "O dia operacional a carimbar numa marcação de disponibilidade",
+        "description" : "Devolve o expediente em curso quando a loja está dentro do horário, e o da próxima abertura quando ela está fechada (ADR-049). 409 quando a loja não abre por horário. Exige vínculo ativo, e nenhuma permissão específica.",
+        "operationId" : "expedienteCorrente",
+        "parameters" : [ {
+          "name" : "estabelecimentoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ExpedienteCorrenteResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/merchants/{estabelecimentoId}/team" : {
       "get" : {
         "tags" : [ "equipe-controller" ],
@@ -122,6 +151,23 @@
               "enum" : [ "VER_PRODUTO", "CRIAR_PRODUTO", "ALTERAR_PRODUTO", "DESATIVAR_PRODUTO", "VER_PEDIDO", "ALTERAR_STATUS", "VER_VENDAS", "VER_ENTREGA", "GERENCIAR_EQUIPE", "GERENCIAR_JORNADA" ]
             },
             "uniqueItems" : true
+          }
+        }
+      },
+      "ExpedienteCorrenteResponse" : {
+        "type" : "object",
+        "description" : "O expediente a carimbar numa marcação de disponibilidade.",
+        "properties" : {
+          "estabelecimentoId" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "A loja sobre a qual esta resposta fala."
+          },
+          "expedienteDeReferencia" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "O dia operacional a gravar como expedienteDeReferencia.",
+            "example" : "2026-09-30"
           }
         }
       },

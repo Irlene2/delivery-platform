@@ -3,6 +3,7 @@ package com.deliveryplatform.merchant.domain.model;
 import com.deliveryplatform.valuetypes.Money;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -171,6 +172,25 @@ public final class Estabelecimento {
      */
     public boolean estaAberta(Instant agora) {
         return disponibilidade.abertaEm(agora, identificacao.fusoHorario());
+    }
+
+    /**
+     * O dia operacional a gravar como {@code expedienteDeReferencia} numa
+     * marcação de disponibilidade — ADR-049.
+     *
+     * <p>Em curso quando a loja está dentro do horário; o da <b>próxima
+     * abertura</b> quando está fechada; vazio quando ela não abre por horário.
+     *
+     * <p><b>Pergunta {@code inicioDaFaixaEm}, e não {@code abertaEm}</b>: pausa
+     * acontece <i>dentro</i> de um expediente e não abre outro. É a mesma
+     * escolha que a varredura da rodada F fez, pelo mesmo motivo — uma loja
+     * pausada às 20h não muda de expediente às 20h30.
+     */
+    public Optional<LocalDate> expedienteParaCarimbo(Instant agora) {
+        FusoHorario fuso = identificacao.fusoHorario();
+        return disponibilidade.inicioDaFaixaEm(agora, fuso)
+                .or(() -> disponibilidade.proximaAberturaApos(agora, fuso))
+                .map(inicio -> DiaOperacional.de(inicio, fuso));
     }
 
     public boolean aceita(Modalidade modalidade) {

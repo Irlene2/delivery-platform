@@ -1,6 +1,7 @@
 package com.deliveryplatform.merchant.api.error;
 
 import com.deliveryplatform.merchant.application.exception.AcessoNegado;
+import com.deliveryplatform.merchant.application.exception.SemExpedientePorHorario;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -33,5 +34,18 @@ public class TratadorDeErros {
     public ProblemDetail acessoNegado(AcessoNegado excecao) {
         return ProblemDetail.forStatusAndDetail(
                 HttpStatus.FORBIDDEN, "sem acesso a este estabelecimento");
+    }
+
+    /**
+     * 409 para a loja que não abre por horário — ADR-049 §5.
+     *
+     * <p>Nasce com a rota que o alcança, o {@code expediente-corrente}. É
+     * <i>estado do mundo</i>, não erro do chamador: a loja existe, e o que não
+     * existe é um expediente para carimbar.
+     */
+    @ExceptionHandler(SemExpedientePorHorario.class)
+    public ProblemDetail semExpedientePorHorario(SemExpedientePorHorario excecao) {
+        return ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT, "a loja não abre por horário");
     }
 }

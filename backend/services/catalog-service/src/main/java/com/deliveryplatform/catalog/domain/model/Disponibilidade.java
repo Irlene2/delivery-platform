@@ -103,9 +103,15 @@ public record Disponibilidade(
      *
      * <p>Repare no que ele <b>não</b> faz: não olha relógio, não olha fuso, não
      * chama {@code LocalDate.now()}. Recebe o expediente que abriu e compara.
+     *
+     * <p><b>{@code isBefore}, e não {@code !equals}.</b> Só reativa o que foi
+     * marcado em expediente <i>anterior</i>. Com desigualdade, um evento de
+     * abertura velho reentregue hoje — a entrega é pelo menos uma vez, e a ordem
+     * não é garantida (ADR-043 §4) — reativaria o que acabou hoje, que é
+     * exatamente o que a C11 existe para impedir. Corrigido na G-C1.
      */
     public boolean deveReativarNoExpediente(LocalDate expedienteQueAbriu) {
         return estado == EstadoDeDisponibilidade.ESGOTADO_HOJE
-                && !expedienteQueAbriu.equals(expedienteDeReferencia);
+                && expedienteDeReferencia.isBefore(expedienteQueAbriu);
     }
 }
