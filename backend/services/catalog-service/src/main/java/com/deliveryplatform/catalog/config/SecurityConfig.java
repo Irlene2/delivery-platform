@@ -42,7 +42,7 @@ import java.util.List;
  */
 @Configuration
 @EnableConfigurationProperties({JwtProperties.class, AutorizacaoProperties.class,
-        CacheDaAutorizacaoProperties.class})
+        CacheDaAutorizacaoProperties.class, DocsProperties.class})
 public class SecurityConfig {
 
     /**
@@ -79,14 +79,22 @@ public class SecurityConfig {
      */
     @Bean
     @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
-    public SecurityFilterChain filtros(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filtros(HttpSecurity http, DocsProperties docs) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(rotas -> rotas
-                        .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
-                        .requestMatchers("/actuator/health/**").permitAll()
-                        .anyRequest().authenticated())
+                .authorizeHttpRequests(rotas -> {
+                    rotas.dispatcherTypeMatchers(DispatcherType.ERROR).permitAll();
+                    rotas.requestMatchers("/actuator/health/**").permitAll();
+                    if (docs.abertas()) {
+                        // ADR-050: só no computador de quem desenvolve, e o
+                        // padrão da propriedade é false — esquecer fecha.
+                        rotas.requestMatchers(
+                                        "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**")
+                                .permitAll();
+                    }
+                    rotas.anyRequest().authenticated();
+                })
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
                 .build();
     }

@@ -57,6 +57,11 @@ spring:
         max-page-size: 100
 
 delivery:
+  # A documentação viva (Swagger UI e /v3/api-docs) sem token — ADR-050. O
+  # padrão é false, e é assim que o serviço sobe em qualquer lugar que não seja
+  # o seu computador: esquecer fecha.
+  docs:
+    abertas: ${DELIVERY_DOCS_ABERTAS:false}
   jwt:
     issuer: ${JWT_ISSUER:http://localhost:8081}
     audience: ${JWT_AUDIENCE:delivery-platform}
