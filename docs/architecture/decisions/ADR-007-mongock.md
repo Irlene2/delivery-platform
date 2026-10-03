@@ -1,6 +1,8 @@
 # ADR-007 — Mongock para versionamento de esquema no MongoDB
 
-**Status:** Aceita — 16/08/2026 · **formalizada em 23/08/2026**
+**Status:** Aceita — 16/08/2026 · **formalizada em 23/08/2026** · **emendada em 27/09/2026**:
+o bloco de YAML não liga o Mongock — falta `@EnableMongock`, e sem ela nenhum
+`changeUnit` roda
 **Relacionada:** ADR-008 (replica set), ADR-014 (sem H2), ADR-017 (MongoDB como aprendizado)
 **Já implementada** no esqueleto — esta ADR registra o porquê, que faltava
 
@@ -88,3 +90,62 @@ Vale para índice, validador e transformação — os três. Não existe categor
   contexto da aplicação.
 - **Nenhuma migração, esquema por convenção.** Rejeitada: é o estado de que esta
   ADR existe para sair.
+
+## Emenda de 27/09/2026 — a decisão descrevia a configuração e omitia a ativação
+
+Esta ADR mostra o bloco de `migration-scan-package` e diz que as unidades
+"rodam no startup". As duas coisas estão certas e **nenhuma delas liga o
+Mongock**.
+
+O jar do `mongock-springboot` 5.5.1 não traz
+`META-INF/spring/…AutoConfiguration.imports`. Sem `@EnableMongock` em alguma
+`@Configuration`, o runner não é registrado, o pacote de varredura não é lido,
+e **o serviço sobe achando que migrou**.
+
+O resultado ficou de pé desde o primeiro commit: o `catalog` e o `conversation`
+têm o bloco no `application.yml`; o do `catalog` chegou a ter um defeito
+encontrado e corrigido — estava aninhado dentro de `spring:`. Alguém depurou a
+configuração de uma peça que nunca executou uma linha. A rodada G-B1 pôs a
+anotação na `config/MongockConfig` do `catalog`, e o primeiro `changeUnit` do
+repositório rodou: `APPLIED - 001-cria-indices-do-produto`, com Mongock 5.5.1,
+Spring Boot 4.1.1 e Spring Data MongoDB 5.1.1. O driver se chama
+`springdata-v4` e funciona sob o Spring Data 5 — medido, não suposto.
+
+**O que a ADR passa a exigir**, além do que já exigia:
+
+- `@EnableMongock`, numa `@Configuration` do serviço documental.
+- **Um teste que afirme o resultado, não o mecanismo.** Índice existe, validador
+  existe. Um Mongock que suba e não execute nada faz o contexto passar; só a
+  asserção sobre o banco distingue os dois casos. No `catalog` é o `MongockIT`.
+
+### DDL mora em `@BeforeExecution`, e não em `@Execution`
+
+Com um `MongoTransactionManager` no contexto — que a ADR-008 exige —, o Mongock
+roda o `@Execution` **dentro de uma transação**, e o MongoDB recusa
+`createIndexes` ali: erro 72, `InvalidOptions`, *"Command createIndexes does not
+support this transaction's { readConcern: { level: "majority" } }"*. O
+`@BeforeExecution` é o lugar que o Mongock reserva para isso: roda fora da
+transação, antes dela, com reversão própria em `@RollbackBeforeExecution`.
+
+A regra: **índice e validador em `@BeforeExecution`; transformação de dado em
+`@Execution`**, que é a que precisa da transação. Desligar a transação do
+Mongock inteiro resolveria com uma linha e tiraria a atomicidade exatamente da
+unidade que precisa dela.
+
+### A convenção de `id`, `order` e `author`, que faltava
+
+O texto dizia "com identificador, ordem e autor" e não dizia a forma. Fica:
+
+| campo | forma | exemplo |
+| --- | --- | --- |
+| `id` | `<ordem>-<verbo>-<objeto>`, minúsculo, hífen | `001-cria-indices-do-produto` |
+| `order` | três dígitos, com zero à esquerda | `"001"` |
+| `author` | `delivery-platform` — o repositório, nunca uma pessoa | |
+
+O nome da classe repete a ordem e o assunto: `V001CriaIndicesDoProduto`. Três
+dígitos porque o Flyway do lado relacional usa `V1`, `V2`… e a simetria que
+importa é a de **ler a pasta em ordem**, não a do número.
+
+`author` é o repositório porque nome de pessoa em migration envelhece: quem
+saiu do projeto continua assinando esquema, e quem entrou não sabe a quem
+perguntar.

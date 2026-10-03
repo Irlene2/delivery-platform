@@ -1,6 +1,8 @@
 # ADR-014 — Não adotar H2; PostgreSQL real em desenvolvimento e Testcontainers em teste
 
-**Status:** Aceita — 16/08/2026 · **emendada em 22/08/2026** pela arquitetura v1.1
+**Status:** Aceita — 16/08/2026 · **emendada em 22/08/2026** pela arquitetura v1.1 · **emendada em
+27/09/2026**: subir o contêiner não prova que é com ele que a aplicação fala — e o preço
+de não provar é escrever no banco de desenvolvimento de quem rodou o teste
 **Relacionada:** ADR-002 (banco por serviço), ADR-020 (taxa por área), ADR-021 (catálogo de serviços)
 
 > **Emenda v1.1 — a decisão continua, a justificativa mudou.** O texto original
@@ -74,3 +76,47 @@ domínio puro, sem Spring e sem banco.
   seriamente na revisão v1.1, e rejeitada: o corte removeu os exemplos, não o
   motivo. `SKIP LOCKED` no outbox e precisão monetária no `settlement` são
   razões mais fortes que as originais.
+
+## Emenda de 27/09/2026 — contêiner que sobe não é contêiner que é usado
+
+A G-B1 do `catalog` apontava a URI do Mongo pela chave
+`spring.data.mongodb.uri`, que o Spring Boot 4 depreciou com nível **error** —
+ela não é lida. O contêiner subiu, **ficou de pé sem ninguém falar com ele**, e
+o contexto caiu no padrão do driver, `mongodb://localhost/test`. Naquela máquina
+isso é o MongoDB do compose.
+
+Os testes passaram. O `changeUnit` rodou. Os índices existiam. E a pergunta que
+decidia a rodada — *o Mongock funciona sob o Boot 4?* — foi respondida contra o
+servidor errado, ficando certa por coincidência.
+
+**A regra que esta ADR passa a exigir:** toda classe-base de contêiner tem um
+teste que prova que a aplicação está falando com aquele contêiner. Hoje são
+dois, os `ConteinerDeVerdadeIT` do `catalog` e do `merchant`.
+
+### E a prova é por efeito, não por endereço
+
+O caminho óbvio — comparar o endereço do cliente com
+`container.getMappedPort(...)` — **não funciona** em replica set: a descrição do
+servidor traz o endereço *canônico* que o nó anuncia (dentro do contêiner, o
+nome interno dele), e não o `127.0.0.1:porta-alta` pelo qual o cliente chegou.
+Um teste desses falha estando tudo certo, e teste que falha estando certo ensina
+a desligar testes.
+
+O que funciona: **a aplicação grava pela porta dela; o teste procura o registro
+numa conexão aberta a partir do contêiner.** Se a aplicação estivesse falando
+com outro servidor, o registro não estaria lá. Não depende de topologia, de
+representação de endereço nem de ordem de descoberta.
+
+No relacional cabe uma segunda prova, essa sim por endereço, porque o PostgreSQL
+não anuncia nome canônico: `connection.getMetaData().getURL()` — do JDBC, não do
+pool — tem de conter a porta mapeada do contêiner e não a 5432 da máquina. Na
+primeira execução, em 27/09/2026, ela respondeu `127.0.0.1:44623`.
+
+### Por que isto é mais caro no `merchant` do que no `catalog`
+
+Vários ITs do `merchant` fazem `truncate table estabelecimento cascade` no
+`@BeforeEach` — a lição da rodada F sobre o banco compartilhado. Se aquele
+serviço estivesse falando com o PostgreSQL de desenvolvimento, **os testes
+estariam apagando dados reais a cada execução, em silêncio**. O
+`spring.datasource.url` não foi depreciado, e a prova agora confirma o que antes
+era expectativa: os ITs do `merchant` falam com o contêiner.

@@ -1,6 +1,13 @@
 # ADR-011 — Autorização comercial: cache em processo, invalidação por evento e fail-closed
 
-**Status:** Aceita — 23/08/2026
+**Status:** Aceita — 23/08/2026 · **emendada pela ADR-043** (24/09/2026): o cache
+"em processo" mora em cada serviço que pergunta, não no `merchant`, e nasce junto
+com o primeiro consumidor do `VinculoAlteradoV1` · **emendada pela ADR-045** (26/09/2026): a
+credencial entre serviços é o token de quem pediu, e por isso `contexto` deixa
+de receber `usuarioId` · **emendada em 28/09/2026**: a porta tem consumidor
+desde a G-B3; o cache fica para a G-B4, com o evento que o invalida ·
+**emendada em 29/09/2026**: a topologia é `topic` com fila exclusiva, e o
+cache existe desde a G-B4
 **Relacionada:** ADR-012 (roteamento do gateway), ADR-015 (JWT com `NimbusJwtEncoder`)
 **Detalha:** `docs/dominio/estabelecimento.md` §2 e §3
 **Invariantes do `CLAUDE.md`:** 8 (nenhum serviço lê o banco de outro), 9 (identificador da URL não é confiável)
@@ -87,7 +94,7 @@ correspondente** da sua cache.
 ```
 Marli remove o Rafa
         │
-merchant-service  ──▶ VinculoAlteradoV1 (fanout)
+merchant-service  ──▶ VinculoAlteradoV1 (topic, fila exclusiva por instância)
         │
         ├──▶ order-service     evict(rafa, pizzaria)
         ├──▶ catalog-service   evict(rafa, pizzaria)
@@ -98,7 +105,7 @@ Efeito em segundos. O TTL cobre o caso do evento perdido — e evento **se perde
 por isso as duas coisas existem.
 
 **Cada instância precisa receber o evento.** Cache em processo com N instâncias
-significa N caches. O evento vai para um *exchange* fanout, e cada instância se
+significa N caches. O evento vai para um *exchange* **topic**, e cada instância se
 liga a ele com uma **fila exclusiva e temporária**, não a uma fila compartilhada
 — fila compartilhada entrega para uma instância só, e as outras N−1 ficam com
 dado velho até o TTL.
@@ -139,6 +146,19 @@ public interface AutorizacaoComercialPort {
 
 O adaptador é quem cacheia. O caso de uso não sabe que existe cache, não sabe que
 existe HTTP, e testa contra um duplo em memória.
+
+> **Emenda — 26/09/2026 (ADR-045).** A assinatura desenhada acima recebe
+> `usuarioId` porque o chamador **afirmava** quem era o usuário. Com o token
+> encaminhado ele não afirma: **prova**. O parâmetro sai:
+>
+> ```java
+> Optional<ContextoDeAcesso> contexto(UUID estabelecimentoId);
+> ```
+>
+> O `ContextoDeAcesso` continua devolvendo o `usuarioId` — como resposta, que é
+> o que ele sempre foi. Tudo o mais desta ADR fica de pé: Caffeine em processo,
+> 60 s positivo, 10 s negativo, invalidação por `VinculoAlteradoV1`, e falha
+> fechada. A forma final nasce com o primeiro consumidor, no marco 2.
 
 ## Consequências
 
@@ -190,3 +210,101 @@ existe HTTP, e testa contra um duplo em memória.
 `docs/dominio/estabelecimento.md` §3 e a tabela de armadilhas do `CLAUDE.md`
 dizem "cache curto **no Redis**". Estava errado — ou melhor, estava indeciso, e
 esta ADR decide. Os dois textos precisam passar a dizer **cache em processo**.
+
+## Emenda de 28/09/2026 — o primeiro consumidor, e por que ele não tem cache
+
+O `AutorizacaoComercialPort` desenhado aqui em agosto ganhou implementação na
+G-B3: o `catalog` pergunta ao `merchant` por
+`GET /internal/merchants/{estabelecimentoId}/me/contexto-de-acesso`,
+encaminhando o token de quem pediu (ADR-045).
+
+### O cache ficou para a rodada seguinte, e o argumento é desta ADR
+
+Esta ADR aceita os 60 segundos como *"o pior caso de acesso indevido depois de
+uma revogação cujo evento se perdeu"*. **Sem consumidor do
+`VinculoAlteradoV1`, toda revogação é esse pior caso** — o que estava escrito
+como exceção tolerada viraria o comportamento normal, e a frase que a justifica
+deixaria de ser verdade.
+
+A ADR-043 já tinha dito o mesmo por outro caminho: *"o cache sem o evento é um
+cache que não invalida, e um cache de autorização que não invalida é uma falha
+de segurança com nome de otimização"*.
+
+Então na G-B3 cada requisição do catálogo pergunta ao `merchant`. O custo de
+carga que esta ADR calculou — uma consulta por clique em vez de uma por minuto
+— é real e é aceitável no MVP, com uma loja e um atendente. O cache entra na
+G-B4, **junto** com o consumidor que o invalida.
+
+### Vazio e indisponível são coisas diferentes, e a porta já as separa
+
+A emenda de 28/09 à ADR-045 escreveu a tabela; a G-B3 a implementou:
+
+| resposta do `merchant` | a porta | por quê |
+| --- | --- | --- |
+| **200** | contexto | |
+| **403** | `Optional.empty()` | é uma resposta: o produtor consultou e disse não |
+| **401** | `AutorizacaoIndisponivel` | **não é resposta** — ver abaixo |
+| 5xx, tempo esgotado, conexão recusada | `AutorizacaoIndisponivel` | ausência de resposta |
+
+**O 401 é o caso que não estava escrito.** Ele significa que o `merchant`
+recusou um token que o `catalog` acabou de aceitar: os dois serviços discordam
+sobre emissor ou audiência. Isso é erro de configuração entre ambientes, não
+resposta sobre vínculo. Tratá-lo como "sem acesso" faria o defeito se disfarçar
+de regra de negócio — e, com o cache da G-B4, ficaria escondido por dez
+segundos a cada tentativa.
+
+Os quatro terminam em **403 para o cliente**. Falha fechada, sem janela de
+graça: *"Fail-closed que abre sob pressão não é fail-closed"*. O que muda é o
+que se poderá guardar.
+
+### Uma conferência que esta ADR não pedia e o adaptador faz
+
+A resposta traz o `estabelecimentoId`, e o adaptador confere contra o que
+perguntou. Divergência é `AutorizacaoIndisponivel`, não contexto. Autorizar com
+o contexto de outra loja é a pior falha que esta porta pode ter, e sem a
+conferência ela seria invisível.
+
+### O que o `catalog` guarda do contexto
+
+Três dos quatro campos que o `estabelecimento.md` desenha: `usuarioId`,
+`estabelecimentoId` e as permissões — estas no recorte que o `catalog` nomeia
+(ver a emenda de 28/09 à ADR-040). O `papel` vem no corpo e não é lido: o
+`catalog` não tem regra que o consulte, e o mesmo documento diz que *"toda
+autorização real é feita pela lista de permissões"*.
+
+## Emenda de 29/09/2026 — o cache existe, e três números desta ADR foram lidos tarde
+
+A G-B4 ligou o cache que esta ADR desenhou em agosto, junto com o consumidor do
+`VinculoAlteradoV1` que o invalida.
+
+### `fanout` era a palavra errada, e a frase seguinte já dizia o certo
+
+Esta ADR dizia *fanout*; o `merchant` publica num *topic* desde a C-B. **A
+propriedade que esta ADR protege é a segunda metade da própria frase** — *"não a
+uma fila compartilhada"* —, e uma fila exclusiva ligada a um `topic` pela chave
+certa entrega a cada instância exatamente como a `fanout` entregaria. A palavra
+trocou; o comportamento exigido ficou inteiro. Ver a ADR-048 §1.
+
+### Três parâmetros desta tabela ficaram de fora da G-B3
+
+A tabela de parâmetros acima tem seis linhas. A G-B3 implementou a porta lendo
+três delas e **sem notar as outras três**:
+
+| parâmetro | esta ADR | o que a G-B3 entregou | o que a G-B4 faz |
+| --- | --- | --- | --- |
+| tempo limite | **300 ms** | 1 s de conexão, 2 s de leitura | volta a 300 ms nos dois |
+| tamanho máximo | **10 000** | não havia cache | 10 000, configurável |
+| disjuntor | "abre após falhas consecutivas" | não existe | **continua não existindo** |
+
+O tempo limite é o que mais importa, e o argumento é o desta ADR: *"Além disso,
+a requisição do usuário já está lenta"*. Com cache, a chamada ao `merchant`
+deixa de ser o caminho comum — esperar dois segundos por ela passa a ser esperar
+dois segundos numa exceção, e não numa regra.
+
+**O disjuntor fica sem implementação, e agora com gatilho.** Ele depende do
+`resilience4j`, declarado no catálogo de versões e que **não resolve em Boot 4**
+— o artefato é o `-spring-boot3`. O gatilho já está escrito lá: *"quando a queda
+de um serviço derrubar dois em cascata, ou quando alguém medir que o tempo
+limite sozinho não basta"*. O cache reduz a pressão para que ele exista, porque
+uma queda do `merchant` passa a ser invisível durante 60 s — que é o que esta
+ADR chama de *"a janela de tolerância"*.

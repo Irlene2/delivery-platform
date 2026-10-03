@@ -39,6 +39,11 @@ mapstruct              = { module = "org.mapstruct:mapstruct", version.ref = "ma
 mapstruct-processor    = { module = "org.mapstruct:mapstruct-processor", version.ref = "mapstruct" }
 
 # --- resiliência ------------------------------------------------------------
+# Declarado e não resolvido. O artefato é o -spring-boot3 e este projeto é Boot 4.
+# A ADR-018 menciona circuit breaker no CatalogPort, do lado do order; a G-B3
+# fez a primeira chamada entre serviços só com tempo limite, sem esta biblioteca.
+# Gatilho para decidir: quando a queda de um serviço derrubar dois em cascata,
+# ou quando alguém medir que o tempo limite sozinho não basta. Com ADR própria.
 resilience4j-spring    = { module = "io.github.resilience4j:resilience4j-spring-boot3", version.ref = "resilience4j" }
 
 # --- migrations MongoDB -----------------------------------------------------

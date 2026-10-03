@@ -55,6 +55,174 @@ consumidor mantém projeção de jornada: a verdade continua no `settlement` e �
 consultada por porta síncrona; o evento é o caminho rápido e o TTL é a rede de
 segurança (ADR-033). É a mesma forma do `VinculoAlteradoV1` na ADR-011.
 
+### `VinculoAlteradoV1` — o contrato
+
+**Implementado na rodada C-B (ADR-043).** Origem `merchant-service` · exchange
+`delivery.eventos` (topic, durável) · chave de rota `merchant.vinculo.alterado.v1`.
+
+O vínculo de uma pessoa com um estabelecimento mudou: papel, estado ou
+permissões. É o evento que faz revogação de acesso valer em segundos em vez de
+esperar o prazo de um cache.
+
+**Quando é emitido.** Em toda escrita de equipe, uma linha de outbox por
+operação, na mesma transação do fato:
+
+| Operação | O que muda |
+|---|---|
+| `promover` | papel |
+| `rebaixar` | papel |
+| `suspender` | estado → `SUSPENSO` |
+| `reativar` | estado → `ATIVO` |
+| `remover` | estado → `REMOVIDO` |
+| `sair` | estado → `REMOVIDO` |
+| `alterarPermissoes` | permissões |
+| aceite de convite | o vínculo nasce (ou volta) `ATIVO`, `COLABORADOR` |
+
+**Formato.** O envelope comum de `events/_envelope-v1.json`; o `eventType` não
+carrega a versão, que vive em `eventVersion`:
+
+```json
+{
+  "eventId": "4f1b0a1e-7d4c-4a2e-9f0b-2c6d8e3a1b55",
+  "eventType": "VinculoAlterado",
+  "eventVersion": 1,
+  "occurredAt": "2026-09-24T14:03:11.482913Z",
+  "correlationId": "4f1b0a1e-7d4c-4a2e-9f0b-2c6d8e3a1b55",
+  "payload": {
+    "estabelecimentoId": "1c9c1f2e-3b44-4a71-9f2a-6b0d5e8c4a10",
+    "usuarioId": "8d2a5f31-90c7-4b6e-a1d3-77f2e0b9c481",
+    "membroId": "b0a4c7e2-51d8-42f9-8c33-1e6a9d0f5b27",
+    "papel": "COLABORADOR",
+    "estado": "SUSPENSO",
+    "permissoes": ["ALTERAR_STATUS", "VER_PEDIDO"]
+  }
+}
+```
+
+**As quatro cláusulas.**
+
+1. **O payload é estado, não delta.** `papel`, `estado` e `permissoes` descrevem
+   o vínculo **depois** da mudança, inteiro. Aplicar duas vezes chega ao mesmo
+   lugar, e quem perdeu um evento se conserta sozinho no próximo.
+2. **`permissoes` é a lista completa, e ausência é negação.** Quem aplica
+   **substitui** a lista que tinha; não faz união. Tratar a lista como
+   incremento transforma revogação em concessão permanente.
+3. **O consumidor é idempotente por `eventId`.** A entrega é pelo menos uma vez
+   (ADR-043 §3); o `eventId` é a chave primária da linha de outbox e nunca se
+   repete.
+4. **O consumidor descarta evento velho por `occurredAt`.** A ordem de publicação
+   não é garantida (ADR-043 §4). Para cada par `(estabelecimentoId, usuarioId)`,
+   guarda-se o `occurredAt` do último evento aplicado e ignora-se qualquer
+   anterior — senão uma suspensão pode ser desfeita por um evento mais velho que
+   chegou depois.
+
+**O que não carrega.** Nome e telefone: são dado do `identity-service` (ADR-001),
+e o `usuarioId` basta para dizer *o que a pessoa pode fazer*. A tabela `outbox` é
+cópia durável do evento, e a regra do `CLAUDE.md` sobre log vale para ela.
+
+**Quem consome.** O `catalog-service`, desde a G-B4 — `OuvinteDeVinculoAlterado`,
+fila exclusiva por instância ligada a `merchant.vinculo.#`. Ele **invalida** a
+entrada do cache de autorização e não lê `papel`, `estado` nem `permissoes`.
+
+**As cláusulas 3 e 4 ficam vazias para ele**, e isso está decidido na ADR-048
+§2: remover uma entrada de cache é idempotente e independe de ordem, então não
+há o que deduplicar por `eventId` nem o que descartar por `occurredAt`. As duas
+voltam inteiras para o primeiro consumidor que **escreva** alguma coisa.
+
+### `ExpedienteAlteradoV1` — o contrato
+
+**Implementado na rodada F (ADR-046).** Origem `merchant-service` · exchange
+`delivery.eventos` (topic, durável) · chave de rota
+`merchant.expediente.alterado.v1`.
+
+O expediente de um estabelecimento mudou. Hoje o único motivo produzido é a
+abertura.
+
+**Quando é emitido.** Uma varredura no `merchant` percorre os estabelecimentos a
+cada minuto e, para cada um que está **dentro do horário** e cujo expediente
+corrente ainda não foi publicado, grava a marca d'água e o evento **na mesma
+transação**.
+
+**Dentro do horário, e não "aberta"** — pausa acontece *dentro* de um expediente
+e não abre outro (`estabelecimento.md` §4). Uma loja pausada no instante da
+abertura publica a abertura assim mesmo; não fizesse isso, o expediente dela
+nunca abriria e os produtos ficariam esgotados o dia inteiro.
+
+**Formato.** O envelope comum de `events/_envelope-v1.json`, com o `eventType`
+sem a versão:
+
+```json
+{
+  "eventId": "9a3c7f10-2b58-4d6e-b1c4-5e0f8a2d3b71",
+  "eventType": "ExpedienteAlterado",
+  "eventVersion": 1,
+  "occurredAt": "2026-09-26T21:00:04.117293Z",
+  "correlationId": "9a3c7f10-2b58-4d6e-b1c4-5e0f8a2d3b71",
+  "payload": {
+    "estabelecimentoId": "1c9c1f2e-3b44-4a71-9f2a-6b0d5e8c4a10",
+    "motivo": "ABERTURA_DE_EXPEDIENTE",
+    "expedienteDeReferencia": "2026-09-26"
+  }
+}
+```
+
+**As quatro cláusulas.**
+
+1. **`occurredAt` e `expedienteDeReferencia` são coisas diferentes.** O
+   primeiro é o instante da publicação; o segundo é o **dia operacional do
+   início da faixa** que estava aberta (ADR-025, ADR-046 emendada), calculado
+   no fuso da loja com hora de corte às 04:00. Às 01:30
+   de domingo o instante é domingo e o expediente é sábado. **Quem usar o
+   carimbo do envelope como dia vai errar uma vez por dia, na madrugada** — que
+   é exatamente quando a pizzaria está vendendo.
+2. **A reativação compara, nunca calcula.** O consumidor reativa produto e
+   opção com `estado == ESGOTADO_HOJE ∧ expedienteDeReferencia < o que veio
+   aqui`. Ele não precisa do fuso da loja nem da hora de corte, e não deve
+   tentar derivá-los: o cálculo tem um dono só, o `merchant` (ADR-046 §6).
+   **`<`, e não `≠`** (G-C1): com desigualdade, um evento velho reentregue
+   depois de uma marcação de hoje reativaria o que acabou agora.
+3. **O consumidor é idempotente por `expedienteDeReferencia`, e não por
+   `eventId`** — é o que o `catalogo.md` §8 e a C11 já diziam, e esta cláusula
+   dizia o contrário até 30/09/2026. A entrega é pelo menos uma vez
+   (ADR-043 §3), e a marca d'água do produtor garante que **uma abertura gera
+   um evento**, não que **um evento chega uma vez**. O que torna o
+   reprocessamento inofensivo é a comparação da cláusula 2: o evento repetido do
+   mesmo expediente não acha nada para reativar, e o evento velho de um
+   expediente anterior também não, porque a comparação é `<`. **Se isso
+   dispensa a `processed_messages` não está decidido**: a invariante 7 do
+   `CLAUDE.md` só tem a exceção da ADR-048, para efeito em memória, e este
+   consumidor escreve em banco. Decide-se com o consumidor, na rodada que o
+   escrever.
+4. **`motivo` desconhecido é ignorado, não é erro** — e isto é uma escolha
+   **deste** consumidor, não uma regra geral. A ADR-027 §2 decide que valor novo
+   em enum é **incompatível por padrão**, *"salvo se todos os consumidores
+   tratarem valor desconhecido como "ignorar""*. Aqui há um consumidor só, e ele
+   trata: hoje existe apenas `ABERTURA_DE_EXPEDIENTE`, e fechamento, pausa e
+   retomada entram quando tiverem produtor. Um consumidor que estourasse com
+   valor novo transformaria uma mudança planejada em incidente.
+
+**Uma abertura por dia operacional, e não por transição.** A loja que abre duas
+vezes no mesmo dia — a padaria de 6h–14h e 18h–22h — publica **um** evento, o da
+primeira. A marca d'água é `(estabelecimento, expediente)`, e a segunda abertura
+do mesmo dia operacional não insere linha.
+
+Isto **emenda o exemplo da ADR-025 §5**, que descrevia o catálogo recebendo dois
+eventos e descartando o segundo por comparação. O resultado é o mesmo — o pão
+que acabou no almoço continua acabado no jantar — mas por um caminho mais curto:
+o produtor não chega a emitir.
+
+**O que não carrega.** O estado de abertura da loja. Quem quiser saber se ela
+está aberta **agora** pergunta pela `OperacaoDoEstabelecimentoPort`
+(`estabelecimento.md` §3) — este evento diz que um expediente começou, não que a
+loja segue aberta. Guardar o segundo como projeção seria manter, do lado de fora,
+um campo que o `merchant` deliberadamente não guarda do lado de dentro.
+
+**Quem consome.** Ninguém ainda. O primeiro consumidor é o `catalog-service`, no
+marco 2, e é ele o único que reage à abertura com regra de domínio — reativa
+`ESGOTADO_HOJE` (`catalogo.md` §3). O `order` e o `conversation` também têm
+comportamento escrito, para qualquer `motivo`: invalidar a cache de operação da
+loja (`pedido.md` §8) e responder aberto/fechado (`conversa.md` §14).
+
 ---
 
 ## 2. Eventos consumidos pelo painel

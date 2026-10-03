@@ -9,9 +9,14 @@ testes, container, contrato e pipeline próprios.
 > nasce numa conversa de WhatsApp. Se uma decisão parecer estranha, confira as
 > premissas em [`docs/PRD.md`](docs/PRD.md) §5 antes de "corrigir".
 
-> **Estado: esqueleto (marco 0).** A estrutura, o build e a infraestrutura estão
-> montados. Ainda não há regra de negócio — o marco 1 começa pelo
-> `identity-service`.
+> **Estado: marco 1 concluído (26/09/2026).** O `identity-service` cadastra com
+> verificação por telefone e emite o token. O `merchant-service` guarda
+> estabelecimento, disponibilidade, áreas de entrega, equipe e convite, atende a
+> primeira rota autorizada e publica `VinculoAlteradoV1` pelo outbox. O gateway
+> autentica e roteia as catorze rotas da ADR-012, com teste, e o `check` de todo
+> módulo recusa dependência entre serviços (ADR-001). Os outros seis serviços
+> ainda são esqueleto. O que ficou em aberto são decisões com gatilho escrito —
+> nenhuma bloqueia o marco 2.
 
 ---
 
@@ -49,7 +54,6 @@ docker compose --profile core up -d           # bancos, brokers, storage
 |---|---|
 | `core` | PostgreSQL, MongoDB, Redis, RabbitMQ, MinIO |
 | `services` | gateway e os oito microsserviços |
-| `observability` | Prometheus, Grafana, Loki, Tempo |
 | `full` | tudo |
 
 Comandos úteis:
@@ -77,7 +81,7 @@ delivery-platform/
 │   ├── dominio/                as REGRAS vigentes — leia antes de codificar
 │   ├── architecture/decisions/ ADRs
 │   └── referencia/             PDFs publicados
-├── infra/                      configuração de Postgres, Mongo e observabilidade
+├── infra/                      configuração de Postgres e Mongo
 ├── frontend/                   entra no marco 3 (ADR-016)
 └── .github/workflows/          um pipeline por serviço + workflow reutilizável
 ```
@@ -111,12 +115,12 @@ Em revisão manual, a arquitetura erode em duas semanas.
 |---|---:|---|---|
 | gateway | 8080 | — | — |
 | identity-service | 8081 | PostgreSQL | [`usuario.md`](docs/dominio/usuario.md) |
-| merchant-service | 8082 | PostgreSQL + Redis | [`estabelecimento.md`](docs/dominio/estabelecimento.md) |
-| catalog-service | 8083 | MongoDB + Redis | [`catalogo.md`](docs/dominio/catalogo.md) |
+| merchant-service | 8082 | PostgreSQL | [`estabelecimento.md`](docs/dominio/estabelecimento.md) |
+| catalog-service | 8083 | MongoDB | [`catalogo.md`](docs/dominio/catalogo.md) |
 | settlement-service | 8084 | PostgreSQL | [`liquidacao.md`](docs/dominio/liquidacao.md) |
-| order-service | 8085 | PostgreSQL + Redis | [`pedido.md`](docs/dominio/pedido.md) |
+| order-service | 8085 | PostgreSQL | [`pedido.md`](docs/dominio/pedido.md) |
 | payment-service | 8086 | PostgreSQL | — (fronteira com o PSP; ver ADR-021) |
-| delivery-service | 8087 | PostgreSQL + Redis | [`entrega.md`](docs/dominio/entrega.md) |
+| delivery-service | 8087 | PostgreSQL | [`entrega.md`](docs/dominio/entrega.md) |
 | conversation-service | 8088 | MongoDB | [`conversa.md`](docs/dominio/conversa.md) |
 
 Seis bancos PostgreSQL e dois MongoDB — oito bancos lógicos.
@@ -126,6 +130,20 @@ Seis bancos PostgreSQL e dois MongoDB — oito bancos lógicos.
 > tinha, estava desatualizada, e um agente tomou uma decisão de build lendo ela.
 > Quem publica o quê está em `docs/dominio/<serviço>.md`, na seção de eventos,
 > que é onde a informação é mantida.
+
+### A documentação viva (Swagger UI)
+
+Fechada por padrão. Com `DELIVERY_DOCS_ABERTAS=true` no `.env`, só no seu
+computador (ADR-050):
+
+| Serviço | Página |
+|---|---|
+| merchant-service | `http://127.0.0.1:8082/swagger-ui.html` |
+| catalog-service | `http://127.0.0.1:8083/swagger-ui.html` |
+
+Não passa pelo gateway, de propósito. O token para as rotas protegidas vem de
+`POST /api/v1/auth/login` no gateway (8080) e vai no botão **Authorize**. O
+`identity-service` ainda não tem a página — gatilho na ADR-050 §1.
 
 ### Serviços adiados
 
@@ -209,7 +227,7 @@ acharam defeitos reais, e **dez minutos lendo o `docker-compose.yml` acharam doi
 bancos sem senha publicados em `0.0.0.0`**. Documento só mente quando alguém lê;
 infraestrutura mente até alguém ligar.
 
-Trinta e sete ADRs escritas, mais duas numeradas que ficaram sem objeto e têm
+Trinta e nove ADRs escritas, mais duas numeradas que ficaram sem objeto e têm
 registro próprio dizendo por quê. Índice em
 [`docs/architecture/decisions/`](docs/architecture/decisions/README.md).
 

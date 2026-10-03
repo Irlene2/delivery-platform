@@ -1,0 +1,257 @@
+{
+  "openapi" : "3.1.0",
+  "info" : {
+    "title" : "merchant-service",
+    "description" : "Estabelecimento, equipe e áreas de entrega. Toda rota exige token emitido pelo identity-service, e a autorização é resolvida pelo vínculo do usuário com a loja da URL.",
+    "version" : "v1"
+  },
+  "security" : [ {
+    "bearerAuth" : [ ]
+  } ],
+  "tags" : [ {
+    "name" : "eu",
+    "description" : "O que o portador do token é, neste serviço."
+  }, {
+    "name" : "interno",
+    "description" : "Consumido por outro serviço, com o token de quem pediu encaminhado. Não roteado pelo gateway — ADR-045."
+  } ],
+  "paths" : {
+    "/internal/merchants/{estabelecimentoId}/me/contexto-de-acesso" : {
+      "get" : {
+        "tags" : [ "interno" ],
+        "summary" : "O contexto de acesso do portador do token nesta loja",
+        "description" : "Exige apenas token válido — nenhuma permissão. Responde sobre o portador e sobre mais ninguém: não existe usuarioId na entrada. Sem vínculo ativo e loja inexistente devolvem a mesma recusa.",
+        "operationId" : "doPortador",
+        "parameters" : [ {
+          "name" : "estabelecimentoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ContextoDeAcesso"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/merchants/{estabelecimentoId}/expediente-corrente" : {
+      "get" : {
+        "tags" : [ "interno" ],
+        "summary" : "O dia operacional a carimbar numa marcação de disponibilidade",
+        "description" : "Devolve o expediente em curso quando a loja está dentro do horário, e o da próxima abertura quando ela está fechada (ADR-049). 409 quando a loja não abre por horário. Exige vínculo ativo, e nenhuma permissão específica.",
+        "operationId" : "expedienteCorrente",
+        "parameters" : [ {
+          "name" : "estabelecimentoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ExpedienteCorrenteResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/merchants/{estabelecimentoId}/team" : {
+      "get" : {
+        "tags" : [ "equipe-controller" ],
+        "summary" : "Lista a equipe do estabelecimento",
+        "description" : "Exige vínculo ativo com GERENCIAR_EQUIPE. Sem vínculo, sem permissão e loja inexistente devolvem a mesma recusa.",
+        "operationId" : "listar",
+        "parameters" : [ {
+          "name" : "estabelecimentoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EquipeResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/estabelecimentos" : {
+      "get" : {
+        "tags" : [ "eu" ],
+        "summary" : "As lojas de que o portador do token faz parte",
+        "description" : "Só vínculos ATIVOS. Traz papel e permissões de cada uma, para o front montar o seletor de loja e o menu numa chamada só. Lista vazia quando não há vínculo ativo em nenhuma loja.",
+        "operationId" : "minhasLojas",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/LojaDoUsuario"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components" : {
+    "schemas" : {
+      "ContextoDeAcesso" : {
+        "type" : "object",
+        "properties" : {
+          "usuarioId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "estabelecimentoId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "papel" : {
+            "type" : "string",
+            "enum" : [ "ADMINISTRADOR", "COLABORADOR" ]
+          },
+          "permissoes" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "VER_PRODUTO", "CRIAR_PRODUTO", "ALTERAR_PRODUTO", "DESATIVAR_PRODUTO", "VER_PEDIDO", "ALTERAR_STATUS", "VER_VENDAS", "VER_ENTREGA", "GERENCIAR_EQUIPE", "GERENCIAR_JORNADA" ]
+            },
+            "uniqueItems" : true
+          }
+        }
+      },
+      "ExpedienteCorrenteResponse" : {
+        "type" : "object",
+        "description" : "O expediente a carimbar numa marcação de disponibilidade.",
+        "properties" : {
+          "estabelecimentoId" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "A loja sobre a qual esta resposta fala."
+          },
+          "expedienteDeReferencia" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "O dia operacional a gravar como expedienteDeReferencia.",
+            "example" : "2026-09-30"
+          }
+        }
+      },
+      "EquipeResponse" : {
+        "type" : "object",
+        "properties" : {
+          "estabelecimentoId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "membros" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/MembroResponse"
+            }
+          }
+        },
+        "required" : [ "estabelecimentoId", "membros" ]
+      },
+      "MembroResponse" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "usuarioId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "papel" : {
+            "type" : "string",
+            "enum" : [ "ADMINISTRADOR", "COLABORADOR" ]
+          },
+          "estado" : {
+            "type" : "string",
+            "enum" : [ "ATIVO", "SUSPENSO", "REMOVIDO" ]
+          },
+          "permissoes" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "VER_PRODUTO", "CRIAR_PRODUTO", "ALTERAR_PRODUTO", "DESATIVAR_PRODUTO", "VER_PEDIDO", "ALTERAR_STATUS", "VER_VENDAS", "VER_ENTREGA", "GERENCIAR_EQUIPE", "GERENCIAR_JORNADA" ]
+            },
+            "uniqueItems" : true
+          },
+          "desde" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "desde", "estado", "id", "papel", "permissoes", "usuarioId" ]
+      },
+      "LojaDoUsuario" : {
+        "type" : "object",
+        "properties" : {
+          "estabelecimentoId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "nome" : {
+            "type" : "string"
+          },
+          "papel" : {
+            "type" : "string",
+            "enum" : [ "ADMINISTRADOR", "COLABORADOR" ]
+          },
+          "permissoes" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "VER_PRODUTO", "CRIAR_PRODUTO", "ALTERAR_PRODUTO", "DESATIVAR_PRODUTO", "VER_PEDIDO", "ALTERAR_STATUS", "VER_VENDAS", "VER_ENTREGA", "GERENCIAR_EQUIPE", "GERENCIAR_JORNADA" ]
+            }
+          }
+        }
+      }
+    },
+    "securitySchemes" : {
+      "bearerAuth" : {
+        "type" : "http",
+        "description" : "Token do identity-service. Seis claims, sem papel nem permissão.",
+        "scheme" : "bearer",
+        "bearerFormat" : "JWT"
+      }
+    }
+  }
+}

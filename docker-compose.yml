@@ -1,7 +1,6 @@
 # Perfis:
 #   core           infraestrutura (bancos, brokers, storage)
 #   services       gateway e microsserviços
-#   observability  Prometheus, Grafana, Loki, Tempo
 #   full           tudo
 #
 # No dia a dia você não sobe os nove aplicativos. Sobe `core` e roda pelo IDE
@@ -137,9 +136,14 @@ services:
       dockerfile: infra/gateway/Dockerfile
     environment:
       SERVER_PORT: "8080"
-      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
       JWT_JWKS_URI: http://identity-service:8081/.well-known/jwks.json
-      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
+      # Emissor e audiência: a MESMA expressão no identity (que assina), no
+      # merchant e no gateway (que conferem). `:-` e não `:`: um JWT_ISSUER=
+      # vazio no .env viraria string vazia, e o gateway recusaria todo token
+      # em silêncio. ADR-044 §3.
+      JWT_ISSUER: ${JWT_ISSUER:-http://localhost:8081}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-delivery-platform}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173}
       SERVICE_IDENTITY_URI: http://identity-service:8081
       SERVICE_MERCHANT_URI: http://merchant-service:8082
       SERVICE_CATALOG_URI: http://catalog-service:8083
@@ -150,9 +154,6 @@ services:
       SERVICE_CONVERSATION_URI: http://conversation-service:8088
     ports:
       - "127.0.0.1:8080:8080"
-    depends_on:
-      redis:
-        condition: service_healthy
     restart: unless-stopped
 
   identity-service:
@@ -169,6 +170,8 @@ services:
       RABBITMQ_USERNAME: ${RABBITMQ_USER}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
       JWT_JWKS_URI: http://identity-service:8081/.well-known/jwks.json
+      JWT_ISSUER: ${JWT_ISSUER:-http://localhost:8081}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-delivery-platform}
     ports:
       - "127.0.0.1:8081:8081"
     depends_on:
@@ -184,21 +187,21 @@ services:
       context: ./backend
       dockerfile: services/merchant-service/Dockerfile
     environment:
+      DELIVERY_DOCS_ABERTAS: ${DELIVERY_DOCS_ABERTAS:-false}
       SERVER_PORT: "8082"
       DB_URL: jdbc:postgresql://postgres:5432/merchant_db
       DB_USERNAME: ${POSTGRES_USER}
       DB_PASSWORD: ${POSTGRES_PASSWORD}
-      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
       RABBITMQ_ADDRESSES: rabbitmq:5672
       RABBITMQ_USERNAME: ${RABBITMQ_USER}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
       JWT_JWKS_URI: http://identity-service:8081/.well-known/jwks.json
+      JWT_ISSUER: ${JWT_ISSUER:-http://localhost:8081}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-delivery-platform}
     ports:
       - "127.0.0.1:8082:8082"
     depends_on:
       postgres:
-        condition: service_healthy
-      redis:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
@@ -210,13 +213,16 @@ services:
       context: ./backend
       dockerfile: services/catalog-service/Dockerfile
     environment:
+      DELIVERY_DOCS_ABERTAS: ${DELIVERY_DOCS_ABERTAS:-false}
       SERVER_PORT: "8083"
       MONGO_URI: mongodb://mongodb:27017/catalog_db?replicaSet=rs0
-      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
       RABBITMQ_ADDRESSES: rabbitmq:5672
       RABBITMQ_USERNAME: ${RABBITMQ_USER}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
       JWT_JWKS_URI: http://identity-service:8081/.well-known/jwks.json
+      JWT_ISSUER: ${JWT_ISSUER:-http://localhost:8081}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-delivery-platform}
+      MERCHANT_URI: http://merchant-service:8082
     ports:
       - "127.0.0.1:8083:8083"
     depends_on:
@@ -224,8 +230,6 @@ services:
         condition: service_healthy
       mongo-init:
         condition: service_completed_successfully
-      redis:
-        condition: service_healthy
       rabbitmq:
         condition: service_healthy
     restart: unless-stopped
@@ -263,7 +267,6 @@ services:
       DB_URL: jdbc:postgresql://postgres:5432/order_db
       DB_USERNAME: ${POSTGRES_USER}
       DB_PASSWORD: ${POSTGRES_PASSWORD}
-      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
       RABBITMQ_ADDRESSES: rabbitmq:5672
       RABBITMQ_USERNAME: ${RABBITMQ_USER}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
@@ -272,8 +275,6 @@ services:
       - "127.0.0.1:8085:8085"
     depends_on:
       postgres:
-        condition: service_healthy
-      redis:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
@@ -312,7 +313,6 @@ services:
       DB_URL: jdbc:postgresql://postgres:5432/delivery_db
       DB_USERNAME: ${POSTGRES_USER}
       DB_PASSWORD: ${POSTGRES_PASSWORD}
-      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
       RABBITMQ_ADDRESSES: rabbitmq:5672
       RABBITMQ_USERNAME: ${RABBITMQ_USER}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
@@ -321,8 +321,6 @@ services:
       - "127.0.0.1:8087:8087"
     depends_on:
       postgres:
-        condition: service_healthy
-      redis:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
@@ -351,45 +349,9 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
-  # ──────────────────────────────────────────── observabilidade
-  prometheus:
-    restart: unless-stopped
-    profiles: ["observability", "full"]
-    image: prom/prometheus:latest
-    ports:
-      - "127.0.0.1:9091:9090"
-    volumes:
-      - ./infra/observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-
-  grafana:
-    restart: unless-stopped
-    profiles: ["observability", "full"]
-    image: grafana/grafana:latest
-    environment:
-      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
-    ports:
-      - "127.0.0.1:3000:3000"
-    volumes:
-      - grafana-data:/var/lib/grafana
-
-  loki:
-    restart: unless-stopped
-    profiles: ["observability", "full"]
-    image: grafana/loki:latest
-    ports:
-      - "127.0.0.1:3100:3100"
-
-  tempo:
-    restart: unless-stopped
-    profiles: ["observability", "full"]
-    image: grafana/tempo:latest
-    ports:
-      - "127.0.0.1:3200:3200"
-
 volumes:
   postgres-data:
   mongo-data:
   redis-data:
   rabbitmq-data:
   minio-data:
-  grafana-data:

@@ -32,6 +32,11 @@ spring:
     password: ${RABBITMQ_PASSWORD}
     publisher-confirm-type: correlated
     publisher-returns: true
+    template:
+      # mandatory: sem ele, mensagem sem fila de destino é descartada em
+      # SILÊNCIO — e o relay marcava a linha como publicada. Com ele, o broker
+      # devolve, e a linha fica pendente. ADR-043, emenda de 29/09/2026.
+      mandatory: true
     listener:
       simple:
         acknowledge-mode: manual
@@ -40,21 +45,46 @@ spring:
           initial-interval: 2s
           max-attempts: 5
 
-  data:
-    redis:
-      url: ${REDIS_URL:redis://localhost:6379}
-
   security:
     oauth2:
       resourceserver:
         jwt:
           jwk-set-uri: ${JWT_JWKS_URI:http://localhost:8081/.well-known/jwks.json}
 
+# O que este serviço EXIGE de um token. Não há chave privada aqui: o merchant
+# valida, quem emite é o identity (ADR-037). Os dois valores precisam bater com
+# os do emissor -- e o decoder passa a recusar o token que não bater, em vez de
+# aceitar qualquer um assinado pela chave certa.
+delivery:
+  # A documentação viva (Swagger UI e /v3/api-docs) sem token — ADR-050. O
+  # padrão é false, e é assim que o serviço sobe em qualquer lugar que não seja
+  # o seu computador: esquecer fecha.
+  docs:
+    abertas: ${DELIVERY_DOCS_ABERTAS:false}
+  jwt:
+    issuer: ${JWT_ISSUER:http://localhost:8081}
+    audience: ${JWT_AUDIENCE:delivery-platform}
+  # O relay do outbox (ADR-043). Nada aqui é credencial: a do broker mora em
+  # spring.rabbitmq.* e vem do ambiente.
+  outbox:
+    exchange: delivery.eventos
+    tamanho-do-lote: 100
+    intervalo-ms: 1000
+    atraso-inicial-ms: 5000
+    habilitado: true
+    # Quanto o relay espera a confirmação do broker, por lote (ADR-048).
+    tempo-de-confirmacao-ms: 2000
+  # A varredura que publica a abertura do expediente (ADR-046).
+  expediente:
+    varredura-habilitada: true
+    intervalo-ms: 60000
+    atraso-inicial-ms: 10000
+
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,prometheus
+        include: health,info
   endpoint:
     health:
       probes:
@@ -70,5 +100,4 @@ logging:
     root: INFO
     com.deliveryplatform: INFO
   pattern:
-    # correlationId entra desde o início: retrofit em payload de evento é caro.
-    console: "%d{yyyy-MM-dd HH:mm:ss} %-5level [%X{traceId:-},%X{spanId:-}] %logger{36} - %msg%n"
+    console: "%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n"

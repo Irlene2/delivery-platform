@@ -1,0 +1,13 @@
+/* Tailwind 4: uma linha, e a configuração mora no CSS.
+   Não existe tailwind.config.js nesta versão — quem procurar por ele e não
+   achar vai pensar que falta arquivo. */
+@import 'tailwindcss';
+
+/* O fundo explícito nos dois temas. Sem isto, o modo escuro do sistema deixa a
+   página branca com texto claro em alguns navegadores. */
+:root {
+  color-scheme: light dark;
+}
+body {
+  @apply bg-white text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100;
+}

@@ -5,9 +5,16 @@ spring:
   application:
     name: conversation-service
 
-  data:
-    mongodb:
-      uri: ${MONGO_URI:mongodb://localhost:27017/conversation_db?replicaSet=rs0}
+  mongodb:
+    # spring.mongodb.*, e não spring.data.mongodb.*: no Boot 4 a chave antiga
+    # está depreciada com nível error e NÃO É LIDA — o serviço cairia em
+    # mongodb://localhost/test, que numa máquina de desenvolvimento é o Mongo do
+    # compose. Foi o que aconteceu com o catalog na G-B1.
+    uri: ${MONGO_URI:mongodb://localhost:27017/conversation_db?replicaSet=rs0}
+    representation:
+      # O padrão do driver é `unspecified`, e com ele o driver se recusa a
+      # gravar UUID. Também descoberto na G-B1.
+      uuid: standard
 
   rabbitmq:
     addresses: ${RABBITMQ_ADDRESSES:localhost:5672}
@@ -41,7 +48,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,prometheus
+        include: health,info
   endpoint:
     health:
       probes:
@@ -57,5 +64,4 @@ logging:
     root: INFO
     com.deliveryplatform: INFO
   pattern:
-    # correlationId entra desde o início: retrofit em payload de evento é caro.
-    console: "%d{yyyy-MM-dd HH:mm:ss} %-5level [%X{traceId:-},%X{spanId:-}] %logger{36} - %msg%n"
+    console: "%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n"

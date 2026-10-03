@@ -1,0 +1,68 @@
+# O front tem pipeline próprio, com filtro de caminho — a mesma defesa que a
+# ADR-001 nomeia para os nove módulos Gradle: alterar o front não roda o CI de
+# serviço nenhum, e alterar um serviço não roda este.
+#
+# `contracts/**` ENTRA no filtro, e é a razão de ser deste arquivo: os tipos do
+# front são gerados de contracts/openapi/*.json e commitados. Se um contrato
+# mudar e os tipos não forem regravados, é aqui que se descobre — o espelho do
+# ContratoOpenApiIT, do outro lado do fio.
+
+name: frontend
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'frontend/**'
+      - 'contracts/openapi/**'
+      - '.github/workflows/frontend.yml'
+  pull_request:
+    paths:
+      - 'frontend/**'
+      - 'contracts/openapi/**'
+      - '.github/workflows/frontend.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      # `npm ci` e não `npm install`: ci exige o lockfile e falha se ele
+      # divergir do package.json. install resolveria versões novas e o build
+      # passaria a depender do dia em que rodou.
+      - name: Instalar
+        run: npm ci
+
+      - name: Conferir formatação
+        run: npm run format
+
+      - name: Lint
+        run: npm run lint
+
+      # Regrava os tipos a partir dos contratos e falha se o resultado divergir
+      # do que está commitado. É o que impede o front de compilar contra um
+      # contrato que o back já mudou.
+      - name: Os tipos gerados são os do contrato commitado
+        run: npm run tipos:conferir
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Testes
+        run: npm test
+
+      - name: Build
+        run: npm run build

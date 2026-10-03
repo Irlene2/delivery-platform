@@ -1,0 +1,492 @@
+package com.deliveryplatform.catalog.domain.model;
+
+import com.deliveryplatform.catalog.domain.exception.RegraDoCatalogoViolada;
+import com.deliveryplatform.valuetypes.Money;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.UUID;
+
+/**
+ * Um item do cardápio. Raiz de agregado: o grupo de opções e a opção não
+ * existem fora dele, e ninguém os altera pelas costas.
+ *
+ * <h2>O vendável é derivado e nunca armazenado</h2>
+ *
+ * <p>{@link #vendavel()} é uma conta sobre três campos que já estão aqui.
+ * Guardá-lo como coluna significaria mantê-lo em dia a cada publicação, a cada
+ * marcação de disponibilidade, a cada opção que esgota, a cada abertura de
+ * expediente — cinco caminhos de escrita para um valor que a leitura calcula em
+ * nanossegundos. <i>O registro diz o que foi feito; o cálculo diz o que vale
+ * agora.</i>
+ *
+ * <p>O preço desta decisão é conhecido e está aceito: o Mongo não filtra por
+ * campo que não existe, então "só os vendáveis" é um filtro de aplicação sobre
+ * o resultado de {@code (estabelecimentoId, estadoDePublicacao)} — o primeiro
+ * índice da §7. O dia em que o cardápio de uma loja não couber em memória, a
+ * saída é projeção com dono e invalidação escritos, não um booleano solto.
+ *
+ * <h2>O que este agregado deliberadamente não sabe</h2>
+ *
+ * <ul>
+ *   <li><b>Se a categoria existe, e se ela é da mesma loja.</b> {@link Categoria}
+ *       é outra raiz; agregado não valida agregado. A regra é do caso de uso, e
+ *       ela nasce com a rota que cria produto (G-B).</li>
+ *   <li><b>Se a loja está aberta.</b> Isso é do {@code merchant}, e vem pela
+ *       porta ou pelo evento.</li>
+ *   <li><b>Que dia é hoje.</b> Não há relógio nem fuso nesta classe. O dia
+ *       operacional tem um dono só (ADR-046 §6) e o catálogo compara, nunca
+ *       calcula.</li>
+ * </ul>
+ */
+public final class Produto {
+
+    private final UUID id;
+    private final UUID estabelecimentoId;
+
+    private UUID categoriaId;
+    private String nome;
+    private String descricao;
+    private String imagemRef;
+    private Money precoBase;
+    private int ordem;
+
+    private EstadoDePublicacao estadoDePublicacao;
+    private ModoDeControle modoDeControle;
+    private Disponibilidade disponibilidade;
+
+    private final List<GrupoDeOpcoes> gruposDeOpcoes = new ArrayList<>();
+
+    private Produto(UUID id, UUID estabelecimentoId, UUID categoriaId, String nome,
+                    Money precoBase, ModoDeControle modoDeControle, int ordem) {
+        if (estabelecimentoId == null) {
+            throw new RegraDoCatalogoViolada("produto sem estabelecimento");
+        }
+        if (categoriaId == null) {
+            throw new RegraDoCatalogoViolada("produto sem categoria");
+        }
+        if (modoDeControle == null) {
+            throw new RegraDoCatalogoViolada("produto sem modo de controle");
+        }
+        exigirPrecoValido(precoBase);
+
+        this.id = id;
+        this.estabelecimentoId = estabelecimentoId;
+        this.categoriaId = categoriaId;
+        this.nome = Textos.exigirPreenchido(nome, "nome do produto");
+        this.precoBase = precoBase;
+        this.modoDeControle = modoDeControle;
+        this.ordem = ordem;
+        this.estadoDePublicacao = EstadoDePublicacao.RASCUNHO;
+        this.disponibilidade = Disponibilidade.inicial();
+    }
+
+    /**
+     * Todo produto nasce {@code RASCUNHO} e {@code DISPONIVEL}.
+     *
+     * <p>Nascer rascunho é o que permite que o cadastro seja incompleto sem ser
+     * inválido: sem foto, sem descrição, sem grupo. A completude é cobrada na
+     * publicação, que é quando alguém vai ver.
+     */
+    public static Produto rascunho(UUID estabelecimentoId, UUID categoriaId, String nome,
+                                   Money precoBase, ModoDeControle modoDeControle, int ordem) {
+        return new Produto(UUID.randomUUID(), estabelecimentoId, categoriaId, nome,
+                precoBase, modoDeControle, ordem);
+    }
+
+    /**
+     * Remonta um produto que já existe, vindo do banco.
+     *
+     * <p><b>Por que existe.</b> Até a G-B1 o {@code Produto} só sabia nascer:
+     * {@link #rascunho} gera id novo e começa {@code RASCUNHO} e
+     * {@code DISPONIVEL}. Não havia caminho de volta, e um agregado que não
+     * sabe ser lido é um agregado que nunca foi persistido.
+     *
+     * <p><b>O que ela verifica, e o que ela não verifica.</b> Repete as
+     * verificações de nulidade e a de preço não-negativo — nenhuma delas foi
+     * gravável de outro jeito, então um documento que as viole está corrompido.
+     * <b>Não</b> repete as regras de publicação (C1, C2, C4, C5): essas são
+     * regras de <i>transição</i>, cobradas em {@link #publicar()}. Uma regra
+     * nova não pode tornar ilegível um documento gravado sob a regra antiga —
+     * o lugar de recusar é a escrita, nunca a leitura. Senão, o dia em que a C2
+     * ficar mais estrita, o cardápio inteiro de quem já publicou para de abrir.
+     *
+     * <p>É pública porque o mapeador mora em outro pacote e o Java não tem
+     * {@code friend}. A alternativa seria pôr persistência dentro do domínio,
+     * que é pior.
+     */
+    public static Produto reconstituir(UUID id,
+                                       UUID estabelecimentoId,
+                                       UUID categoriaId,
+                                       String nome,
+                                       String descricao,
+                                       String imagemRef,
+                                       Money precoBase,
+                                       int ordem,
+                                       EstadoDePublicacao estadoDePublicacao,
+                                       ModoDeControle modoDeControle,
+                                       Disponibilidade disponibilidade,
+                                       List<GrupoDeOpcoes> gruposDeOpcoes) {
+        if (id == null) {
+            throw new RegraDoCatalogoViolada("produto sem id");
+        }
+        if (estadoDePublicacao == null) {
+            throw new RegraDoCatalogoViolada("produto sem estado de publicação");
+        }
+        if (disponibilidade == null) {
+            throw new RegraDoCatalogoViolada("produto sem disponibilidade");
+        }
+        Produto produto = new Produto(id, estabelecimentoId, categoriaId, nome,
+                precoBase, modoDeControle, ordem);
+        produto.descricao = descricao;
+        produto.imagemRef = imagemRef;
+        produto.estadoDePublicacao = estadoDePublicacao;
+        produto.disponibilidade = disponibilidade;
+        if (gruposDeOpcoes != null) {
+            gruposDeOpcoes.forEach(produto::acrescentarGrupo);
+        }
+        return produto;
+    }
+
+    // ── publicação ──────────────────────────────────────────────────────────
+
+    /**
+     * Coloca o produto no cardápio público.
+     *
+     * <p><b>Publicar é onde as invariantes são cobradas</b> ({@code catalogo.md}
+     * §2): C1 (preço base maior que zero), C5 (mínimo alcançável) e C4 (teto
+     * alcançável). Em rascunho o comerciante pode deixar o produto pela metade —
+     * preço zero, grupo sem opção —, que é como se trabalha.
+     *
+     * <p>Recusa se algum grupo obrigatório não puder <b>nunca</b> ser
+     * satisfeito — zero opções para um mínimo de um. Note o "nunca": grupo
+     * cujas opções estão todas esgotadas <b>publica</b>, porque esgotar é do
+     * dia e publicar é do cadastro. O produto fica {@code ATIVO} e não vendável
+     * até a opção voltar, que é exatamente o comportamento certo: o
+     * comerciante não teve de mexer em nada, e não vai encontrar o prato em
+     * rascunho na segunda-feira.
+     *
+     * <p>Publicar o que já está publicado não faz nada. Idempotência aqui não é
+     * conveniência: a publicação vai virar uma rota, e rota que estoura ao ser
+     * repetida obriga o cliente a saber o estado antes de agir.
+     */
+    public void publicar() {
+        if (estadoDePublicacao == EstadoDePublicacao.ATIVO) {
+            return;
+        }
+        if (precoBase.ehZero()) {
+            throw new RegraDoCatalogoViolada(
+                    "C1: preço base zero impede a publicação de " + nome
+                            + " — produto de graça por descuido");
+        }
+        List<String> impossiveis = gruposDeOpcoes.stream()
+                .filter(g -> !g.estruturalmenteSatisfazivel())
+                .map(GrupoDeOpcoes::nome)
+                .toList();
+        if (!impossiveis.isEmpty()) {
+            throw new RegraDoCatalogoViolada(
+                    "C5: grupo obrigatório sem opções suficientes impede a publicação: "
+                            + String.join(", ", impossiveis));
+        }
+        List<String> tetosInalcancaveis = gruposDeOpcoes.stream()
+                .filter(g -> !g.tetoAlcancavel())
+                .map(GrupoDeOpcoes::nome)
+                .toList();
+        if (!tetosInalcancaveis.isEmpty()) {
+            throw new RegraDoCatalogoViolada(
+                    "C4: maxEscolhas maior que o número de opções impede a publicação: "
+                            + String.join(", ", tetosInalcancaveis));
+        }
+        Money minimo = precoMinimoPossivel();
+        if (minimo.ehNegativo() || minimo.ehZero()) {
+            throw new RegraDoCatalogoViolada(
+                    "C2: existe combinação válida cujo preço unitário não é positivo — "
+                            + "mínimo possível " + minimo.valor());
+        }
+        estadoDePublicacao = EstadoDePublicacao.ATIVO;
+    }
+
+    /**
+     * Retira do cardápio o que já esteve nele.
+     *
+     * <p>Recusa a partir de {@code RASCUNHO}: um rascunho nunca apareceu, então
+     * não há o que retirar. Permitir a transição faria {@code RASCUNHO} e
+     * {@code INATIVO} significarem a mesma coisa, e a lista do que o
+     * comerciante está montando desapareceria dentro da lista do que ele tirou
+     * do ar.
+     */
+    public void inativar() {
+        if (estadoDePublicacao == EstadoDePublicacao.RASCUNHO) {
+            throw new RegraDoCatalogoViolada(
+                    "rascunho não se inativa: ele nunca apareceu no cardápio");
+        }
+        estadoDePublicacao = EstadoDePublicacao.INATIVO;
+    }
+
+    // ── composição ──────────────────────────────────────────────────────────
+
+    /**
+     * Acrescenta um grupo, mantendo a lista ordenada por {@code ordem}.
+     *
+     * <p>A lista sai sempre ordenada porque o cardápio tem ordem e ela é do
+     * comerciante. Empate de {@code ordem} não é recusado — dois grupos com o
+     * mesmo número aparecem em ordem de inserção, que é estável e não é
+     * decisão de ninguém. Se o {@code catalogo.md} exigir {@code ordem} única,
+     * é aqui que a regra entra.
+     */
+    public void acrescentarGrupo(GrupoDeOpcoes grupo) {
+        if (grupo == null) {
+            throw new RegraDoCatalogoViolada("grupo nulo");
+        }
+        gruposDeOpcoes.add(grupo);
+        gruposDeOpcoes.sort(Comparator.comparingInt(GrupoDeOpcoes::ordem));
+    }
+
+    public void substituirGrupos(List<GrupoDeOpcoes> grupos) {
+        gruposDeOpcoes.clear();
+        if (grupos != null) {
+            grupos.forEach(this::acrescentarGrupo);
+        }
+    }
+
+    // ── disponibilidade ─────────────────────────────────────────────────────
+
+    /**
+     * Registra o que o dia fez com este produto.
+     *
+     * <p><b>{@code SEM_CONTROLE} só aceita {@code DISPONIVEL}</b>, e essa é a
+     * definição do modo, não uma restrição arbitrária: um produto que não acaba
+     * não pode acabar. Sem a regra aqui, um refrigerante em lata poderia ficar
+     * {@code ESGOTADO_HOJE} por engano de tela e esperar a abertura do próximo
+     * expediente para voltar — um produto sumido do cardápio por doze horas,
+     * por um estado que o modo dele diz não existir.
+     *
+     * <p>A marcação não olha para {@link EstadoDePublicacao}: marcar esgotado
+     * um produto inativo é inofensivo, e proibir obrigaria a ordenar duas
+     * operações que o comerciante faz em telas diferentes.
+     *
+     * <p><b>O ato de reativar não está aqui.</b> Ele é o consumidor do
+     * {@code ExpedienteAlteradoV1} e nasce na G-C; o que existe nesta rodada é
+     * a pergunta, em
+     * {@link Disponibilidade#deveReativarNoExpediente(java.time.LocalDate)}.
+     */
+    public void marcar(Disponibilidade nova) {
+        if (nova == null) {
+            throw new RegraDoCatalogoViolada("disponibilidade nula");
+        }
+        if (modoDeControle == ModoDeControle.SEM_CONTROLE
+                && nova.estado() != EstadoDeDisponibilidade.DISPONIVEL) {
+            throw new RegraDoCatalogoViolada(
+                    "produto SEM_CONTROLE não acaba: " + nova.estado() + " não se aplica a "
+                            + nome);
+        }
+        this.disponibilidade = nova;
+    }
+
+    /**
+     * Marca uma opção. É o par do {@link #marcar(Disponibilidade)}, e existe
+     * porque <b>o que acaba quase sempre é a opção</b>: a calabresa acaba às
+     * 23h; "Pizza grande" não acaba.
+     *
+     * <p>Passa pela raiz porque a opção é entidade dentro do agregado. A
+     * {@link Opcao} e o {@link GrupoDeOpcoes} são valores imutáveis; quem os
+     * substitui na lista é este método, e ninguém mais.
+     *
+     * <p><b>Id desconhecido estoura.</b> Engolir em silêncio faria a reativação
+     * da G-C varrer opções, não achar nenhuma e reportar sucesso — um sabor
+     * esgotado para sempre, sem erro em lugar nenhum.
+     *
+     * <p>Marcar duas vezes o mesmo estado é inofensivo: a entrega do evento é
+     * pelo menos uma vez (ADR-043 §3), e a segunda passada não pode virar
+     * exceção dentro do agregado. Por isso o laço procura o id antes de montar
+     * a lista nova — comparar a lista nova com a antiga confundiria "marcou o
+     * mesmo estado" com "não achou".
+     *
+     * <p><b>Não recusa estado por {@code SEM_CONTROLE}</b>, ao contrário de
+     * {@link #marcar(Disponibilidade)}. A §6 do {@code catalogo.md} diz "sempre
+     * disponível" do <i>produto</i>; a §3 dá à opção os mesmos quatro estados
+     * sem exceção por modo. O gelo acaba mesmo quando a lata não acaba.
+     */
+    public void marcarOpcao(UUID grupoId, UUID opcaoId, Disponibilidade nova) {
+        if (nova == null) {
+            throw new RegraDoCatalogoViolada("disponibilidade nula");
+        }
+        for (int i = 0; i < gruposDeOpcoes.size(); i++) {
+            GrupoDeOpcoes g = gruposDeOpcoes.get(i);
+            if (!g.id().equals(grupoId)) {
+                continue;
+            }
+            if (g.opcoes().stream().noneMatch(o -> o.id().equals(opcaoId))) {
+                break;
+            }
+            List<Opcao> novas = g.opcoes().stream()
+                    .map(o -> o.id().equals(opcaoId) ? o.com(nova) : o)
+                    .toList();
+            gruposDeOpcoes.set(i, new GrupoDeOpcoes(
+                    g.id(), g.nome(), g.minEscolhas(), g.maxEscolhas(), g.ordem(), novas));
+            return;
+        }
+        throw new RegraDoCatalogoViolada("opção não encontrada neste produto");
+    }
+
+    // ── o preço mínimo (C2) ─────────────────────────────────────────────────
+
+    /**
+     * O menor preço unitário que uma combinação válida deste produto pode ter —
+     * a conta que a C2 exige.
+     *
+     * <p>Em cada grupo: ordene os acréscimos do menor para o maior, pegue os
+     * {@code minEscolhas} primeiros porque é obrigatório, e continue pegando
+     * enquanto o próximo for negativo e o teto permitir. Como a lista está
+     * ordenada, o primeiro não-negativo depois do mínimo encerra o grupo —
+     * dali para a frente só encarece.
+     *
+     * <p>Usa <b>todas</b> as opções, disponíveis ou não. "Combinação válida" é a
+     * que respeita mínimo, teto e pertinência — o {@code catalogo.md} §5 separa
+     * isso (400) de opção indisponível (409, "o estado do mundo mudou"). C2 é
+     * invariante do cadastro, e a opção esgotada hoje volta amanhã; um produto
+     * que amanhã sai de graça é defeito hoje.
+     *
+     * <p>A conta só existe porque o acréscimo pode ser negativo. Sem desconto no
+     * cardápio, C2 seria a mesma coisa que C1.
+     */
+    public Money precoMinimoPossivel() {
+        Money total = precoBase;
+        for (GrupoDeOpcoes g : gruposDeOpcoes) {
+            for (Money acrescimo : escolhasMaisBaratas(g)) {
+                total = total.mais(acrescimo);
+            }
+        }
+        return total;
+    }
+
+    private static List<Money> escolhasMaisBaratas(GrupoDeOpcoes grupo) {
+        List<Money> ordenados = grupo.opcoes().stream()
+                .map(Opcao::acrescimo)
+                .sorted()
+                .toList();
+        List<Money> escolhidos = new ArrayList<>();
+        for (Money acrescimo : ordenados) {
+            boolean obrigatorio = escolhidos.size() < grupo.minEscolhas();
+            boolean baixaOPreco = acrescimo.ehNegativo() && escolhidos.size() < grupo.maxEscolhas();
+            if (!obrigatorio && !baixaOPreco) {
+                break;
+            }
+            escolhidos.add(acrescimo);
+        }
+        return escolhidos;
+    }
+
+    // ── o vendável ──────────────────────────────────────────────────────────
+
+    /**
+     * A fórmula da §5 do {@code catalogo.md}, inteira e num lugar só.
+     *
+     * <pre>
+     * vendavel = estadoDePublicacao == ATIVO
+     *          ∧ disponibilidade ∈ {DISPONIVEL, ACABANDO}
+     *          ∧ ∀ grupo obrigatório: contar(opções disponíveis) ≥ minEscolhas
+     * </pre>
+     *
+     * <p>A terceira cláusula é a que ninguém lembra. Uma pizza
+     * {@code DISPONIVEL} num cardápio publicado, cujo grupo "Tamanho" —
+     * obrigatório, escolha uma — está com pequena, média e grande todas
+     * esgotadas, <b>não é vendável</b>: não existe pedido válido a montar. Sem
+     * esta cláusula o consumidor chega até o carrinho para descobrir lá que não
+     * dá, e a cotação recusa um pedido que o cardápio ofereceu.
+     */
+    public boolean vendavel() {
+        return estadoDePublicacao == EstadoDePublicacao.ATIVO
+                && disponibilidade.permiteVenda()
+                && gruposDeOpcoes.stream().allMatch(GrupoDeOpcoes::satisfazivelHoje);
+    }
+
+    // ── preço ───────────────────────────────────────────────────────────────
+
+    /**
+     * A metade de C1 que vale desde o rascunho: preço existe e não é negativo.
+     *
+     * <p>Preço negativo não é desconto — desconto é {@link Opcao#acrescimo()}
+     * negativo, dentro de um grupo, com nome. <b>Zero passa aqui e para na
+     * publicação</b>: C1 é {@code precoBase > 0}, e em rascunho o comerciante
+     * pode ainda não ter posto o preço. Um produto de graça só existe por
+     * descuido, e o descuido é pego quando alguém vai vê-lo.
+     */
+    private static void exigirPrecoValido(Money precoBase) {
+        if (precoBase == null) {
+            throw new RegraDoCatalogoViolada("produto sem preço base");
+        }
+        if (precoBase.ehNegativo()) {
+            throw new RegraDoCatalogoViolada(
+                    "C1: preço base negativo — desconto é acréscimo negativo em opção, não preço");
+        }
+    }
+
+    // ── acessores ───────────────────────────────────────────────────────────
+
+    public UUID getId() {
+        return id;
+    }
+
+    public UUID getEstabelecimentoId() {
+        return estabelecimentoId;
+    }
+
+    public UUID getCategoriaId() {
+        return categoriaId;
+    }
+
+    public String getNome() {
+        return nome;
+    }
+
+    public String getDescricao() {
+        return descricao;
+    }
+
+    public String getImagemRef() {
+        return imagemRef;
+    }
+
+    public Money getPrecoBase() {
+        return precoBase;
+    }
+
+    public int getOrdem() {
+        return ordem;
+    }
+
+    public EstadoDePublicacao getEstadoDePublicacao() {
+        return estadoDePublicacao;
+    }
+
+    public ModoDeControle getModoDeControle() {
+        return modoDeControle;
+    }
+
+    public Disponibilidade getDisponibilidade() {
+        return disponibilidade;
+    }
+
+    /** Cópia imutável: quem quiser mudar grupo passa pela raiz. */
+    public List<GrupoDeOpcoes> getGruposDeOpcoes() {
+        return List.copyOf(gruposDeOpcoes);
+    }
+
+    /**
+     * Descrição é opcional, e "em branco" é o mesmo que "não tem".
+     *
+     * <p>Sem esta normalização o cardápio ganharia produtos com descrição de
+     * três espaços, que a tela renderiza como um parágrafo vazio e nenhuma
+     * busca encontra.
+     */
+    public void descreverCom(String descricao) {
+        this.descricao = Textos.normalizarOpcional(descricao);
+    }
+
+    /** Mesma regra da descrição. A referência da imagem é opcional. */
+    public void ilustrarCom(String imagemRef) {
+        this.imagemRef = Textos.normalizarOpcional(imagemRef);
+    }
+}

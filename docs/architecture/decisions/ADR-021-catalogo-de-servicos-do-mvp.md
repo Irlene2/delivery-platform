@@ -1,6 +1,11 @@
 # ADR-021 — Catálogo de serviços do MVP
 
-**Status:** Aceita — 21/08/2026
+**Status:** Aceita — 21/08/2026 · **emendada em 24/09/2026**: o `merchant` não
+tem Redis, e a persistência além do banco principal passa a apontar a decisão
+que a pôs ali (ver "Emenda de 24/09/2026") · **emendada em 26/09/2026**: o `order` e o
+`delivery` também não têm Redis (ver "Emenda de 26/09/2026") · **emendada em
+27/09/2026**: o `catalog` perde o starter do Redis, e o motivo escrito dele continua de pé
+(ver "Emenda de 27/09/2026")
 **Relacionada:** ADR-004 (um estabelecimento por pedido), ADR-020 (taxa por área), ADR-022 (remuneração)
 **Fonte:** Resposta ao Adendo Crítico · Arquitetura v1.1, §5.3
 **Premissas do PRD que sustentam esta decisão:** P1, P2, P3, P5, P6
@@ -27,20 +32,24 @@ verdade concorrente, e ela vence — porque o código é o que a pessoa abre.
 
 Oito serviços de negócio e um gateway.
 
-| Serviço | Porta | Persistência | O que é dele |
-|---|---:|---|---|
-| `gateway` | 8080 | — | Roteamento, CORS, limite de taxa |
-| `identity` | 8081 | PostgreSQL | Conta, autenticação, emissão de JWT (ADR-015) |
-| `merchant` | 8082 | PostgreSQL + Redis | Estabelecimento, equipe, permissões, áreas e taxas, vínculo de entregador |
-| `catalog` | 8083 | MongoDB + Redis | Produto, opções, disponibilidade qualitativa, cotação |
-| `settlement` | 8084 | PostgreSQL | Jornada, custódia, divergência, extrato, fechamento |
-| `order` | 8085 | PostgreSQL + Redis | Pedido, valores, liquidação registrada, Saga |
-| `payment` | 8086 | PostgreSQL | Fronteira com o PSP: Pix com `txid`, webhook |
-| `delivery` | 8087 | PostgreSQL + Redis | Atribuição, rodízio, posição do entregador, retorno |
-| `conversation` | 8088 | MongoDB | Canal, conversa, interpretação. Absorve a notificação ao cliente |
+| Serviço | Porta | Persistência | Por quê | O que é dele |
+|---|---:|---|---|---|
+| `gateway` | 8080 | — | | Roteamento, CORS, limite de taxa |
+| `identity` | 8081 | PostgreSQL | | Conta, autenticação, emissão de JWT (ADR-015) |
+| `merchant` | 8082 | PostgreSQL | | Estabelecimento, equipe, permissões, áreas e taxas, vínculo de entregador |
+| `catalog` | 8083 | MongoDB | Redis: **motivo escrito** — cache do cardápio público, ADR-005 e `catalogo.md` §7. **Starter removido em 27/09/2026 (G-B1)**: o leitor desse cache é do marco 7. **Gatilho:** volta com o primeiro leitor, com contêiner nos testes | Produto, opções, disponibilidade qualitativa, cotação |
+| `settlement` | 8084 | PostgreSQL | | Jornada, custódia, divergência, extrato, fechamento |
+| `order` | 8085 | PostgreSQL | | Pedido, valores, liquidação registrada, Saga |
+| `payment` | 8086 | PostgreSQL | | Fronteira com o PSP: Pix com `txid`, webhook |
+| `delivery` | 8087 | PostgreSQL | | Atribuição, rodízio, posição do entregador, retorno |
+| `conversation` | 8088 | MongoDB | | Canal, conversa, interpretação. Absorve a notificação ao cliente |
 
 Seis bancos PostgreSQL e dois MongoDB. **Nenhum serviço acessa o banco de
 outro.**
+
+**Regra da coluna "Por quê":** toda linha que declare persistência além do banco
+principal aponta a decisão que a pôs ali. Assim, apagar a razão deixa uma
+referência pendurada, que alguém vê, em vez de uma célula órfã, que ninguém vê.
 
 As portas dos serviços que permaneceram **não mudaram**. `settlement` ocupa a
 vaga do `inventory` e `conversation` a do `geolocation`, o que mantém o diff
@@ -111,6 +120,114 @@ invariante e dá ao `payment` um recorte claro em vez de um espelho do pedido.
 
 **Resolvido pela ADR-023** (23/08/2026): o `order` é dono do registro de
 liquidação, o `payment` é a fronteira com o PSP.
+
+## Emenda de 24/09/2026 — o `merchant` não tem Redis
+
+**Por quê.** Esta ADR listava o `merchant` como "PostgreSQL + Redis" sem dizer
+para quê. O único motivo escrito no repositório estava no `estabelecimento.md`
+v1.1 (22/08): o cache de autorização, "TTL curto no Redis, chave
+`usuarioId:estabelecimentoId`". Um dia depois a ADR-011 pôs esse cache em
+processo, com Caffeine, e rejeitou por escrito a "cache compartilhada no Redis,
+escrita pelo `merchant-service`". O commit que emendou os documentos conforme a
+ADR-011 (`751a3ac`) mexeu nesta ADR e esqueceu a coluna. A ADR-043 depois situou
+o cache no serviço que pergunta. Desde então, nenhum documento e nenhuma linha de
+código usam Redis no `merchant`.
+
+**O que a célula órfã custou.** O starter chegava pelo
+`delivery.redis-conventions`, e o indicador de saúde que ele cria fazia o
+`/actuator/health` responder `503` sem que ninguém soubesse explicar a
+dependência. A C-A desligou o indicador, a C-B precisou justificar a flag, e só
+lendo a história se achou que o motivo já tinha morrido. É isso que a coluna
+"Por quê" existe para impedir.
+
+**O que muda.** O `merchant` perde o `delivery.redis-conventions` no build, o
+bloco `spring.data.redis` e a flag `management.health.redis.enabled: false` no
+`application.yml`, e a variável `REDIS_URL` e o `depends_on: redis` no
+`docker-compose.yml`. O README acompanha a tabela. O health passa a valer sem
+flag nenhuma.
+
+**Pendência que esta emenda não fechou — fechada em 26/09/2026.** O Redis do `order` e do `delivery` também
+não tem motivo escrito em lugar nenhum: o `pedido.md` e o `entrega.md` nunca o
+citaram, e os caches dos dois são em processo (ADR-033). Os dois vieram do commit
+inicial, da arquitetura v1.0 de marketplace. Não são tocados agora. **Gatilho
+escrito:** a mesma conferência que tirou o Redis do `merchant` — procurar o motivo
+escrito, seguir a história até onde ele morreu ou até onde ele vive —, aplicada a
+cada um dos dois.
+
+## Emenda de 26/09/2026 — o `order` e o `delivery` não têm Redis
+
+**Por quê.** A conferência que o gatilho acima pedia foi feita, e nos dois casos
+o motivo não morreu depois de escrito: **nunca foi escrito para eles**. Os dois
+`build.gradle.kts` têm um único commit, o inicial (`c96be71`, 21/08/2026), cujo
+README já dava "PostgreSQL + Redis" a cinco serviços sem dizer para quê. Nenhum
+documento de domínio cita Redis: o `pedido.md` e o `entrega.md` guardam cache
+em processo (ADR-033) e idempotência em `processed_messages`, e a
+`PosicaoDoEntregador` do `entrega.md` é situação — `NO_ESTABELECIMENTO`,
+`EM_ROTA` —, não coordenada. Nenhuma linha de código usa Redis nos dois.
+
+A única justificativa que existe está na arquitetura v1.0
+(`docs/referencia/Arquitetura-Plataforma-Delivery.pdf`, §6.2), e é transversal,
+sem nomear serviço:
+
+> Redis · transversal · Carrinhos com expiração, última posição e proximidade,
+> chaves de idempotência, limite de taxa e cache de decisão de permissão
+
+Os cinco usos morreram, cada um numa decisão própria:
+
+| Uso da v1.0 | Onde morreu |
+|---|---|
+| Carrinhos com expiração | ADR-006 — não existe carrinho; o rascunho é campo da `Conversa`, no MongoDB |
+| Última posição e proximidade | ADR-005 (sem objeto) e ADR-020 — taxa por área nomeada, sem geoprocessamento; ADR-013 §4 — coordenada exata nunca é gravada |
+| Chaves de idempotência | Invariante 7 do `CLAUDE.md` e ADR-026 — `processed_messages`, no banco do consumidor, na transação do efeito |
+| Limite de taxa | ADR-012 emendada — fora do marco 1, e no gateway; ADR-044 §6 — o gateway não tem Redis |
+| Cache de decisão de permissão | ADR-011 — em processo, "Por que não Redis"; ADR-043 — no serviço que pergunta |
+
+**O que muda.** O `order` e o `delivery` perdem o `delivery.redis-conventions`
+no build e o bloco `spring.data.redis` no `application.yml`; o
+`docker-compose.yml` perde o `REDIS_URL` e o `depends_on: redis` dos dois. O
+README acompanha a tabela. O cabeçalho do `delivery.redis-conventions` deixa de
+prometer "cache, TTL, idempotência, GEO e presença" e passa a dizer o único uso
+que sobreviveu: o cache do cardápio público do `catalog` (ADR-005, "O Redis
+fica, para cache"; `catalogo.md` §7). O contêiner `redis` fica no compose,
+porque o `catalog` o declara.
+
+**Com isso, a coluna "Por quê" não tem mais célula sem motivo.** A única linha
+com persistência além do banco principal é a do `catalog`, e ela aponta o
+motivo.
+
+### Emenda que esta decisão provoca
+
+O documento de arquitetura **v2** (`docs/referencia/ArquiteturaPlataformaDeliveryv2.pdf`)
+e o resumo executivo (`ArquiteturaResumoExecutivo.pdf`) desenham `order` e
+`delivery` como "PostgreSQL · Redis". **Ficam desatualizados nesse ponto**: são
+publicados e não se reescrevem. Quem ler os dois lê esta emenda por cima — a
+v2 também desenha o `merchant` com Redis, que a emenda de 24/09 tirou.
+
+## Emenda de 27/09/2026 — o Redis sai do `catalog`, e este caso é diferente dos outros três
+
+**O que muda.** O `catalog` perde o `delivery.redis-conventions` no build, o
+bloco `spring.data.redis` no `application.yml`, e o `REDIS_URL` e o
+`depends_on: redis` no `docker-compose.yml`. O README acompanha a tabela.
+
+> **A diferença deste caso para os outros três.** No `merchant`, no `order` e no
+> `delivery` o Redis saiu porque **não havia motivo escrito** — a célula dizia
+> "PostgreSQL + Redis" e mais nada. Aqui há: a §7 do `catalogo.md` manda cachear
+> o cardápio público. O motivo continua de pé e a decisão continua tomada; o que
+> sai é a **dependência**, que é outra coisa. Decisão mora em documento;
+> dependência mora no `build.gradle.kts`, e dependência sem uso vira indicador
+> de saúde mentindo — foi assim que o `/actuator/health` do `merchant` passou a
+> responder 503 e alguém desligou o indicador, que é a pior saída possível.
+
+**Gatilho:** o starter volta com o primeiro leitor do cardápio em cache, no
+marco 7 — e volta com contêiner nos testes de integração, não com indicador
+desligado.
+
+**O que esta emenda deixa em aberto.** A emenda de 26/09 manteve o contêiner
+`redis` no compose "porque o `catalog` o declara". Isso deixou de ser verdade:
+**nenhum serviço usa o Redis hoje**, e o contêiner sobe no perfil `core` sem
+consumidor. Ele não foi tocado nesta rodada, e a decisão — tirá-lo junto com a
+variável `REDIS_PASSWORD` e a linha do perfil `core` no README, ou mantê-lo até
+o marco 7 — fica registrada aqui para não se perder.
 
 ## Alternativas consideradas
 

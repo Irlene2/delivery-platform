@@ -1,6 +1,7 @@
 # ADR-026 — Fila morta, retentativa e reprocessamento
 
-**Status:** Aceita — 24/08/2026
+**Status:** Aceita — 24/08/2026 · **emendada em 29/09/2026**: consumidor de invalidação
+não tem retentativa nem fila morta — ele esquece o cache inteiro
 **Fecha a consequência assumida da:** ADR-010 (saga do pedido)
 **Relacionada:** ADR-002 (banco por serviço), ADR-023 (fronteira com o PSP)
 **Invariante do `CLAUDE.md`:** 7 (quem publica precisa de outbox, quem consome precisa de `processed_messages`)
@@ -185,3 +186,44 @@ O documento de arquitetura v2 (`docs/referencia/`), §18.2, lista **fila morta e
 procedimento operacional** como nomeado e não construído. Passa a estar decidido
 aqui e detalhado em `docs/operacao/mensagem-na-fila-morta.md`. O que permanece
 sem desenho é a parada do consumidor por falha em série — ver a pendência acima.
+
+## Emenda de 29/09/2026 — o primeiro consumidor não segue esta política, e por quê
+
+Esta ADR previa-se necessária *"antes do marco 3 — é quando o primeiro consumidor
+de evento é escrito"*. Ele chegou antes, na G-B4, e **não usa nada do que está
+aqui**.
+
+O consumidor do `VinculoAlteradoV1` invalida um cache em memória. A política
+desta ADR não serve a ele por três motivos:
+
+1. a fila dele é **exclusiva e temporária** (ADR-011) — uma fila morta ligada a
+   ela morre junto, e reprocessar para uma instância que já não existe não é
+   reprocessar;
+2. reter uma mensagem por 21 segundos é reter uma **revogação de acesso** por 21
+   segundos;
+3. há resposta melhor do que repetir: **esvaziar o cache inteiro**. Se não se
+   consegue remover uma entrada, remover todas custa algumas consultas e não
+   deixa ninguém com acesso que já foi retirado.
+
+**Falhar para o lado seguro, num cache de autorização, é esquecer.** A mensagem
+é sempre confirmada; devolvê-la repetiria a mesma falha em laço enquanto o cache
+já está vazio e correto.
+
+A política desta ADR continua valendo, inteira, para **todo consumidor que
+escreva em banco** — que são todos os outros previstos. Ver a ADR-048 §3.
+
+### E um número desta ADR nunca foi confrontado com a configuração
+
+O `application.yml` de sete serviços declara `initial-interval: 2s` e
+`max-attempts: 5`. Esta ADR decide 1 s, 4 s, 16 s e quatro tentativas. **Os dois
+descrevem retentativa de consumo**, e nenhum dos dois nunca rodou — não havia
+consumidor.
+
+Há ainda uma armadilha no meio: o `max-interval` padrão do Spring Boot é **10 s**,
+então mesmo implementando esta ADR a espera de 16 s viraria 10 sem ninguém
+declarar nada.
+
+**Gatilho escrito:** o primeiro consumidor que escreva em banco. É ele que
+precisa desta política de verdade, e é aí que a divergência se resolve — não
+antes, porque resolvê-la agora seria escolher entre dois números que nenhum
+código usa.

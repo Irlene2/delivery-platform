@@ -1,6 +1,6 @@
 # Domínio — Estabelecimento, equipe e áreas
 
-**Serviço:** `merchant-service` · **Status:** vigente (v1.1, 21/08/2026)
+**Serviço:** `merchant-service` · **Status:** vigente (v1.4, 14/09/2026)
 **Fontes:** PRD §5 (P2, P3, P5), PRD §6 E1, E2 e E6.1, ADR-004, ADR-011, ADR-012, ADR-020, ADR-022
 **Invariantes do `CLAUDE.md` que este documento detalha:** 2, 8, 9
 
@@ -18,8 +18,8 @@ que é lido em que frequência.
 
 ```
 Estabelecimento  (raiz)
-├── identificacao       id, nome, documento, telefone, endereco, fusoHorario
-├── operacao            tipoDeOperacao, modalidadesAceitas, metodosPorModalidade,
+├── identificacao       id, nome, documento, telefone, enderecoTextual, bairro, fusoHorario
+├── operacao            tipoDeOperacao, metodosPorModalidade,
 │                       descontoDeRetirada, pedidoMinimoPorModalidade
 ├── politicaDeTroco     fundoMaximoDeTroco, aceitaPedidoSemTrocoDisponivel
 ├── disponibilidade     horarioDeFuncionamento, pausa
@@ -30,13 +30,21 @@ Membro  (raiz)          vínculo usuário ↔ estabelecimento
 ├── usuarioId, estabelecimentoId
 ├── papel               ADMINISTRADOR | COLABORADOR
 ├── permissoes    [n]   concedidas item a item
-└── estado              CONVIDADO | ATIVO | SUSPENSO | REMOVIDO
+└── estado              ATIVO | SUSPENSO | REMOVIDO
 
 VinculoEntregador  (raiz)
 ├── entregadorId, estabelecimentoId
 ├── modeloDeRemuneracao, valorDiaria, comissaoPorEntrega, taxaFixaPorEntrega
 └── ativo
 ```
+
+**O endereço da loja é texto, não estrutura.** `enderecoTextual` e `bairro`, e
+nada mais — é a representação que a ADR-013 escolheu para o sistema inteiro,
+"endereço textual e nome de bairro" no lugar de coordenada. Nenhuma regra deste
+serviço lê pedaço de endereço: as faixas de CEP da ADR-020 casam com o endereço
+do **cliente**, e vivem na `AreaDeEntrega`. O bairro fica separado porque é a
+unidade do modelo de entrega, e o da própria loja é o ponto de partida natural
+do cadastro das áreas.
 
 **Por que `AreaDeEntrega` fica dentro do `Estabelecimento`.** São dezenas de
 linhas, editadas juntas na mesma tela, e a invariante de não-sobreposição de CEP
@@ -52,6 +60,18 @@ sem que o estabelecimento mude.
 **Por que `VinculoEntregador` é raiz própria.** Mesmo motivo do `Membro`, mais
 um: a jornada congela um `vinculoSnapshot` na abertura (ADR-022), e congelar
 exige uma coisa com identidade própria e histórico próprio.
+
+**Não há `CONVIDADO`, e a ausência é decisão.** A pendência do convite mora no
+`Convite`, que é raiz própria e sabe expirar — e o aceite cria o `Membro` já
+`ATIVO`. Um estado `CONVIDADO` aqui seria um segundo lugar dizendo a mesma
+coisa, que teria de concordar com `Convite.PENDENTE` para sempre. `REMOVIDO`
+não apaga a linha: o vínculo é registro de quem teve acesso à loja e quando, e
+o `UNIQUE (usuario_id, estabelecimento_id)` faz a recontratação reusar o mesmo
+vínculo. Quem **sai** e quem **é removido** terminam no mesmo `REMOVIDO`, e não
+em um quarto estado que todo filtro do sistema teria de tratar para sempre. A
+diferença entre as duas coisas **não está no evento**, e não precisa estar: o
+`VinculoAlteradoV1` carrega estado, não motivo, e quem o consome só precisa
+saber que o vínculo mudou. Quem quiser a diferença a lê no registro da operação.
 
 ---
 
@@ -122,7 +142,31 @@ As três regras de H2.2, como invariantes verificáveis:
 |---|---|---|
 | A1 | Quem tem `GERENCIAR_EQUIPE` administra `COLABORADOR`, nunca `ADMINISTRADOR` | Convite, alteração, suspensão, remoção |
 | A2 | Ninguém concede permissão que não possui — `concedidas ⊆ próprias` | Convite **e** aceite |
-| A3 | Um estabelecimento sempre mantém ≥ 1 `ADMINISTRADOR` `ATIVO` | Remoção, suspensão, rebaixamento |
+| A3 | Um estabelecimento sempre mantém ≥ 1 `ADMINISTRADOR` `ATIVO` | Saída da própria loja — nas demais, decorre de A1 |
+
+**A1, lida por inteiro.** "Nunca alcança `ADMINISTRADOR`" é sobre a
+**permissão**, não sobre quem a tem: `GERENCIAR_EQUIPE` sozinha não alcança um
+administrador, e `GERENCIAR_EQUIPE` mais o papel de administrador, sim. Ao pé
+da letra, a frase tornaria todo administrador impossível de remover por quem
+quer que fosse — e "o administrador saiu da empresa" é o caso (c) da ADR-029,
+que existe porque isso acontece. O gerente que só tem a permissão continua
+barrado, que é a escalada que H2.2 nomeia.
+
+**A3 tem dois regimes.** Nas seis operações administrativas ela *decorre* de
+A1: mexer num administrador exige ser um administrador ativo, ninguém administra
+o próprio vínculo, logo todo alvo administrador tem pelo menos um par e a
+contagem nunca chega a zero. A demonstração está em
+`Equipe.administradoresAtivos()`.
+
+Em **sair da própria loja** ela é *verificada*, e é o único lugar do sistema que
+a verifica — porque é a única operação sem autor separado do alvo, e portanto a
+única onde a premissa "ninguém se administra" não vale. Quem é o último
+administrador ativo promove alguém antes de sair.
+
+Nos dois regimes, a garantia depende, sob concorrência, do **cadeado na linha do
+estabelecimento** que `MembroRepositorio.equipeParaAlteracao` toma antes de
+contar: sem ele, duas saídas simultâneas passam pela checagem — as duas — e a
+loja fica órfã.
 
 A2 é verificada **duas vezes**, e a segunda é a que se esquece: entre o convite e
 o aceite podem passar dias, e o convidante pode ter perdido a permissão que
@@ -153,12 +197,86 @@ Convite
 ├── permissoesOferecidas  [n]
 ├── convidadoPor          usuário
 ├── expiraEm              Instant
-└── estado                PENDENTE | ACEITO | EXPIRADO | CANCELADO
+└── estado                PENDENTE | ACEITO | CANCELADO
 ```
 
 O aceite cria o `Membro` com `estado = ATIVO`. Convite expirado não aceita.
 Convite nunca concede `papel = ADMINISTRADOR` — promoção é ato separado, feito
 por um administrador existente, sobre um membro que já aceitou.
+
+**Não há `EXPIRADO`, e é a mesma decisão que tirou o `CONVIDADO` do `Membro`.**
+Expirar não é ato de ninguém: é o relógio passando de `expiraEm`. Guardá-lo como
+estado exigiria uma rotina varrendo a tabela, e essa rotina seria ou inexistente
+— peça que nunca roda — ou um segundo lugar que precisa concordar com `expiraEm`
+para sempre. O domínio deriva: pendente é `estado = PENDENTE` **e** `agora <
+expiraEm`. `CANCELADO` fica, porque cancelar é ato de alguém, num instante que
+se registra.
+
+**O token autoriza; o telefone endereça.** Quem aceita é quem apresenta o token
+— 32 bytes, uso único, sete dias. Conferir que ele é o dono daquele telefone
+exigiria perguntar ao `identity-service` qual é o telefone de um `usuarioId`, e
+essa porta não existe (ADR-001). Por isso "convidar quem já é da equipe" só é
+detectado no aceite, que é onde o `usuarioId` aparece. O telefone fica guardado
+como endereço de entrega e registro de para quem o convite foi mandado.
+
+**Quem volta pelo convite volta `COLABORADOR`.** O aceite de quem já teve
+vínculo reativa o mesmo registro e o rebaixa — senão um gerente restauraria um
+`ADMINISTRADOR` removido sem nenhum administrador na operação, que é escalada
+com aparência de gentileza.
+
+### As minhas lojas
+
+Uma pessoa pode ter vínculo com mais de uma loja, e o sistema nunca soube
+responder a pergunta mais simples do produto: **de quais lojas eu faço parte?**
+
+`GET /api/v1/me/estabelecimentos` responde (G-B5, 30/09/2026), e devolve, por
+loja: o identificador, o **nome**, o **papel** e as **permissões gravadas no
+vínculo**.
+
+**Só vínculo ATIVO aparece.** Quem foi suspenso ou removido não vê a loja no
+seletor. Isso não é cosmético: sem o filtro, uma pessoa afastada abriria o
+painel da loja e só descobriria o afastamento no 403 da primeira ação — e a
+mensagem que ela leria seria "você não pode fazer isso", quando a verdadeira é
+"você não está mais aqui". O `MembroRepositorio.buscarPorUsuario` devolve
+qualquer estado, como os vizinhos; quem filtra é o caso de uso.
+
+**Quem não tem vínculo nenhum recebe `200` e lista vazia.** É o estado de todo
+mundo no instante seguinte ao cadastro, e é resposta, não ausência de recurso.
+
+#### Por que papel e permissões vêm juntos
+
+O front precisa de duas coisas ao entrar: qual loja abrir, e que itens mostrar
+no menu. As duas saem do mesmo vínculo. Separá-las em duas rotas criaria duas
+verdades sobre o mesmo vínculo, obrigadas a concordar para sempre.
+
+As permissões são **as gravadas**, não as deduzidas do papel — o que esta
+seção já diz: *"`papel` não é uma lista de permissões"*.
+
+#### Por que esta rota não exige permissão
+
+Todas as outras rotas de negócio começam com
+`/api/v1/merchants/{estabelecimentoId}/…` e confrontam esse identificador com o
+usuário autenticado. **Esta é a rota que responde qual identificador usar** —
+ela não recebe nenhum, e por isso mora sob `/me`.
+
+Exigir permissão numa loja para descobrir de quais lojas se faz parte seria
+circular. O que a torna segura é não haver entrada: o usuário sai do `sub` do
+token, pelo `SujeitoDoToken` (ADR-038), e de mais lugar nenhum. Um `sub` que
+não é `UUID` é 403, como nas outras rotas.
+
+#### O que ela não responde
+
+Se a loja está **aberta agora**. A porta que compõe horário, pausa e dia
+operacional para quem pergunta — a `OperacaoDoEstabelecimentoPort` da §3 —
+ainda não existe em código. Um valor calculado por engano aqui seria o segundo
+lugar a errar na virada das 04:00, antes de o primeiro existir.
+
+#### E o gêmeo interno
+
+`/internal/…/contexto-de-acesso` responde sobre **uma** loja e existe para
+serviço perguntar a serviço com o token encaminhado (ADR-045). Esta responde
+sobre **todas** e existe para o navegador. Duas superfícies, dois donos,
+nenhuma duplicada.
 
 ---
 
@@ -177,6 +295,28 @@ public interface AutorizacaoComercialPort {
 record ContextoDeAcesso(UUID usuarioId, UUID estabelecimentoId,
                         Papel papel, Set<Permissao> permissoes) {}
 ```
+
+> **Emenda — 26/09/2026 (ADR-045).** A credencial entre serviços é o token de
+> quem pediu, encaminhado pelo consumidor. O `usuarioId` deixa de ser
+> parâmetro — ele vem provado no token, não afirmado por quem chama — e a
+> assinatura passa a `contexto(UUID estabelecimentoId)`. O `ContextoDeAcesso`
+> continua devolvendo o `usuarioId`, como resposta. A forma final nasce com o
+> primeiro consumidor, o `catalog`, no marco 2.
+
+> **28/09/2026 — o endereço do produtor.** O `merchant` expõe
+> `GET /internal/merchants/{estabelecimentoId}/me/contexto-de-acesso`, que
+> devolve os quatro campos do record acima em JSON e **403 para as quatro
+> recusas**. Só vínculo `ATIVO` recebe resposta — suspenso e removido respondem
+> como ausência.
+>
+> O record fica onde está desenhado, do lado de quem pergunta. No `merchant` ele
+> é uma **projeção** do `Membro`, não um segundo conceito de domínio: sem
+> `membroId`, sem `criadoEm` e sem `estado` — este último porque seria a
+> constante `ATIVO` em toda resposta que existe.
+>
+> **As permissões são as gravadas.** Nenhuma dedução a partir do papel, pelo
+> motivo que a §2 já dá: papel não é lista de permissões, e o `promover` muda só
+> o papel.
 
 | Aspecto | Regra | Por quê |
 |---|---|---|
@@ -220,17 +360,42 @@ vira acesso irrestrito aos dados de todas as lojas. Mitigação é disponibilida
 (réplicas, cache com TTL que sobrevive a queda curta), não relaxamento da regra.
 Os detalhes de TTL, invalidação e janela de tolerância estão na **ADR-011**.
 
-### As três portas, e a política de cache de cada uma
+### As quatro portas, e a política de cache de cada uma
 
 | Porta | Cache | Por quê |
 |---|---|---|
 | `AutorizacaoComercialPort` | 60 s positivo · 10 s negativo | ADR-011 |
 | `OperacaoDoEstabelecimentoPort` | idem | Resposta usada e descartada |
 | `DeliveryQuotePort` (ADR-019, ADR-020) | **nenhum** | A resposta é **congelada** no pedido como `taxaSnapshot` — cache aqui grava dado velho para sempre. ADR-034 |
+| `GET /internal/…/expediente-corrente` (ADR-049) — a porta do `catalog` que a chama nasce na G-C2 | **nenhum** | A resposta **muda de valor quando a faixa fecha** — às 01h59 a pizzaria aberta responde terça; às 02h01, fechada, responde quarta. Com cache, o que se marca logo depois de fechar carregaria o expediente que acabou de terminar, e voltaria ao cardápio na abertura seguinte |
 
 **Porta sem essa coluna preenchida não está documentada.** O padrão das três
 decisões anteriores é "consulte e guarde"; a terceira linha existe para que
 ninguém o aplique por analogia onde ele corrompe.
+
+### O expediente corrente, e por que ele não tem cache
+
+`GET /internal/merchants/{estabelecimentoId}/expediente-corrente` (G-C1,
+30/09/2026) devolve o dia operacional a gravar como `expedienteDeReferencia`
+numa marcação de disponibilidade. Quem pergunta é o `catalog`, e ele pergunta
+porque **não pode calcular**: o cálculo tem um dono só (ADR-046 §6).
+
+A resposta é o expediente **em curso** quando a loja está dentro do horário, e o
+da **próxima abertura** quando ela está fechada — ADR-049. `409` quando a loja
+não abre por horário.
+
+**Sem cache**, e é a quarta linha da tabela acima com motivo próprio: a resposta
+**muda de valor quando a faixa fecha**. Às 01h59 a pizzaria de 18h–02h, aberta,
+responde terça; às 02h01, fechada, responde quarta — a próxima abertura. Sessenta
+segundos de cache carimbariam com terça o que se marca ao limpar o balcão, e o
+item voltaria ao cardápio na abertura de quarta, que é o erro da madrugada que a
+ADR-049 existe para evitar. É o mesmo raciocínio
+da `DeliveryQuotePort`, por outro caminho: lá o dano é gravar um valor velho
+para sempre; aqui também.
+
+Exige **vínculo ativo** e nenhuma permissão específica: quem chama já confere a
+permissão do ato que vai praticar. Sem vínculo é 403, inclusive quando a loja não
+existe — a diferença entre 403 e 404 enumeraria lojas.
 
 ### Identificador na URL nunca é confiável
 
@@ -245,6 +410,19 @@ estabelecimentos.
 
 Nenhuma consulta filtra por `estabelecimentoId` vindo do corpo da requisição. O
 filtro usa o identificador **já validado** contra o vínculo.
+
+**Como isso ficou no código (C-A).** O `estabelecimentoId` da URL entra no caso
+de uso junto com o `sub` do token, e a primeira coisa que acontece é a busca do
+vínculo pelo **par** (usuário, loja). Quem não tem vínculo e quem pediu uma loja
+inexistente caem na mesma consulta vazia, e recebem o mesmo 403 com o mesmo
+corpo — há um teste que compara os dois corpos.
+
+**A porta pela qual os outros serviços perguntam ainda não existe**, e é
+deliberado: nenhum dos seis tem código, e uma porta sem consumidor é uma peça que
+nunca roda com cara de pronta. Dentro do `merchant`, autorização é consulta ao
+próprio repositório. O cache de 60 s da ADR-011 acompanha a porta — e, antes
+dela, o `VinculoAlteradoV1` que o invalida: cache sem invalidação é permissão
+revogada continuando a valer, em silêncio.
 
 ---
 
@@ -279,8 +457,16 @@ No fechamento do pedido, `metodoDeclarado` tem que pertencer ao conjunto da
 matriz descreve o que a loja aceita hoje, e um pedido antigo já registrou o que
 foi de fato declarado e liquidado.
 
-`modalidadesAceitas` vazio é inválido — uma loja que não entrega nem deixa
-retirar não opera.
+**Não existe campo `modalidadesAceitas`.** A loja aceita a modalidade se há
+entrada para ela no mapa: `modalidadesAceitas` é `metodosPorModalidade.keySet()`,
+derivado. Os dois campos existiam lado a lado, e as chaves de um eram os
+elementos do outro — dois campos que precisam ser iguais são uma invariante a
+testar para sempre e a violar por descuido, que é o mesmo argumento com que a
+emenda de 26/08 colapsou `deliveryFee` em `taxaSnapshot`.
+
+Mapa vazio é inválido: uma loja que não entrega nem deixa retirar não opera. E
+modalidade com conjunto de métodos vazio também é — aceitar entrega sem aceitar
+forma nenhuma de pagar é pedido que entra e não fecha.
 
 ### Pedido mínimo
 
@@ -294,6 +480,12 @@ RETIRADA → R$ 0,00        zero = sem mínimo
 Matriz pelo mesmo motivo dos métodos de pagamento: mínimo para entrega e nenhum
 para retirada é a configuração comum, e o valor único não a expressa. **Zero é
 valor válido e significa "sem mínimo"** — não é ausência de configuração.
+
+E **a ausência não é permitida**: toda modalidade aceita tem entrada, e nenhuma
+modalidade não aceita tem. Sem a primeira metade, ausência e zero se confundem —
+o erro que M11 nomeia do outro lado, em "ausência de área ≠ taxa zero". Sem a
+segunda, sobra configuração morta que vira ativa sozinha no dia em que alguém
+aceitar a modalidade.
 
 **O mínimo é sobre `subtotalDosItens`, nunca sobre o `total`** (ADR-028). Sobre o
 total, a taxa de entrega ajudaria a atingi-lo: um mínimo de R$ 25 com taxa de
@@ -357,6 +549,45 @@ estende ao dia seguinte. Terça 18:00–02:00 significa "de terça às 18h até
 quarta às 2h" — e às 00:30 de quarta a loja está aberta **pela faixa de terça**.
 Testar isto com um pedido à 01:00 é obrigatório.
 
+Quatro detalhes que a implementação precisou fixar e este documento não dizia:
+
+- **Início inclusivo, fim exclusivo.** Às 18:00 em ponto abriu; às 02:00 em
+  ponto já fechou. Sem isso, 18:00–02:00 e 02:00–06:00 se sobreporiam num
+  minuto, e o pedido daquele minuto passaria por duas regras.
+- **Faixa com `inicio == fim` é recusada** — não há como saber se é turno vazio
+  ou vinte e quatro horas.
+- **Horário vazio é válido** e significa "nunca abre por horário". É o estado de
+  uma loja recém-cadastrada; o aceite manual de T02 continua sendo o caminho
+  para atender assim mesmo.
+- **Faixas que se sobrepõem são permitidas** — "aberta" é um OU sobre as faixas,
+  então sobrepor é redundância, não contradição. Faixa **idêntica** repetida no
+  mesmo dia é recusada, porque não significa nada.
+
+### Quem percebe que o expediente abriu
+
+Nada nesta seção é um ato: `abertaEm(instante)` é calculado na leitura, e é
+assim de propósito — *o registro diz o que foi feito; o cálculo diz o que vale
+agora*.
+
+Só que o `catalogo.md` §3 exige um evento na transição fechado → aberto, e
+transição só existe para quem observa. Desde a **ADR-046** existe um
+observador: uma varredura de minuto em minuto pergunta quais lojas estão
+**dentro do horário** e registra, numa tabela cuja chave primária é
+`(estabelecimento, expediente)`, que a abertura daquele expediente foi
+publicada. O expediente é o dia operacional do **início da faixa** que contém o
+instante — um turno 22h–06h é um expediente só, mesmo atravessando as 04:00. Inseriu linha, grava o `ExpedienteAlteradoV1` no outbox na mesma
+transação; não inseriu, já estava publicada.
+
+**A tabela não guarda o estado da loja** — guarda o que já foi publicado. A
+regra do parágrafo acima continua inteira.
+
+**A varredura pergunta `dentroDoHorario`, não `estaAberta`.** Uma loja pausada
+no instante em que entra no horário abre o expediente assim mesmo: pausa
+acontece *dentro* de um expediente e não abre outro. Se a abertura dependesse
+de `estaAberta`, a loja que estivesse pausada às 18h nunca publicaria a abertura
+daquele dia — quando a pausa vencesse já estaria aberta, sem transição para
+observar — e os produtos ficariam esgotados o dia inteiro.
+
 ### O dia operacional
 
 ```
@@ -393,6 +624,12 @@ Pausar não cancela nada. A cozinha atolou, param de entrar pedidos novos, e os
 trinta que já estão na fila seguem seu curso. Um sistema que cancelasse ao
 pausar seria abandonado no primeiro sábado.
 
+**Motivo é obrigatório quando a pausa está ativa**, e **pausa vencida não precisa
+de faxina**: uma pausa com `pausadoAte` no passado continua registrada como o
+comerciante a deixou, e a pergunta "está pausada agora?" devolve não. O registro
+diz o que foi feito; o cálculo diz o que vale agora — nenhuma rotina passa
+limpando, e nenhum campo fica mentindo.
+
 **Aceite manual fora do horário.** T02 em `pedido.md` permite aceitar com a loja
 fechada, desde que seja ato explícito de alguém com `ALTERAR_STATUS`. O cliente
 que ligou às 2h05 e o dono resolveu atender não deve esbarrar numa regra.
@@ -419,6 +656,13 @@ AreaDeEntrega
 | E3 | `taxa ≥ 0` | — |
 | E4 | Ausência de área ≠ `taxa = 0` | Entregar de graça onde não se entrega |
 
+**M9 e M10 não têm o mesmo escopo, e a diferença é o modo de falha de cada uma.**
+M9 vale entre **todas** as áreas, ativas ou não: o que ela impede é a mesma área
+ser cadastrada duas vezes sem ninguém perceber, e desativar uma das duas não
+desfaz a confusão. M10 vale **só entre as ativas**: o que ela impede é o mesmo
+endereço resolver para duas taxas, e área desativada não cota nada. Reativar uma
+área é reconstruir o agregado, e a construção confere M10 de novo.
+
 **A normalização é regra de domínio, não detalhe de banco.** Maiúsculas, sem
 acento, sem espaço duplo, aparado. "Boa Viagem", "boa viagem" e "BOA  VIAGEM"
 são a mesma área — e se não forem, a Marli cadastra a mesma sem perceber e
@@ -430,6 +674,13 @@ mais nada.
 
 **Área desativada com pedido em rota é caso normal.** O entregador termina a
 entrega; a área simplesmente não aceita pedido novo.
+
+**Procurar área devolve `Optional`, nunca uma taxa.** Não existe
+`taxaPara(cep)` que responda zero quando não acha — é M11 na forma da
+assinatura, e não numa checagem que alguém pode esquecer. São duas consultas: por
+**nome de bairro**, que é o caminho da ADR-020 e o que o cliente diz na conversa,
+e por **CEP**, que é o refinamento de quem quer resolver o endereço sem
+perguntar. Área sem faixa de CEP é normal — ela só não é alcançável pela segunda.
 
 ---
 
@@ -460,7 +711,7 @@ Todos com `correlationId`, todos via outbox na mesma transação da alteração.
 | `EstabelecimentoCriadoV1` | Cadastro concluído | `conversation` |
 | `VinculoAlteradoV1` | Membro criado, alterado, suspenso, removido | **Todos** — invalidação de cache de autorização |
 | `ConfiguracaoOperacionalAlteradaV1` | Tipo, modalidades, métodos, troco, `maxEntregasSimultaneas` | `order`, `delivery`, `conversation` |
-| `ExpedienteAlteradoV1` | Abriu, fechou, pausou, retomou — com `motivo` | `conversation`, **`catalog`** (reativa `ESGOTADO_HOJE`) |
+| `ExpedienteAlteradoV1` | Abriu, fechou, pausou, retomou — com `motivo`. Hoje só a abertura é produzida (ADR-046); payload: `estabelecimentoId`, `motivo`, `expedienteDeReferencia` | `conversation`, **`catalog`** (reativa `ESGOTADO_HOJE`) |
 | `AreasDeEntregaAlteradasV1` | Área criada, alterada, desativada | `conversation` (lista de bairros) |
 | `VinculoEntregadorAlteradoV1` | Vínculo ou remuneração | `delivery` |
 
@@ -474,6 +725,20 @@ O `motivo` desse evento não é decoração: o `catalog-service` só reativa pro
 `ESGOTADO_HOJE` quando ele é `ABERTURA_DE_EXPEDIENTE`. Retomada de pausa **não**
 reativa nada, e é por isso que pausa e abertura precisam ser distinguíveis no
 payload.
+
+O payload leva `estabelecimentoId`, `motivo` e **`expedienteDeReferencia`** — o
+dia operacional (ADR-025), que é contra o que o `catalog` compara. Sem ele o
+consumidor teria de perguntar o expediente corrente a cada evento, e a
+idempotência de C11 passaria a depender de duas chamadas darem a mesma resposta
+num intervalo que atravessa a hora de corte todo dia.
+
+Hoje o `motivo` tem **um** valor, `ABERTURA_DE_EXPEDIENTE`, que é o único com
+produtor. Fechamento, pausa e retomada entram quando alguém os emitir —
+valor sem emissor é promessa com sintaxe de código — e acrescentar um depois não
+é de graça: a ADR-027 §2 trata valor novo em enum como **incompatível por
+padrão** — *"valor novo em enum exige versão nova, salvo se todos os
+consumidores tratarem valor desconhecido como "ignorar""*. O contrato completo está em
+[`contracts/eventos.md`](../../contracts/eventos.md).
 
 `VinculoAlteradoV1` é o mais crítico: é ele que faz a revogação de acesso valer
 em segundos em vez de esperar o TTL. Se este evento se perder, alguém continua
@@ -497,12 +762,12 @@ mesmo tendo invalidação por evento.
 | M9 | `identificadorNormalizado` único por loja | Áreas duplicadas com taxas divergentes |
 | M10 | Faixas de CEP não se sobrepõem | O mesmo endereço com duas taxas |
 | M11 | Ausência de área ≠ taxa zero | Entrega grátis onde não se entrega |
-| M12 | `modalidadesAceitas` não vazio | Loja que não opera |
+| M12 | `metodosPorModalidade` não vazio, e nenhum conjunto de métodos vazio | Loja que não opera; ou modalidade que aceita pedido e nenhuma forma de pagar |
 | M13 | Um vínculo de entregador por par entregador × loja | Remuneração ambígua na jornada |
 | M14 | Pausa e fechamento não afetam pedido em andamento | Sábado à noite com pedidos cancelados em massa |
 | M15 | `descontoDeRetirada ≥ 0` | Desconto negativo vira acréscimo silencioso |
 | M16 | `fusoHorario` é identificador IANA válido do conjunto brasileiro, nunca nulo | Horário de funcionamento, expediente e fechamento erram juntos e em silêncio |
-| M17 | `pedidoMinimoPorModalidade[m] ≥ 0` para toda modalidade aceita | Mínimo negativo, que não significa nada |
+| M17 | `pedidoMinimoPorModalidade` tem entrada para **toda** modalidade aceita e para nenhuma outra, e toda entrada é `≥ 0` | Mínimo negativo não significa nada; ausência se confunde com zero (o erro que M11 nomeia do outro lado); mínimo de modalidade não aceita é configuração morta |
 | M18 | Recuperação de estabelecimento cria ou promove `Membro` — nunca altera credencial de `Usuario` | Recuperar uma loja daria acesso às outras lojas do mesmo usuário |
 
 ---

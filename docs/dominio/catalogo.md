@@ -18,6 +18,7 @@ Produto  (raiz)
 ├── estabelecimentoId, categoriaId
 ├── nome, descricao, imagemRef
 ├── precoBase                 Money
+├── ordem                     posição dentro da categoria
 ├── estadoDePublicacao        RASCUNHO | ATIVO | INATIVO
 ├── modoDeControle            SEM_CONTROLE | QUALITATIVO | QUANTITATIVO
 ├── disponibilidade           estado, marcadoEm: Instant, expedienteDeReferencia: LocalDate
@@ -28,6 +29,21 @@ Produto  (raiz)
 Categoria  (raiz)
 ├── estabelecimentoId, nome, ordem, ativa
 ```
+
+> **26/09/2026.** `ordem` do `Produto` entrou nesta lista na rodada G-A: a §7
+> sempre indexou `(estabelecimentoId, categoriaId, ordem)`, que é índice de
+> produto, e a lista estava incompleta.
+>
+> **O código nasce com dois valores de `modoDeControle`**: `SEM_CONTROLE` e
+> `QUALITATIVO`. `QUANTITATIVO` é controle por quantidade, e nada no sistema dá
+> ou tira unidade até o marco 10 — não há baixa no pedido, não há entrada, não
+> há tela. Com o valor presente, "`QUANTITATIVO` é inválido na publicação" seria
+> uma regra em tempo de execução que alguém pode remover sem perceber; sem ele,
+> é o sistema de tipos.
+>
+> **Gatilho:** o valor nasce junto com a primeira baixa de estoque, no marco 10.
+> Acrescentar valor a enum é mudança compatível (ADR-027), então esperar não
+> custa nada e antecipar custa um campo que mente.
 
 **Por que `GrupoDeOpcoes` e `Opcao` ficam dentro do `Produto`.** A invariante C6
 — produto com grupo obrigatório precisa ter opção disponível para ser vendável —
@@ -101,8 +117,23 @@ ExpedienteAlteradoV1 (merchant-service)
       ↓
 catalog-service reativa todo produto e opção com:
       estado == ESGOTADO_HOJE
-   ∧  expedienteDeReferencia != expediente atual
+   ∧  expedienteDeReferencia < expediente atual
 ```
+
+`<`, e não `≠` (corrigido na G-C1, 30/09/2026). A diferença aparece quando um
+evento de abertura **velho** é reentregue — redelivery, fila morta reprocessada,
+ordem não garantida (ADR-043 §4). Com `≠`, o evento do dia `D` chegando no dia
+`D+1`, depois de alguém marcar "acabou" hoje, compara `D ≠ D+1`, dá verdadeiro,
+e **reativa o que acabou agora** — que é literalmente o que a C11 promete
+impedir, na coluna "o que quebra sem ela". Com `<`, só reativa o que foi marcado
+**antes** do expediente que abriu.
+
+A comparação é entre datas, e o texto ISO gravado no Mongo ordena
+lexicograficamente — `$lt` serve, se um dia a consulta precisar dele.
+
+E o carimbo de quem **marca** com a loja fechada é o expediente da **próxima
+abertura** (ADR-049): a calabresa marcada às 10h carrega o dia da abertura das
+18h, e continua esgotada a noite inteira.
 
 Três consequências que precisam estar no código:
 
@@ -119,7 +150,9 @@ Três consequências que precisam estar no código:
    acabou no domingo. É o comportamento certo: o estoque físico também não se
    repõe sozinho.
 
-**`expedienteDeReferencia` é o `diaOperacional` da loja** (ADR-025). Isso
+**`expedienteDeReferencia` é o `diaOperacional` da loja** (ADR-025) — o do
+**início do turno** que está aberto, e não o do instante, para que um turno
+22h–06h continue sendo um expediente só depois das 04:00 (ADR-046). Isso
 responde o caso que faltava: a loja que abre **duas vezes no mesmo dia**.
 
 ```
@@ -241,8 +274,9 @@ agora". Reserva só existe no modo `QUANTITATIVO`, no marco 10.
 
 O campo existe desde o marco 2 e é congelado no item do pedido como
 `estoqueControladoSnapshot` (ADR-018) — um boolean hoje, para evitar migration de
-dados quando o marco 10 chegar. Enquanto isso, `QUANTITATIVO` é valor **inválido
-na publicação**, com mensagem que diz o marco.
+dados quando o marco 10 chegar. Enquanto isso, `QUANTITATIVO` **não existe no
+código** (nota da §1, 26/09/2026): o enum tem dois valores, e não há como
+atribuir o terceiro. A linha da tabela descreve o marco 10.
 
 ---
 
@@ -261,6 +295,18 @@ grupos e opções é uma árvore lida inteira, gravada inteira.
 
 O cache do cardápio pode servir dado de segundos atrás. É aceitável **porque a
 cotação não usa cache** — a listagem é vitrine, a cotação é contrato.
+
+> **28/09/2026 — a primeira rota.**
+> `GET /api/v1/merchants/{estabelecimentoId}/catalog/produtos` lista os
+> produtos **publicados** da loja, paginados (`page`, `size`, teto de 100), e
+> exige `VER_PRODUTO`.
+>
+> Publicados, e não vendáveis: o comerciante precisa ver o que não está
+> vendável para poder agir. Cada item traz `vendavel` calculado, porque o
+> cliente não consegue derivá-lo sem os grupos — e o resumo não os carrega.
+>
+> A autorização não é local. Ela vem do `merchant`, com o token de quem pediu
+> encaminhado (ADR-045), e **não há cache até a G-B4**.
 
 ---
 
@@ -312,9 +358,32 @@ acabou depois da abertura.
 | C8 | Produto pertence a **um** estabelecimento (ADR-004) | Cardápio vaza entre lojas |
 | C9 | Produto nunca é apagado — `INATIVO` | Pedido antigo com referência morta |
 | C10 | `RASCUNHO` e `INATIVO` nunca cotizam | Cliente pede o que não está à venda |
-| C11 | Reativação de `ESGOTADO_HOJE` é idempotente por `expedienteDeReferencia` | Mensagem repetida reativa o que acabou agora |
-| C12 | `QUANTITATIVO` é inválido na publicação até o marco 10 | Promete contagem que não existe |
+| C11 | Reativação de `ESGOTADO_HOJE` é idempotente por `expedienteDeReferencia`, e a comparação é `carimbo < expediente que abriu` | Mensagem repetida reativa o que acabou agora |
+| C12 | `QUANTITATIVO` não existe até o marco 10 — o enum tem dois valores (nota da §1) | Promete contagem que não existe |
 | C13 | Toda estrutura e índice via Mongock | Ambiente diverge do outro em silêncio |
+
+> **Quem cobra cada uma no código (26/09/2026, G-A e G-A.1).** C1, C2, C4 e C5
+> são cobradas em `Produto.publicar()` — o §2 diz que publicar é onde as
+> invariantes são cobradas; C1 recusa preço negativo também no rascunho. C2 é
+> cobrada por `Produto.precoMinimoPossivel()`. C3 é cobrada na construção do
+> `GrupoDeOpcoes`. C6 é `Produto.vendavel()`, sem campo. C11 tem o predicado,
+> `Disponibilidade.deveReativarNoExpediente(LocalDate)`, para produto e opção;
+> o ato — o consumidor do `ExpedienteAlteradoV1` — é da G-C. C12 é o sistema de
+> tipos (nota da §1). C13 é o `changeUnit` do Mongock, com o `MongockIT`
+> afirmando que os dois índices da §7 existem (G-B1, 27/09/2026). **Ainda só
+> texto:** C7, C8 e C9 pela forma do agregado, sem regra própria; C10 na
+> cotação (G-C).
+>
+> **C2 tem conta.** "Toda combinação válida": o menor preço unitário é o preço
+> base mais, em cada grupo, os `minEscolhas` acréscimos mais baratos, mais todo
+> acréscimo negativo que ainda caiba no `maxEscolhas`. É essa conta que a
+> publicação faz. Ela usa **todas** as opções, disponíveis ou não: "válida" é a
+> combinação que respeita mínimo, teto e pertinência — o §5 separa isso (400)
+> de opção indisponível (409, o estado do mundo mudou) —, e a opção esgotada
+> hoje volta amanhã.
+>
+> A conta só existe porque o `acrescimo` pode ser negativo (§4). Sem desconto no
+> cardápio, C2 seria a mesma coisa que C1.
 
 ---
 

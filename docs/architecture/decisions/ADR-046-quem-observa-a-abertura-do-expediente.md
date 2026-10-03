@@ -1,0 +1,319 @@
+# ADR-046 — Quem observa a abertura do expediente
+
+- **Estado:** aceita · **emendada em 26/09/2026**: o expediente é o dia operacional do
+  **início da faixa**, não do instante (ver "Emenda de 26/09/2026 — o turno que
+  atravessa a hora de corte") · **emendada em 26/09/2026**: o `ExpedienteAlteradoV1`
+  significa "um expediente começou", não "a loja abriu ou fechou" — e dois
+  consumidores contam com o segundo (ver "Emenda de 26/09/2026 — o que este evento
+  passou a significar") · **emendada em 30/09/2026**: a porta que esta ADR disse
+  existir não existia, e o §6 ganhou rota (ver "Emenda de 30/09/2026")
+- **Data:** 26/09/2026
+- **Fecha:** o buraco entre `catalogo.md` §3 e `estabelecimento.md` §4 — o evento
+  de abertura é exigido por um e não tem produtor no outro
+- **Emenda:** ADR-025 §5 (o mecanismo, não o resultado), `estabelecimento.md` §4 e §7
+- **Relacionadas:** ADR-008, ADR-026, ADR-027, ADR-031, ADR-043
+
+## Contexto
+
+O `catalogo.md` §3 não deixa dúvida sobre o gatilho da reativação:
+
+```
+ExpedienteAlteradoV1 (merchant-service)
+  motivo = ABERTURA_DE_EXPEDIENTE
+      ↓
+catalog-service reativa todo produto e opção com:
+      estado == ESGOTADO_HOJE
+   ∧  expedienteDeReferencia != expediente atual
+```
+
+E diz por que não é um job à meia-noite: *"A pizzaria abre às 18h e fecha às 2h;
+à meia-noite ela está vendendo, e um job zeraria a calabresa que acabou às 23h."*
+**A objeção é ao horário fixo, não a agendamento** — distinção que esta ADR
+precisa fazer explícita, porque ela decide justamente a favor de uma varredura.
+
+O documento também exige: *"Só a transição fechado → aberto **por horário**
+conta."*
+
+**Transição implica alguém observando.** E ninguém observa. No
+`merchant-service`, `Disponibilidade.abertaEm(instante, fuso)` é calculado na
+leitura; não existe registro de "estava fechada, agora está aberta". O
+`estabelecimento.md` §4 é explícito sobre esse estilo, e com razão:
+
+> *"O registro diz o que foi feito; o cálculo diz o que vale agora — nenhuma
+> rotina passa limpando, e nenhum campo fica mentindo."*
+
+Um fato que não é ato não pode virar evento sozinho. O desenho está certo e
+**a metade produtora dele nunca foi decidida**.
+
+## Decisão
+
+### 1. Uma varredura periódica, e a chave primária é a idempotência
+
+A cada minuto, o `merchant` percorre os estabelecimentos, pergunta a cada um se
+está **dentro do horário**, e para os que estão tenta registrar a abertura do
+expediente corrente — o dia operacional do **início da faixa** que contém o
+instante, e não do instante — numa tabela cuja chave primária é
+`(estabelecimento_id, expediente)`:
+
+```sql
+insert into abertura_de_expediente (estabelecimento_id, expediente, publicado_em)
+values (?, ?, ?)
+on conflict do nothing
+```
+
+**Inseriu uma linha → grava o evento no outbox, na mesma transação. Não inseriu
+→ a abertura já foi publicada, e não há nada a fazer.**
+
+Isto não é um cache de "está aberta". É o **registro de um ato**: *publiquei a
+abertura do expediente D para a loja X*. A regra do `estabelecimento.md` §4 vale
+inteira — nada aqui passa limpando, e nenhum campo fica mentindo sobre o estado
+atual, porque nenhum campo fala do estado atual.
+
+**A idempotência é o banco, não o código.** Duas instâncias da varredura rodando
+juntas disputam a mesma chave primária, e o PostgreSQL decide: exatamente uma
+insere, exatamente um evento sai. Não há leitura-antes-da-escrita para correr, e
+não há janela. É a mesma forma do índice único que decide a corrida de cadastro
+no `identity` (rodada C-B), e ela tem teste com duas threads pelo mesmo motivo.
+
+### 2. Por que varredura, e não agendador por loja
+
+Um agendador que dispara no instante exato da abertura de cada loja daria
+reativação no segundo certo. O custo é o que o torna pior:
+
+- reagendar a cada alteração de horário, de fuso e de pausa;
+- reconstruir a agenda inteira a cada reinício;
+- e um defeito de agendamento **falha em silêncio numa loja só** — o pior modo
+  de falha possível, porque ninguém olha a loja que não reclamou.
+
+A varredura é uma consulta. Não tem estado a reconstruir, não tem o que
+reagendar, e um defeito nela falha para todo mundo de uma vez, que é visível.
+
+O preço é latência de até um minuto para reativar produto marcado no expediente
+anterior. É irrelevante: o produto está esgotado desde ontem.
+
+### 3. Dentro do horário, não "aberta"
+
+A varredura pergunta **`dentroDoHorario`**, não `estaAberta`.
+
+Parece detalhe e não é. `estaAberta` compõe horário **e** pausa. Se a pizzaria
+abre às 18h e o dono pausou às 17h50 por uma hora, às 18h ela está dentro do
+horário e pausada — e com `estaAberta` a abertura daquele expediente **nunca
+seria publicada**, porque quando a pausa vencesse a loja já estaria aberta sem
+nenhuma transição observável. Os produtos ficariam esgotados o dia inteiro.
+
+O `estabelecimento.md` §4 já diz o que resolve isso: *"Pausar e retomar
+acontecem **dentro** de um expediente e não abrem outro."* Pausa pressupõe
+expediente. Então é o horário que abre o expediente, e a pausa é um estado
+dentro dele.
+
+### 4. O payload, que nenhum documento tinha escrito
+
+Nenhum documento do repositório define o payload do `ExpedienteAlteradoV1`. O
+`estabelecimento.md` §7 nomeia um campo — `motivo` — e um valor —
+`ABERTURA_DE_EXPEDIENTE`. Esta ADR escreve o resto, no envelope comum
+(`_envelope-v1.json`), com `eventType` sem versão:
+
+```json
+{
+  "eventId": "…", "eventType": "ExpedienteAlterado", "eventVersion": 1,
+  "occurredAt": "2026-09-26T21:00:04.117293Z",
+  "correlationId": "…",
+  "payload": {
+    "estabelecimentoId": "…",
+    "motivo": "ABERTURA_DE_EXPEDIENTE",
+    "expedienteDeReferencia": "2026-09-26"
+  }
+}
+```
+
+**O `expedienteDeReferencia` vai no payload, e é o que torna C11 verificável.**
+Sem ele, o consumidor teria que perguntar ao `merchant` qual é o expediente
+corrente a cada evento — e a idempotência da reativação passaria a depender de
+duas chamadas darem a mesma resposta, num intervalo que atravessa a hora de
+corte uma vez por dia. Com ele, o consumidor compara dois valores que recebeu.
+
+`occurredAt` é o instante da publicação; `expedienteDeReferencia` é o dia
+operacional do **início da faixa** que estava aberta. **São coisas diferentes e é
+de propósito**: às 01:30 de domingo o instante é domingo e o expediente é sábado
+(ADR-025); numa loja 22h–06h, às 04:30 o dia operacional do instante já virou, e o
+expediente continua sendo o da véspera.
+
+### 5. O enum nasce com um valor só
+
+`MotivoDoExpediente` tem **`ABERTURA_DE_EXPEDIENTE`, e mais nada**.
+
+O `estabelecimento.md` §7 descreve o evento como "abriu, fechou, pausou,
+retomou". Os outros três são atos de verdade, com dono óbvio, e nenhum deles é
+produzido nesta rodada. Um valor de enum sem emissor é uma promessa com sintaxe
+de código — é a mesma razão que tirou `CONVIDADO` do `EstadoDoMembro` na B1 e
+`EXPIRADO` do `EstadoDoConvite` na B2.
+
+Acrescentar valor a enum é mudança compatível (ADR-027), e o contrato já obriga
+o consumidor a tolerar valor desconhecido. Então o custo de esperar é zero e o
+custo de antecipar é uma lista que mente.
+
+### 6. `diaOperacional` nasce aqui, e continua com um consumidor só
+
+A ADR-025 definiu a função e nenhum código a implementou. Ela nasce agora, no
+`merchant`, porque é aqui que mora o `fusoHorario` — e continua sendo o **único
+lugar** que a calcula. O `catalog` recebe o valor no evento e o recebe de novo
+pela porta quando precisa carimbar; **compara, nunca calcula**, que é
+exatamente a distinção que manteve esta decisão fechada desde a rodada A2b.
+
+## Consequências
+
+**Positivas**
+
+- O `catalogo.md` §3 passa a ter produtor, e a promessa do PRD — *"volta
+  automaticamente a disponível na abertura do expediente seguinte"* — deixa de
+  depender de uma peça que não existe.
+- A tabela `abertura_de_expediente` é, de graça, o **histórico de expedientes
+  abertos por loja** — que é o que o marco 6 vai querer para o fechamento.
+- `diaOperacional` sai do papel com teste, antes de o `settlement` precisar
+  dela.
+
+**Negativas**
+
+- **A varredura carrega todos os estabelecimentos a cada minuto.** Com o
+  `SUBSELECT` da C-A isso é 1+5 consultas independentemente da quantidade de
+  lojas, e na escala do MVP é irrelevante. **Gatilho escrito:** o dia em que uma
+  passada da varredura levar mais que o intervalo entre passadas. A saída já é
+  conhecida — restringir a busca às lojas sem linha para os dois últimos
+  expedientes —, e é uma consulta, não um redesenho.
+  É também a única exceção à paginação obrigatória do `CLAUDE.md`: o
+  `EstabelecimentoRepositorio.todos()` não recebe `Pageable`, e o javadoc dele
+  aponta para cá.
+- **Até um minuto de atraso** na reativação. Assumido em §2.
+- **A varredura publica sem ninguém ter pedido**, e portanto sem token. É o
+  primeiro caso de escrita sem pessoa do outro lado neste repositório — e é
+  justamente o caso que a ADR-045 registra como fora do alcance dela. Aqui não
+  há problema, porque a varredura não *autoriza* nada: ela observa e publica um
+  fato do próprio serviço.
+- **Loja sem horário nunca abre expediente**, e portanto nunca reativa nada. É o
+  comportamento certo — `estabelecimento.md` §4 diz que horário vazio significa
+  "nunca abre por horário" — e precisa estar escrito, porque quem operar só por
+  aceite manual vai estranhar.
+
+## Emenda à ADR-025 §5: é um evento, não dois
+
+A §5 explica o caso da padaria que abre 6h–14h e 18h–22h, e diz:
+
+> *"são duas transições fechado → aberto, e o catálogo recebe **dois eventos de
+> abertura**"*
+
+Com a marca d'água por `(estabelecimento, expediente)`, **o catálogo recebe
+um**. A segunda abertura do mesmo dia operacional não insere linha e não publica
+evento.
+
+O resultado que a ADR descreve continua exato — o pão que acabou no almoço
+continua acabado no jantar —, mas por um caminho mais curto: em vez de o
+consumidor receber `D`, comparar com `D` e decidir não reativar, o produtor não
+chega a emitir. A idempotência do consumidor **continua obrigatória**, porque a
+entrega é pelo menos uma vez (ADR-043 §3) e o mesmo evento pode chegar duas
+vezes.
+
+A diferença importa para quem for escrever o consumidor: o exemplo da ADR-025
+descreve um tráfego que não vai existir.
+
+## Emenda de 26/09/2026 — o turno que atravessa a hora de corte
+
+**Por quê.** A §1 dizia "o expediente corrente", e o código o calculava como
+`diaOperacional(instante)`. Para a pizzaria 18h–02h dá no mesmo: o turno inteiro
+fica antes das 04:00 do dia seguinte. Para uma loja **22h–06h** não dá. Às 22h de
+terça o expediente é terça; às 04:30 de quarta, no mesmo turno, o dia operacional
+do instante já é quarta — e a varredura registrava uma segunda
+`ABERTURA_DE_EXPEDIENTE` no meio do turno. O catálogo reativaria o que acabou às
+23h. É o defeito do job à meia-noite que o `catalogo.md` §3 rejeita, reaparecendo
+pela hora de corte em vez da meia-noite.
+
+O defeito tinha uma segunda face, que o teste mostrou: a marca d'água de quarta
+já estava gravada às 04:30, e a abertura **verdadeira** de quarta, às 22h, não
+publicava nada.
+
+**A regra.** O expediente é o **dia operacional do início da faixa** que contém
+o instante:
+
+```
+inicio     = Disponibilidade.inicioDaFaixaEm(instante, fuso)   // vazio: fora do horário
+expediente = diaOperacional(inicio, fuso)
+```
+
+Com faixas sobrepostas (o `estabelecimento.md` §4 permite), vale a de início
+**mais antigo** entre as que contêm o instante: é a que já estava aberta, e a
+resposta não depende da ordem de cadastro.
+
+**Onde a equação da ADR-025 §5 continua valendo.** "O expediente de referência é
+o dia operacional" é exata para o turno que **não** atravessa as 04:00 — em que o
+dia operacional do instante e o do início da faixa coincidem, que é o caso de
+toda loja que fecha antes da hora de corte. Para o turno que atravessa, quem
+manda é a abertura: o `estabelecimento.md` §4 define expediente como *"uma
+abertura até o fechamento correspondente"*, e um turno contínuo tem uma
+abertura só.
+
+**O que não muda.** A marca d'água, a chave primária, o payload e o enum. O
+`expedienteDeReferencia` continua sendo um `LocalDate` de dia operacional; só a
+entrada do cálculo mudou, do instante para o início da faixa.
+
+**Consequência assumida.** Duas faixas **encostadas** — 22:00–04:00 e
+04:00–10:00, com fim exclusivo — são duas aberturas, porque o horário diz que são
+dois turnos. Quem opera continuamente cadastra uma faixa só.
+
+## Emenda de 26/09/2026 — o que este evento passou a significar
+
+A ADR-031 renomeou este evento de `DisponibilidadeAlteradaV1` para
+`ExpedienteAlteradoV1` e, na época, os dois nomes descreviam a mesma coisa: a
+loja mudou de estado. A ADR-046 mudou isso sem dizer. Com a marca d'água
+`(estabelecimento, expediente)`, o evento passou a significar **um expediente
+começou** — uma vez por dia operacional, no início da primeira faixa. Ele já
+não diz que a loja abriu, e nunca diz que ela fechou, pausou ou retomou.
+
+Dois documentos do repositório contam com o significado antigo:
+
+- **`pedido.md` §8** manda invalidar o cache de operação da loja quando este
+  evento chega. Invalidar uma vez por dia, na abertura, é quase nunca: o cache
+  vai servir "aberta" durante uma pausa e durante o fechamento inteiro, até
+  vencer por TTL.
+- **`conversa.md` §14** conta com ele para responder aberto/fechado
+  corretamente. Pela mesma razão, ele responde certo uma vez por dia.
+
+**Nenhum dos dois está errado como desenho; os dois estão esperando um produtor
+que ainda não existe.** O `merchant` hoje emite um motivo só,
+`ABERTURA_DE_EXPEDIENTE`, porque é o único que tem quem o emita — e valor de
+enum sem emissor é promessa com sintaxe de código.
+
+**O gatilho, escrito:** quando o `order` ganhar código — marco 3 — ele é o
+primeiro serviço a precisar da resposta *agora*, e não *uma vez por dia*. É
+nesse momento que se decide entre (a) o `merchant` passar a emitir fechamento,
+pausa e retomada, com os observadores que isso exige, e (b) quem precisa da
+resposta perguntar pela `OperacaoDoEstabelecimentoPort`, que já existe e já
+calcula na leitura. A segunda é mais barata e é o que o `estabelecimento.md` §3
+já manda fazer; a primeira só se paga se houver consumidor que não possa
+perguntar.
+
+Até lá, a regra é a do parágrafo final do contrato: **este evento diz que um
+expediente começou, não que a loja segue aberta.** Quem precisar do segundo,
+pergunta.
+
+## Emenda de 30/09/2026 — a porta que esta ADR disse existir, e o §6 que ganhou rota
+
+Duas correções e um acréscimo.
+
+**A `OperacaoDoEstabelecimentoPort` não existe.** A emenda de 26/09 escreveu que
+ela *"já existe e já calcula na leitura"*. Não há tal interface em código, nem
+`expedienteCorrente`, nem `diaOperacionalCorrente`: antes da G-C1, o nome
+aparecia em dez documentos e em dois javadocs do `merchant`, e em nenhuma
+declaração. O gatilho que aquela emenda escreveu — o `order` ganhar código, no
+marco 3 — continua valendo; o que muda é que ele aponta para **escrever** a
+porta, e não para usá-la.
+
+**O §6 ganhou o chamador que faltava.** Ele dizia que o `catalog` *"recebe o
+valor no evento e o recebe de novo pela porta quando precisa carimbar"*, e essa
+porta era a única peça do parágrafo que não existia. A G-C1 a escreveu:
+`GET /internal/merchants/{estabelecimentoId}/expediente-corrente`.
+
+**E o caso da loja fechada, que esta ADR não cobria.** A regra da emenda de
+26/09 — *"o expediente é o dia operacional do início da faixa que contém o
+instante"* — vale para quem pergunta com a loja **aberta**, que é o único caso
+da varredura. Quem carimba pergunta também com ela fechada, e aí
+`inicioDaFaixaEm` devolve vazio. **A ADR-049 decide**: o carimbo passa a ser o
+dia operacional da **próxima abertura**.
