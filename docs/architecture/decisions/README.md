@@ -62,8 +62,9 @@
 | 058 | O limite do contêiner dimensiona o JVM, e a pilha sobe em grupos | ✅ aceita |
 | 059 | A semeadura passa pelo agregado, e não pelas tabelas | ✅ aceita |
 | 060 | A primeira rota de escrita, e o que o agregado exige para a loja nascer | ✅ aceita |
+| 061 | A loja escolhida mora na URL | ✅ aceita |
 
-**Cinquenta e oito escritas, duas sem objeto — estas com registro próprio desde
+**Cinquenta e nove escritas, duas sem objeto — estas com registro próprio desde
 25/08/2026 —, nenhuma a escrever.**
 
 ## Onde mora o quê

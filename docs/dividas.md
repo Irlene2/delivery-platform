@@ -1,6 +1,6 @@
 # O razão das dívidas
 
-**Gerado em 10/10/2026 na rodada R-1, sobre o commit `6fb73e6`; refeito na E-1, sobre `d7dbcc4` mais a ADR-060. Este arquivo é
+**Gerado em 10/10/2026 na rodada R-1, sobre o commit `6fb73e6`; refeito na E-1, sobre `d7dbcc4` mais a ADR-060, e na W-E, sobre `398d828` mais a ADR-061. Este arquivo é
 derivado e envelhece:** toda ADR, documento ou javadoc que escrever um gatilho novo o
 torna incompleto. Refaça-o com os comandos abaixo antes de confiar nele.
 
@@ -19,14 +19,15 @@ relato de um que disparou. A conta, em 10/10/2026:
 
 | | linhas |
 | --- | --- |
-| o recorte estreito devolve | **49** |
-| — cópias em `frontend/.tsbuild/`, saída de build que o filtro não exclui | −2 |
-| — citação de um gatilho que já tem linha própria (ADR-045:17, ADR-054:15, ADR-055:12, ADR-059:21, `pedido.md`:397) | −5 |
+| o recorte estreito devolve | **56** |
+| — cópias em `frontend/.tsbuild/`, saída de build que o filtro não exclui | −3 |
+| — citação de um gatilho que já tem linha própria (ADR-045:17, ADR-054:15, ADR-055:12, ADR-059:21, `pedido.md`:397; e, na W-E, `PainelPage.tsx`:28 e as linhas 8, 18, 20 e 142 da ADR-061) | −10 |
 | — o mesmo gatilho repetido em outro lugar, ou substituído por outro (ADR-045:123, que a ADR-054 substituiu; ADR-043:210, ADR-057:101, ADR-058:91, `como-subir-local.md`:480, `ProdutoResponse`:30, `MarcarDisponibilidadeService`:64, `ContratoDeErrosIT`:73 e :105, `ReativacaoNoExpedienteIT`:58) | −10 |
-| **= linhas da tabela vindas do recorte estreito** | **32** |
+| **= linhas da tabela vindas do recorte estreito** | **33** |
 | + entraram por outra redação — *"com gatilho:"* (linhas 1 e 2), *"Gatilho para trazê-lo de volta"* (4), *"Quando o segundo chegar"* (6), *"O gatilho para mudar"* (11), *"O gatilho para reabrir"* (19), *"O gatilho, escrito"* (22), *"Gatilho:"* (40 e 42), *"O gatilho para a função mudar de lugar"* (41), *"volta quando houver"* (43), *"Decidir antes do marco 5"* (44), *"Gatilho novo, e são dois"* (20 e 48) | **+14** |
-| + segundos gatilhos dentro de uma seção "## Gatilho escrito", que o comando conta uma vez só, pela linha do título (ADR-057, ADR-058, ADR-059 — linhas 45 a 47; ADR-060 — linhas 50 e 51) | **+5** |
-| **= linhas da tabela** | **51** |
+| + segundos gatilhos dentro de uma seção "## Gatilho escrito", que o comando conta uma vez só, pela linha do título (ADR-057, ADR-058, ADR-059 — linhas 45 a 47; ADR-060 — linhas 50 e 51; ADR-061 — linha 54) | **+6** |
+| + escrito neste razão, porque a condição não tem outro lugar onde morar (linha 52) | **+1** |
+| **= linhas da tabela** | **54** |
 
 **A coluna "disparou?" tem quatro respostas.** *sim* — disparou e a dívida foi paga;
 *não* — e a coluna seguinte diz o que se procurou; **disparou e não produziu nada** —
@@ -42,8 +43,8 @@ este arquivo existe para achar.**
 | --- | --- | --- | --- | --- |
 | 1 | ADR-044:97 (e `gateway/config/JwtProperties.java`:12) | *"Fica registrado como duplicação conhecida, com gatilho: o terceiro módulo que precisar do mesmo decoder."* | o `catalog` montou o terceiro decoder com validador de `iss`/`aud` em 28/09 (`e1e78fa`); hoje são quatro: `grep -rln "JwtIssuerValidator\|audience" backend --include=SecurityConfig.java` devolve `gateway`, `catalog`, `identity`, `merchant`. Nenhuma ADR posterior volta ao assunto | uma decisão: módulo comum de segurança (emenda à ADR-001) ou a duplicação assumida sem gatilho |
 | 2 | `gateway/src/test/.../IdentityDeMentira.java`:36 | *"Fica registrado na ADR-044 como duplicação conhecida, com gatilho: o terceiro módulo que precisar do mesmo dublê."* | há três cópias: `gateway`, `merchant` e `catalog` têm `support/IdentityDeMentira.java`. A ADR-044 **não** registra esta duplicação — `grep -n "dublê\|IdentityDeMentira" docs/architecture/decisions/ADR-044-*.md` volta vazio | a mesma decisão da linha 1, para teste |
-| 3 | `frontend/src/painel/MenuDoPainel.tsx`:34 | *"**Gatilho escrito:** a segunda seção com tela. Aí a URL passa a precisar dizer onde a pessoa está — para recarregar, para voltar e para mandar link a alguém —, e isso é rota, não estado."* | a W-C pôs a segunda seção com tela ("Disponibilidade", `PainelPage.tsx`:103), e a W-D uma terceira tela (o produto aberto). O `App.tsx` continua com uma rota só para o painel. O gatilho venceu na W-C, e a **W-D pôs a terceira tela** (o produto aberto) seguindo o precedente "o painel navega por estado" sem ler o gatilho que o expirava | rotas com URL no painel — e a decisão de qual URL é estável, porque ela vira link |
 | 4 | `frontend/README.md`:32 | *"**Gatilho para trazê-lo de volta:** a primeira escrita que precise invalidar leitura de **outra** tela."* | **leitura, não medida:** na W-D, marcar uma opção na tela do produto muda o `vendavel` que a lista mostra; a lista é relida por remontagem ao voltar (`ListaDeProdutos.tsx`, `aoVoltar`). Se isso é "invalidar leitura de outra tela", disparou e foi resolvido sem o TanStack Query nem decisão escrita | decidir se a remontagem é a resposta, e escrevê-lo |
+| 52 | este razão (W-E) | *"a primeira tela que mostre um desses três ao comerciante"* — o `TratadorDeErros` do `catalog` repassa `excecao.getMessage()` no `detail` em três tratadores: `ProdutoNaoEncontrado` (404), `LojaSemExpediente` (409), `RegraDoCatalogoViolada` (400), contra a regra do `CLAUDE.md` escrita na W-E | **nasceu disparado.** A tela da W-C mostra o `detail` de todo 400 e 409 da marcação (`disponibilidade.ts`, `recusaDe`: só o 403 descarta), e o 400 e o 409 da marcação são `RegraDoCatalogoViolada` e `LojaSemExpediente`. O censo: `grep -rn "getMessage()" backend/services/*/src/main/java/com/deliveryplatform/*/api/error/TratadorDeErros.java` devolve as linhas 86, 96 e 133 do `catalog` | a frase escrita por tratador, como no `merchant` desde a W-E |
 
 ## Rearmado
 
@@ -62,6 +63,7 @@ este arquivo existe para achar.**
 | 10 | ADR-053:123 (e `ContratoDeErrosIT`:73) | *"a primeira tela que mostre `detail` a alguém — a W-C."* | a W-C | ADR-055 |
 | 11 | ADR-040:212 (e `Permissao.java`:9) | *"O gatilho para mudar é o segundo serviço que precise nomear uma permissão"* | o `catalog` passou a nomear `VER_PRODUTO` (G-B3) | respondido com "não" — `PermissaoDoCatalogo`, recorte próprio |
 | 12 | `frontend/src/api/useRecurso.ts`:47 (o da W-A) | o gatilho da W-A para o TanStack Query, *"para esta rodada decidir"* | a W-B | decidido: saiu (`main.tsx`:9). O de volta é a linha 4 |
+| 3 | `frontend/src/painel/MenuDoPainel.tsx:34` (hoje citado na linha 32 do mesmo arquivo) | *"**Gatilho escrito:** a segunda seção com tela. Aí a URL passa a precisar dizer onde a pessoa está — para recarregar, para voltar e para mandar link a alguém —, e isso é rota, não estado."* | venceu na **W-C**; a **W-D** o agravou pondo a terceira tela pelo mesmo precedente, sem o reler; a **R-1** o nomeou; pago na **W-E**: `App.tsx` tem `/painel/lojas/:estabelecimentoId/{produtos,disponibilidade}[/:produtoId]`, e o estado que escolhia a seção saiu do `PainelPage` | ADR-061 — três rodadas entre vencer e ser lido |
 | 13 | ADR-044:157 | *"sai da lista de exposição antes de qualquer ambiente exposto, junto com a decisão do limite de taxa."* | **pago antes de disparar**: o `/actuator/gateway` saiu na G-B5; `include: health,info` no `application.yml` do gateway | emenda de 30/09 à ADR-044 |
 
 ## Não
@@ -106,6 +108,8 @@ este arquivo existe para achar.**
 | 49 | ADR-060, seção "Gatilho escrito" | *"**A primeira rota que crie um recurso cujo dono ainda não exista** — hoje só esta."* | só o `POST /api/v1/me/estabelecimentos` cria sem confrontar vínculo | a regra *"escrita sem vínculo só quando o vínculo é o produto"* vira linha do `CLAUDE.md` |
 | 50 | ADR-060, seção "Gatilho escrito" | *"**O dia em que o `merchant` precisar de um GET de uma loja por id.**"* | não há `GET /api/v1/me/estabelecimentos/{id}` nem outro GET de loja por id; o predicado do gateway para a coleção é exato (G-B5) — e por isso a criação responde 201 **sem `Location`** | o predicado prefixado e o `Location`, com ADR própria |
 | 51 | ADR-060, seção "Gatilho escrito" | *"**O dia em que uma pessoa física precisar ser impedida de criar lojas sem limite.**"* | não há limite nem unicidade de documento, e ninguém pediu | decisão de produto |
+| 53 | ADR-061, seção "Gatilho escrito" | *"**A primeira tela do painel que não pertença a uma loja** — relatório que cruze duas lojas, conta da pessoa, preferências."* | toda rota sob `/painel` em `App.tsx` é o seletor, o cadastro ou `lojas/:estabelecimentoId/…` | um nível acima de `/painel/lojas/:id` |
+| 54 | ADR-061, seção "Gatilho escrito" | *"**O dia em que o seletor tiver mais de uma dúzia de lojas.**"* | não há medida de quantas lojas alguém tem; a fixture e a prova da W-E têm uma cada | busca no servidor, e paginação no `GET /api/v1/me/estabelecimentos` |
 
 **Fora da tabela, de propósito:** a ADR-037:203 adia o refresh token *"para ADR
 própria"* e não escreve condição — o motivo dado, *"um marco que ainda não tem
@@ -128,6 +132,7 @@ Achadas nas rodadas, sem condição que as reabra. **Sem gatilho, ninguém olha.
 | O par de chaves na raiz do repositório, que não é o de `secrets/` | I-B |
 | `JWT_PUBLIC_KEY_PATH` no `.env.example`, que nada lê | I-B |
 | A ADR-041 atribui à ADR-037 uma frase entre aspas que ela não tem — *"decidir quando o segundo consumidor existir"*; a ADR-037:210 diz *"Quando o segundo chegar, a pergunta chega junto, com evidência"* | medido na R-1 |
+| As modalidades não estão no contrato: o mapa `metodosPorModalidade` é declarado com chave `string`, e o formulário da W-E nomeia `ENTREGA` e `RETIRADA` numa constante — a única lista dele sem o contrato atrás. Uma divergência com o domínio vira 400 sem `detail` | medido na W-E |
 | A correção do Mongo no `conversation`, que nenhum teste exerce | `CLAUDE.md`, armadilha do MongoDB no Boot 4 |
 
 ---

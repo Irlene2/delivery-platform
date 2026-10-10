@@ -162,16 +162,29 @@ conjunto brasileiro (M16), modalidade sem método (M12), fundo de troco negativo
 400 tem duas origens, as duas no padrão do `/signup`:
 
 - **a forma**, por Bean Validation no `CriarEstabelecimentoRequest` — o que falta, o que
-  vem em branco, o mapa vazio. O `/signup` faz igual (`@Valid` e `@NotBlank`), e o
-  400 sai do mecanismo padrão do Spring;
+  vem em branco, e o `null` dentro do mapa. O `/signup` faz igual (`@Valid` e
+  `@NotBlank`), e o 400 sai do mecanismo padrão do Spring. **O mapa vazio não está
+  aqui desde a W-E:** ele é a M12, e um `@NotEmpty` no DTO a repetia na borda — o mapa
+  vazio nunca chegava ao tratador que escreve a frase dela;
 - **o que só o agregado sabe**, por **um** ponto de tradução: a construção do agregado no
   `CriarEstabelecimentoService` captura as recusas dos objetos de valor e lança
-  `CadastroDeLojaRecusado`, que o `TratadorDeErros` responde com 400 e a frase do
-  agregado como `detail`. É o mesmo desenho do `/signup`, que trata
-  `TelefoneInvalido` por tipo.
+  `CadastroDeLojaRecusado` **com um motivo**, e o `TratadorDeErros` responde 400 com **a
+  frase que ele escreve para aquele motivo** — nunca com `excecao.getMessage()`.
 
 **Não há tratador de `IllegalArgumentException`**, e é de propósito: ele transformaria em
 400 todo defeito do serviço que lançasse o mesmo tipo.
+
+**E a mensagem do agregado não vai à tela.** Ela fica no log e nos testes, onde o código
+da invariante é útil. A ADR-055 manda a tela mostrar o `detail` **como veio** — logo o
+`detail` é texto de produto, e *"a loja precisa aceitar ao menos uma modalidade (M12)"*
+não é. O `identity` já dizia a razão por escrito, no javadoc do tratador do telefone:
+*"Mensagem fixa, não `excecao.getMessage()`"*.
+
+**⚠ Correção de uma afirmação da E-1.** Este bloco dizia que a convenção era *"unânime —
+três de três"*. **Não era:** o `TratadorDeErros` do `catalog` repassa `getMessage()` em
+três tratadores (404, 409 e 400). O repositório tinha **dois** precedentes, e a W-E
+escolheu um — a regra está no `CLAUDE.md`, e os três do `catalog` estão no `dividas.md`
+com gatilho.
 
 **O que os testes alcançam, medido por mutação.** Tirar o `registrarVinculoNascido`
 derruba o caso 5 do teste de unidade, a linha do outbox no `CriarEstabelecimentoIT` e o
@@ -179,9 +192,17 @@ derruba o caso 5 do teste de unidade, a linha do outbox no `CriarEstabelecimento
 **ordem das chamadas**, que é o que um dublê sabe ver — e os dois casos de integração que
 criam de verdade, com 500: a chave estrangeira está no banco, e só a integração a alcança.
 
-**O marco 1 ganha metade do que lhe faltava.** O time — convite, aceite, papel,
-permissão — continua sem rota: as sete operações do `GerenciarEquipeService` e o
+**O marco 1 não ganha coluna nesta rodada — ganha a rota que a tela vai chamar.** A
+coluna do PRD §10 diz *"Cadastrar a loja e o time"*, e quem a exerce é uma pessoa diante
+de uma tela. Em 10/10/2026, com a rota no ar, o front não tinha caminho de cadastro de
+loja: nenhuma rota, nenhum componente, nenhum link no menu. **A tela é a W-E**, e o time
+continua sem rota nenhuma — as sete operações do `GerenciarEquipeService` e o
 `AceitarConviteService` ainda não têm controlador. *Está no `dividas.md`.*
+
+**Esta frase substitui a que estava aqui** — *"o marco 1 ganha metade do que lhe
+faltava"* —, escrita medindo **rotas** onde a coluna mede **o que o comerciante
+consegue**. É o vigésimo quarto defeito reincidindo uma rodada depois de publicado, e a
+correção fica no texto para que a reincidência fique também.
 
 **Os três semeadores continuam.** A ADR-059 diz que eles saem *"na rodada que der ao
 `merchant` as rotas de escrita"* — e esta dá **uma**. O valor da fixture é uma loja

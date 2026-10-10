@@ -95,6 +95,20 @@ Três consequências que o código tem de respeitar:
   permissões que o servidor respondeu, e um 403 numa ação oferecida significa que
   elas mudaram.
 
+
+### 2.6 A loja escolhida mora na URL (W-E)
+
+**A loja escolhida mora na URL** (ADR-061). `/painel/lojas/:estabelecimentoId` é o prefixo
+de tudo que pertence a uma loja. Recarregar não perde a loja; o `201` da criação tem
+destino; e "abre a tela X da loja Y" é um endereço. O id que está na URL **não é conferido
+no navegador**: a tela pede os dados, e quem recusa é o servidor, com o 403 idêntico a "não
+existe" (§2.4).
+
+**Zero lojas não é erro, e tem mais de uma causa:** conta nova, convidada que ainda não
+aceitou, suspensa, removida da última loja. Por isso o `/painel` **mostra** o convite em
+vez de redirecionar para o cadastro — o texto *"ainda não faz parte de nenhuma loja"* é
+verdade nas quatro, e *"cadastre a sua loja"* só na primeira. O convite leva ao cadastro
+por um link.
 ---
 
 ## 3 · Dinheiro, e regra de domínio
@@ -131,6 +145,17 @@ suficiente, a regra aplicada certo também dá `true` — medido na W-D, recalcu
 que a regra daria como vendável: um estado que ela nunca produziria, e que só uma tela
 que lê o servidor mostra.
 
+
+**O formulário não antecipa recusa de domínio** (W-E). Campo obrigatório é forma, e a tela
+o marca. **Invariante não:** o botão do cadastro de loja não é desabilitado pela M12, e a
+tela mostra o `detail` do 400 como veio (ADR-055). Antecipar a regra seria mantê-la em dois
+lugares — o erro que a W-D consertou no `vendavel`.
+
+**E a lista do seletor de fuso vem do contrato**, não de uma constante solta: o `merchant`
+declara as zonas aceitas no schema do campo, e o tipo gerado as carrega. A tela as lista a
+partir de um `Record<Fuso, string>` de rótulos, e o `Record` exige do typecheck exatamente
+as chaves da união gerada. **Ler o contrato não é derivar regra** — é o oposto de copiá-la.
+A exceção, escrita no `dividas.md`: as modalidades, que o contrato não nomeia.
 ---
 
 ## 4 · O que o front tolera, porque o back mudará
@@ -227,4 +252,6 @@ interpolação é, por si, a razão: no dia em que o nome do produto vier da API
 | No 403 o texto do servidor não vai à tela | testes `no 403 descarta o detail…` e `5 · no 403, não mostra o texto do servidor…` |
 | Estado de enum desconhecido não concede nada | testes `estado que o front não conhece vira null…` e `estado que o front não conhece não aparece como "Disponível"` |
 | O front não deriva regra de domínio | teste `3b · e quando o servidor diz que não é vendável, a tela diz também` |
+| O formulário não antecipa a M12 | teste `A7 · a tela não antecipa a M12: matriz vazia, botão habilitado, e a requisição acontece` |
+| A lista de fusos é a do contrato | o `typecheck`, pelo `Record<Fuso, string>` do `CadastroDeLojaPage`; e, do lado do servidor, o `AllowableValuesDoFusoTest` |
 | As seis premissas | **ninguém, e é por isso que este documento existe.** Nenhuma máquina confere que uma tela não foi desenhada. |
