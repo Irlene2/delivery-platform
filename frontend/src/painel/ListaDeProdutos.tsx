@@ -4,7 +4,6 @@ import { ErroDaApi } from '../api/cliente';
 import type { ProdutoDoContrato } from '../api/disponibilidade';
 import { useRecurso } from '../api/useRecurso';
 import { MarcarDisponibilidade } from './MarcarDisponibilidade';
-import { ProdutoAberto } from './ProdutoAberto';
 import {
   caminhoDosProdutos,
   paraTela,
@@ -41,11 +40,12 @@ import {
  * item marcado é **substituído pelo produto que o servidor devolveu** — é aí que o
  * `vendavel` recalculado aparece.
  *
- * ## O nome abre o produto (W-D)
+ * ## O nome abre o produto (W-D), e desde a W-E por endereço
  *
- * Clicar no nome troca a lista pelo produto aberto — os grupos, as opções e o
- * acréscimo de cada uma. Voltar recarrega a lista, porque marcar uma opção pode
- * ter mudado o `vendavel` de quem está nela.
+ * Clicar no nome chama `aoAbrir`, e quem monta a lista navega para o endereço do
+ * produto (ADR-061). Até a W-E o produto aberto era estado desta lista — a terceira
+ * tela posta pelo precedente do estado, com o gatilho do `MenuDoPainel` já vencido.
+ * Voltar remonta a lista, e ela relê: marcar uma opção pode ter mudado o `vendavel`.
  *
  * Recarregar é remontar: a lista de dentro leva uma `key` que muda, e o
  * `useRecurso` dela busca de novo. Assim o `useRecurso`, que é de todas as telas,
@@ -54,26 +54,13 @@ import {
 export function ListaDeProdutos({
   estabelecimentoId,
   podeMarcar = false,
+  aoAbrir,
 }: {
   estabelecimentoId: string | null;
   podeMarcar?: boolean;
+  aoAbrir?: (produtoId: string) => void;
 }) {
   const [geracao, definirGeracao] = useState(0);
-  const [aberto, abrir] = useState<string | null>(null);
-
-  if (aberto !== null && estabelecimentoId !== null) {
-    return (
-      <ProdutoAberto
-        estabelecimentoId={estabelecimentoId}
-        produtoId={aberto}
-        podeMarcar={podeMarcar}
-        aoVoltar={() => {
-          abrir(null);
-          definirGeracao((atual) => atual + 1);
-        }}
-      />
-    );
-  }
 
   return (
     <ListaCarregada
@@ -81,7 +68,7 @@ export function ListaDeProdutos({
       estabelecimentoId={estabelecimentoId}
       podeMarcar={podeMarcar}
       aoRecarregar={() => definirGeracao((atual) => atual + 1)}
-      aoAbrir={abrir}
+      aoAbrir={aoAbrir}
     />
   );
 }
@@ -95,7 +82,7 @@ function ListaCarregada({
   estabelecimentoId: string | null;
   podeMarcar: boolean;
   aoRecarregar: () => void;
-  aoAbrir: (produtoId: string) => void;
+  aoAbrir: ((produtoId: string) => void) | undefined;
 }) {
   const recurso = useRecurso<PaginaDoContrato>(
     estabelecimentoId === null ? null : caminhoDosProdutos(estabelecimentoId),
@@ -140,13 +127,17 @@ function ListaCarregada({
           .map((produto) => (
             <li key={produto.id} className="py-3">
               <div className="flex items-baseline justify-between gap-4">
-                <button
-                  type="button"
-                  onClick={() => aoAbrir(produto.id)}
-                  className="text-left text-slate-900 underline-offset-2 hover:underline dark:text-slate-100"
-                >
-                  {produto.nome}
-                </button>
+                {aoAbrir === undefined ? (
+                  <span className="text-slate-900 dark:text-slate-100">{produto.nome}</span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => aoAbrir(produto.id)}
+                    className="text-left text-slate-900 underline-offset-2 hover:underline dark:text-slate-100"
+                  >
+                    {produto.nome}
+                  </button>
+                )}
                 <span className="flex items-baseline gap-3">
                   {!produto.vendavel && (
                     <span className="rounded bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">

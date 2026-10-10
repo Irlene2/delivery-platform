@@ -132,32 +132,33 @@ describe('ListaDeProdutos', () => {
     expect(await screen.findByText(/Mostrando 1 de 37/)).toBeInTheDocument();
   });
 
-  // W-D: o nome abre o produto inteiro, e voltar relê a lista — marcar uma opção
-  // pode ter mudado o vendável de quem está nela.
-  it('o nome abre o produto, e voltar relê a lista', async () => {
-    chamarFalso.mockImplementation((caminho: string) =>
-      Promise.resolve(
-        caminho.includes('?page=')
-          ? pagina([{ id: 'x9', nome: 'Pizza margherita', precoBase: 49.9, vendavel: true }])
-          : {
-              id: 'x9',
-              nome: 'Pizza margherita',
-              precoBase: 49.9,
-              vendavel: true,
-              gruposDeOpcoes: [],
-            },
-      ),
+  // W-D abriu o produto pelo nome; desde a W-E abrir é navegar (ADR-061), e a lista só
+  // avisa quem a montou. O caminho inteiro — abrir, ler, voltar e reler — está no
+  // PainelPage.test, por endereço.
+  it('o nome avisa qual produto abrir, pelo id', async () => {
+    chamarFalso.mockResolvedValue(
+      pagina([{ id: 'x9', nome: 'Pizza margherita', precoBase: 49.9, vendavel: true }]),
+    );
+    const aoAbrir = vi.fn();
+
+    render(
+      <SessaoProvider>
+        <ListaDeProdutos estabelecimentoId="p1" aoAbrir={aoAbrir} />
+      </SessaoProvider>,
+    );
+    fireEvent.click(await screen.findByRole('button', { name: 'Pizza margherita' }));
+
+    expect(aoAbrir).toHaveBeenCalledWith('x9');
+  });
+
+  it('sem quem abra, o nome é só texto', async () => {
+    chamarFalso.mockResolvedValue(
+      pagina([{ id: 'x9', nome: 'Pizza margherita', precoBase: 49.9, vendavel: true }]),
     );
 
     montar('p1');
-    fireEvent.click(await screen.findByRole('button', { name: 'Pizza margherita' }));
 
-    expect(await screen.findByRole('heading', { name: 'Pizza margherita' })).toBeInTheDocument();
-    expect(chamarFalso.mock.calls.at(-1)?.[0]).toBe('/api/v1/merchants/p1/catalog/produtos/x9');
-
-    fireEvent.click(screen.getByRole('button', { name: /voltar à lista/i }));
-
-    expect(await screen.findByRole('button', { name: 'Pizza margherita' })).toBeInTheDocument();
-    expect(chamarFalso.mock.calls.filter(([c]) => String(c).includes('?page='))).toHaveLength(2);
+    expect(await screen.findByText('Pizza margherita')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Pizza margherita' })).toBeNull();
   });
 });

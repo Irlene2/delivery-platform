@@ -1,3 +1,6 @@
+import { Link } from 'react-router';
+
+import { NOVA_LOJA } from './caminhos';
 import type { LojaDoUsuario } from './tipos';
 
 /**
@@ -39,6 +42,16 @@ export function SeletorDeLoja({
           Quem administra a loja precisa te convidar. O convite chega com um código, e é com ele que
           você entra na equipe.
         </p>
+        {/* W-E: o convite continua dizendo o que é verdade para os quatro casos de lista
+            vazia, e ganha o caminho de quem é dono: cadastrar a própria loja (ADR-061 §3). */}
+        <p className="mt-4 text-sm">
+          <Link
+            to={NOVA_LOJA}
+            className="font-medium text-slate-900 underline underline-offset-4 dark:text-slate-100"
+          >
+            Cadastrar minha loja
+          </Link>
+        </p>
       </section>
     );
   }
@@ -67,6 +80,13 @@ export function SeletorDeLoja({
         onChange={(evento) => aoSelecionar(evento.target.value)}
         className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
       >
+        {/* Sem loja escolhida — o /painel de quem tem mais de uma (ADR-061 §3) —, a opção
+            vazia evita que a primeira apareça marcada sem estar escolhida. */}
+        {selecionada === null && (
+          <option value="" disabled>
+            Escolha uma loja
+          </option>
+        )}
         {lojas.map((loja) => (
           <option key={loja.estabelecimentoId} value={loja.estabelecimentoId}>
             {loja.nome}

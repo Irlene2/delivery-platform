@@ -1,4 +1,6 @@
-import { render, screen } from '@testing-library/react';
+import { render as renderizar, screen } from '@testing-library/react';
+import type { ReactElement } from 'react';
+import { MemoryRouter } from 'react-router';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -14,6 +16,11 @@ function loja(nome: string, id: string): LojaDoUsuario {
   };
 }
 
+/** O convite tem um `Link` para o cadastro desde a W-E, e link precisa de roteador. */
+function render(ui: ReactElement) {
+  return renderizar(ui, { wrapper: MemoryRouter });
+}
+
 describe('SeletorDeLoja', () => {
   /**
    * O estado de todo mundo no instante seguinte ao cadastro — e a primeira
@@ -26,6 +33,29 @@ describe('SeletorDeLoja', () => {
     expect(screen.getByText(/ainda não faz parte de nenhuma loja/i)).toBeInTheDocument();
     expect(screen.getByText(/precisa te convidar/i)).toBeInTheDocument();
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+  });
+
+  // W-E: o convite continua dizendo o que vale para os quatro casos de lista vazia, e
+  // ganha o caminho de quem é dono — sem redirecionar ninguém (ADR-061 §3).
+  it('o convite leva ao cadastro de loja por um link', () => {
+    render(<SeletorDeLoja lojas={[]} selecionada={null} aoSelecionar={() => {}} />);
+
+    expect(screen.getByRole('link', { name: 'Cadastrar minha loja' })).toHaveAttribute(
+      'href',
+      '/painel/lojas/nova',
+    );
+  });
+
+  it('com duas lojas e nenhuma escolhida, nenhuma aparece marcada', () => {
+    render(
+      <SeletorDeLoja
+        lojas={[loja('Ana Pães', 'a1'), loja('Pizzaria', 'p1')]}
+        selecionada={null}
+        aoSelecionar={() => {}}
+      />,
+    );
+
+    expect(screen.getByRole('combobox', { name: /loja/i })).toHaveValue('');
   });
 
   it('com uma loja só, mostra o nome e não desenha seletor', () => {
