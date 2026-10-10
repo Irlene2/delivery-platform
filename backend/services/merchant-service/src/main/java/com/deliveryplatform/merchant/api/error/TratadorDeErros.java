@@ -64,10 +64,26 @@ public class TratadorDeErros {
      * não {@code IllegalArgumentException}: um tratador desse tipo transformaria em 400
      * todo defeito que o lançasse.
      *
-     * <p>O {@code detail} é a frase do agregado, e a tela a mostra como veio (ADR-055).
+     * <p><b>O {@code detail} é escrito aqui, por motivo — nunca
+     * {@code excecao.getMessage()}</b> (W-E). A tela o mostra como veio (ADR-055), e a
+     * mensagem do agregado carrega código de invariante — <i>"(M12)"</i> — e às vezes o
+     * valor digitado. Ela fica na causa, para o log. É o que o tratador do telefone do
+     * {@code identity} já fazia, com a razão escrita no javadoc dele.
      */
     @ExceptionHandler(CadastroDeLojaRecusado.class)
     public ProblemDetail cadastroDeLojaRecusado(CadastroDeLojaRecusado excecao) {
-        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, excecao.getMessage());
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, fraseDe(excecao.motivo()));
+    }
+
+    static String fraseDe(CadastroDeLojaRecusado.Motivo motivo) {
+        return switch (motivo) {
+            case DOCUMENTO -> "documento inválido: informe um CPF ou um CNPJ";
+            case TELEFONE -> "telefone inválido";
+            case FUSO_HORARIO -> "fuso horário inválido";
+            case TEXTO_OBRIGATORIO -> "nome, endereço e bairro são obrigatórios";
+            case MODALIDADE_SEM_FORMA_DE_PAGAR ->
+                    "escolha ao menos uma modalidade, e uma forma de pagar para cada uma";
+            case FUNDO_DE_TROCO_NEGATIVO -> "o fundo máximo de troco não pode ser negativo";
+        };
     }
 }

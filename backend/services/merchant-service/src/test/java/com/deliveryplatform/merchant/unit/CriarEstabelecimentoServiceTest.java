@@ -1,6 +1,7 @@
 package com.deliveryplatform.merchant.unit;
 
 import com.deliveryplatform.merchant.application.exception.CadastroDeLojaRecusado;
+import com.deliveryplatform.merchant.application.exception.CadastroDeLojaRecusado.Motivo;
 import com.deliveryplatform.merchant.application.port.in.CriarEstabelecimento.NovoEstabelecimento;
 import com.deliveryplatform.merchant.application.port.in.LojaDoUsuario;
 import com.deliveryplatform.merchant.application.port.out.EstabelecimentoRepositorio;
@@ -18,6 +19,9 @@ import com.deliveryplatform.merchant.domain.model.Permissao;
 import com.deliveryplatform.merchant.domain.model.TipoDeOperacao;
 import com.deliveryplatform.valuetypes.Money;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
@@ -32,6 +36,7 @@ import java.time.ZoneOffset;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -174,28 +179,49 @@ class CriarEstabelecimentoServiceTest {
         ordem.verify(equipes).registrarVinculoNascido(any(), any());
     }
 
-    @Test
-    void recusa_do_agregado_vira_cadastro_recusado_e_nada_e_salvo() {
-        NovoEstabelecimento semModalidade = new NovoEstabelecimento(
-                "Pizzaria", "12345678901", "(11) 98765-4321", "Rua A, 1", "Centro",
-                "America/Sao_Paulo", BigDecimal.ZERO, false, TipoDeOperacao.PRODUCAO,
-                Map.of(Modalidade.ENTREGA, Set.of()));
-
-        assertThatThrownBy(() -> servico().criar(PORTADOR, semModalidade))
-                .isInstanceOf(CadastroDeLojaRecusado.class)
-                .hasMessageContaining("M12");
-        verifyNoInteractions(estabelecimentos, membros, equipes);
+    /** O pedido válido, com um campo trocado — cada caso abaixo varia um só. */
+    private static NovoEstabelecimento com(String documento, String telefone, String fuso,
+                                           String nome, BigDecimal fundo,
+                                           Map<Modalidade, Set<MetodoPagamento>> metodos) {
+        return new NovoEstabelecimento(nome, documento, telefone, "Rua A, 1", "Centro", fuso,
+                fundo, false, TipoDeOperacao.PRODUCAO, metodos);
     }
 
-    @Test
-    void documento_fora_do_tamanho_tambem_e_recusa_do_agregado() {
-        NovoEstabelecimento documentoCurto = new NovoEstabelecimento(
-                "Pizzaria", "123", "(11) 98765-4321", "Rua A, 1", "Centro",
-                "America/Sao_Paulo", BigDecimal.ZERO, false, TipoDeOperacao.PRODUCAO,
-                Map.of(Modalidade.RETIRADA, Set.of(MetodoPagamento.DINHEIRO)));
+    private static final Map<Modalidade, Set<MetodoPagamento>> RETIRADA_EM_DINHEIRO =
+            Map.of(Modalidade.RETIRADA, Set.of(MetodoPagamento.DINHEIRO));
 
-        assertThatThrownBy(() -> servico().criar(PORTADOR, documentoCurto))
-                .isInstanceOf(CadastroDeLojaRecusado.class);
+    /**
+     * O censo dos motivos (W-E): cada parte do agregado, e o que ela recusa. O motivo
+     * é o que o tratador lê para escrever a frase — e a causa guarda a mensagem do
+     * agregado, que não vai à tela.
+     */
+    static Stream<Arguments> recusas() {
+        return Stream.of(
+                Arguments.of(Motivo.DOCUMENTO,
+                        com("123", "(11) 98765-4321", "America/Sao_Paulo", "Pizzaria", BigDecimal.ZERO, RETIRADA_EM_DINHEIRO)),
+                Arguments.of(Motivo.TELEFONE,
+                        com("12345678901", "não é telefone", "America/Sao_Paulo", "Pizzaria", BigDecimal.ZERO, RETIRADA_EM_DINHEIRO)),
+                Arguments.of(Motivo.FUSO_HORARIO,
+                        com("12345678901", "(11) 98765-4321", "Europe/Lisbon", "Pizzaria", BigDecimal.ZERO, RETIRADA_EM_DINHEIRO)),
+                // Inalcançável pela borda: o @NotBlank do DTO recusa antes. Prova-se aqui.
+                Arguments.of(Motivo.TEXTO_OBRIGATORIO,
+                        com("12345678901", "(11) 98765-4321", "America/Sao_Paulo", "   ", BigDecimal.ZERO, RETIRADA_EM_DINHEIRO)),
+                Arguments.of(Motivo.MODALIDADE_SEM_FORMA_DE_PAGAR,
+                        com("12345678901", "(11) 98765-4321", "America/Sao_Paulo", "Pizzaria", BigDecimal.ZERO, Map.of())),
+                Arguments.of(Motivo.MODALIDADE_SEM_FORMA_DE_PAGAR,
+                        com("12345678901", "(11) 98765-4321", "America/Sao_Paulo", "Pizzaria", BigDecimal.ZERO,
+                                Map.of(Modalidade.ENTREGA, Set.of()))),
+                Arguments.of(Motivo.FUNDO_DE_TROCO_NEGATIVO,
+                        com("12345678901", "(11) 98765-4321", "America/Sao_Paulo", "Pizzaria", new BigDecimal("-1.00"), RETIRADA_EM_DINHEIRO)));
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("recusas")
+    void cada_recusa_do_agregado_tem_o_seu_motivo_e_nada_e_salvo(Motivo esperado, NovoEstabelecimento pedido) {
+        assertThatThrownBy(() -> servico().criar(PORTADOR, pedido))
+                .isInstanceOfSatisfying(CadastroDeLojaRecusado.class,
+                        recusa -> assertThat(recusa.motivo()).isEqualTo(esperado))
+                .hasCauseInstanceOf(RuntimeException.class);
         verifyNoInteractions(estabelecimentos, membros, equipes);
     }
 }

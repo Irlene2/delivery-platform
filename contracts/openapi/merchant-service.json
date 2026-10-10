@@ -218,8 +218,7 @@
                 "enum" : [ "DINHEIRO", "CARTAO", "PIX" ]
               },
               "uniqueItems" : true
-            },
-            "minProperties" : 1
+            }
           }
         },
         "required" : [ "identificacao", "metodosPorModalidade", "politicaDeTroco", "tipoDeOperacao" ]
@@ -249,6 +248,9 @@
           },
           "fusoHorario" : {
             "type" : "string",
+            "default" : "America/Sao_Paulo",
+            "description" : "Identificador IANA do conjunto brasileiro (M16, ADR-025). O conjunto é o de FusoHorario.identificadoresAceitos(), e o AllowableValuesDoFusoTest impede as duas listas de divergirem.",
+            "enum" : [ "America/Araguaina", "America/Bahia", "America/Belem", "America/Boa_Vista", "America/Campo_Grande", "America/Cuiaba", "America/Eirunepe", "America/Fortaleza", "America/Maceio", "America/Manaus", "America/Noronha", "America/Porto_Velho", "America/Recife", "America/Rio_Branco", "America/Santarem", "America/Sao_Paulo" ],
             "minLength" : 1
           }
         },

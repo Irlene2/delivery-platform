@@ -1,6 +1,7 @@
 package com.deliveryplatform.merchant.application.usecase;
 
 import com.deliveryplatform.merchant.application.exception.CadastroDeLojaRecusado;
+import com.deliveryplatform.merchant.application.exception.CadastroDeLojaRecusado.Motivo;
 import com.deliveryplatform.merchant.application.port.in.CriarEstabelecimento;
 import com.deliveryplatform.merchant.application.port.in.LojaDoUsuario;
 import com.deliveryplatform.merchant.application.port.out.EstabelecimentoRepositorio;
@@ -26,6 +27,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 /**
  * A loja e o fundador dela, na mesma transação (ADR-060).
@@ -86,30 +88,32 @@ public class CriarEstabelecimentoService implements CriarEstabelecimento {
     }
 
     /**
-     * O único ponto em que a recusa do agregado vira 400. Os tipos capturados são os
-     * que os objetos de valor desta loja lançam — {@code IllegalArgumentException}
-     * pelas invariantes (M12, M15, M17, texto obrigatório), e os três próprios do
-     * documento, do telefone e do fuso (M16). Nada fora desta construção é capturado.
+     * O único ponto em que a recusa do agregado vira 400 — e, desde a W-E, com o
+     * {@link Motivo} de cada parte. Cada parte do agregado é construída no seu próprio
+     * bloco, porque três delas lançam o mesmo {@code IllegalArgumentException} por razões
+     * diferentes, e o tipo sozinho não diz qual foi. Nada fora desta construção é
+     * capturado.
      */
     private static Estabelecimento construir(NovoEstabelecimento pedido) {
+        Documento documento = recusando(Motivo.DOCUMENTO, () -> new Documento(pedido.documento()));
+        Telefone telefone = recusando(Motivo.TELEFONE, () -> Telefone.de(pedido.telefone()));
+        FusoHorario fuso = recusando(Motivo.FUSO_HORARIO, () -> FusoHorario.de(pedido.fusoHorario()));
+        Identificacao identificacao = recusando(Motivo.TEXTO_OBRIGATORIO, () -> new Identificacao(
+                pedido.nome(), documento, telefone, pedido.enderecoTextual(), pedido.bairro(), fuso));
+        Operacao operacao = recusando(Motivo.MODALIDADE_SEM_FORMA_DE_PAGAR,
+                () -> Operacao.nova(pedido.tipoDeOperacao(), pedido.metodosPorModalidade()));
+        PoliticaDeTroco troco = recusando(Motivo.FUNDO_DE_TROCO_NEGATIVO, () -> new PoliticaDeTroco(
+                Money.de(pedido.fundoMaximoDeTroco()), pedido.aceitaPedidoSemTrocoDisponivel()));
+        return Estabelecimento.novo(
+                identificacao, operacao, troco, Disponibilidade.semHorario(), List.of());
+    }
+
+    private static <T> T recusando(Motivo motivo, Supplier<T> parte) {
         try {
-            return Estabelecimento.novo(
-                    new Identificacao(
-                            pedido.nome(),
-                            new Documento(pedido.documento()),
-                            Telefone.de(pedido.telefone()),
-                            pedido.enderecoTextual(),
-                            pedido.bairro(),
-                            FusoHorario.de(pedido.fusoHorario())),
-                    Operacao.nova(pedido.tipoDeOperacao(), pedido.metodosPorModalidade()),
-                    new PoliticaDeTroco(
-                            Money.de(pedido.fundoMaximoDeTroco()),
-                            pedido.aceitaPedidoSemTrocoDisponivel()),
-                    Disponibilidade.semHorario(),
-                    List.of());
+            return parte.get();
         } catch (IllegalArgumentException | DocumentoInvalido | TelefoneInvalido
                  | FusoHorarioInvalido recusa) {
-            throw new CadastroDeLojaRecusado(recusa.getMessage(), recusa);
+            throw new CadastroDeLojaRecusado(motivo, recusa);
         }
     }
 }

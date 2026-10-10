@@ -11,6 +11,9 @@ import com.deliveryplatform.merchant.support.IdentityDeMentira;
 import com.deliveryplatform.merchant.support.Infraestrutura;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -22,6 +25,7 @@ import org.springframework.test.web.servlet.client.RestTestClient;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -127,13 +131,37 @@ class CriarEstabelecimentoIT extends Infraestrutura {
         criar(token, CORPO.formatted("Loja Dois", "123.456.789-09")).expectStatus().isCreated();
     }
 
-    @Test
-    void documento_que_o_agregado_recusa_e_400_com_a_frase_dele() {
-        String detalhe = criar(IDENTITY.tokenDe(UUID.randomUUID()), CORPO.formatted("Loja", "123"))
+    /**
+     * O 400 por motivo (W-E): o `detail` é a frase que o tratador escreve, nunca a
+     * mensagem do agregado. Cinco dos seis motivos são alcançáveis pela borda; o de
+     * texto obrigatório o `@NotBlank` do DTO recusa antes, e mora no teste de unidade.
+     */
+    static Stream<Arguments> recusas() {
+        String valido = CORPO.formatted("Loja", "123.456.789-09");
+        return Stream.of(
+                Arguments.of("documento", CORPO.formatted("Loja", "123"),
+                        "documento inválido: informe um CPF ou um CNPJ"),
+                Arguments.of("telefone", valido.replace("(81) 98765-4321", "não é telefone"),
+                        "telefone inválido"),
+                Arguments.of("fuso", valido.replace("America/Recife", "Europe/Lisbon"),
+                        "fuso horário inválido"),
+                Arguments.of("modalidade sem forma de pagar",
+                        valido.replace("{ \"ENTREGA\": [\"DINHEIRO\", \"PIX\"], \"RETIRADA\": [\"CARTAO\"] }", "{ }"),
+                        "escolha ao menos uma modalidade, e uma forma de pagar para cada uma"),
+                Arguments.of("fundo de troco", valido.replace("50.00", "-1.00"),
+                        "o fundo máximo de troco não pode ser negativo"));
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("recusas")
+    void o_400_diz_a_frase_do_tratador_e_nao_a_do_agregado(String motivo, String corpo, String frase) {
+        String resposta = criar(IDENTITY.tokenDe(UUID.randomUUID()), corpo)
                 .expectStatus().isBadRequest()
                 .expectBody(String.class).returnResult().getResponseBody();
 
-        assertThat(detalhe).contains("documento inválido");
+        assertThat(resposta).contains("\"detail\":\"" + frase + "\"");
+        // A mensagem do agregado não vai à tela: nem o código da invariante, nem o valor digitado.
+        assertThat(resposta).doesNotContain("M12").doesNotContain("Europe/Lisbon").doesNotContain("não é telefone");
     }
 
     @Test
