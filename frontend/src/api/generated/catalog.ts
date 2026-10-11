@@ -72,8 +72,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Lista os produtos publicados do estabelecimento
-         * @description Exige vínculo ativo com VER_PRODUTO, resolvido no merchant-service com o token de quem pediu. Sem vínculo, sem permissão, loja inexistente e merchant indisponível devolvem a mesma recusa.
+         * Lista os produtos do estabelecimento, em qualquer estado de publicação
+         * @description A listagem do painel: rascunho, ativo e inativo, cada um com o estadoDePublicacao. Sem sort, pela ordem e depois pelo id. Exige vínculo ativo com VER_PRODUTO, resolvido no merchant-service com o token de quem pediu. Sem vínculo, sem permissão, loja inexistente e merchant indisponível devolvem a mesma recusa.
          */
         get: operations["listar"];
         put?: never;
@@ -198,6 +198,8 @@ export interface components {
             /** @enum {string} */
             disponibilidade?: "DISPONIVEL" | "ACABANDO" | "ESGOTADO_HOJE" | "ESGOTADO_INDETERMINADO";
             vendavel?: boolean;
+            /** @enum {string} */
+            estadoDePublicacao?: "RASCUNHO" | "ATIVO" | "INATIVO";
         };
         /** @description Um produto novo. Nasce rascunho; vai ao cardápio pela publicação. */
         ProdutoRequest: {
@@ -483,7 +485,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description A página de produtos publicados */
+            /** @description A página de produtos da loja, em qualquer estado de publicação */
             200: {
                 headers: {
                     [name: string]: unknown;

@@ -1,6 +1,7 @@
 package com.deliveryplatform.catalog.api.dto;
 
 import com.deliveryplatform.catalog.domain.model.EstadoDeDisponibilidade;
+import com.deliveryplatform.catalog.domain.model.EstadoDePublicacao;
 import com.deliveryplatform.catalog.domain.model.Produto;
 
 import java.math.BigDecimal;
@@ -22,6 +23,12 @@ import java.util.UUID;
  * está inteiro esgotado não é vendável, e nada no resumo diria isso. Omiti-lo
  * obrigaria a tela a mostrar como disponível o que não dá para vender.
  *
+ * <p><b>E o {@code estadoDePublicacao} vem</b> desde a E-3d (ADR-068), no mesmo tipo e
+ * nome do {@code ProdutoResponse}: a listagem passou a trazer o rascunho, e com ele na
+ * lista {@code vendavel: false} sozinho confunde "nunca foi publicado" com "acabou
+ * tudo" — que pedem ações opostas. Os dois campos não dizem a mesma coisa: um
+ * {@code ATIVO} pode não ser vendável, e é o caso que a lista existe para mostrar.
+ *
  * <p>O {@code precoBase} sai como {@code BigDecimal}, que o Jackson serializa
  * como número JSON sem casas perdidas. <b>Não é {@code double}</b> — a ADR-009
  * existe para isso — e não é o texto do documento: aquele formato é decisão de
@@ -34,7 +41,8 @@ public record ProdutoResumoResponse(
         BigDecimal precoBase,
         int ordem,
         EstadoDeDisponibilidade disponibilidade,
-        boolean vendavel
+        boolean vendavel,
+        EstadoDePublicacao estadoDePublicacao
 ) {
 
     public static ProdutoResumoResponse de(Produto produto) {
@@ -45,6 +53,7 @@ public record ProdutoResumoResponse(
                 produto.getPrecoBase().valor(),
                 produto.getOrdem(),
                 produto.getDisponibilidade().estado(),
-                produto.vendavel());
+                produto.vendavel(),
+                produto.getEstadoDePublicacao());
     }
 }

@@ -13,12 +13,15 @@ import {
 } from './produtos';
 
 /**
- * O cardápio publicado da loja escolhida — a rota que a G-B3 abriu, com tela
- * pela primeira vez.
+ * O cardápio da loja escolhida — a rota que a G-B3 abriu, com tela pela primeira
+ * vez. Desde a E-3d (ADR-068) a rota devolve **todos os estados de publicação**,
+ * rascunho inclusive, cada item com `estadoDePublicacao`: a listagem é a do painel,
+ * e o cardápio de quem compra entra pela porta da ADR-018. Esta tela ainda não
+ * mostra o estado — é a W-F.
  *
  * ## `vendavel` é a coluna que esta tela existe para mostrar
  *
- * A rota devolve os **publicados**, não os vendáveis, e cada item traz
+ * A rota não filtra pelos vendáveis, e cada item traz
  * `vendavel` já calculado — porque o cliente não consegue derivá-lo sem os
  * grupos de opções, que o resumo não carrega. Um produto ativo e não vendável é
  * cadastro perfeito num dia ruim: a pizza está `DISPONIVEL` e todos os tamanhos

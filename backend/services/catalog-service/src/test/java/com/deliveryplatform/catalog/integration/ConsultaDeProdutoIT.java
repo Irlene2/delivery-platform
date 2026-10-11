@@ -160,8 +160,13 @@ class ConsultaDeProdutoIT extends Infraestrutura {
 
     // ── 5 · as duas visibilidades ───────────────────────────────────────────
 
+    /**
+     * <b>Até a E-3d este caso afirmava que a listagem escondia o rascunho.</b> Mudou de
+     * sentido, não morreu: as duas leituras devolvem qualquer estado (ADR-068), e a
+     * listagem diz qual é.
+     */
     @Test
-    @DisplayName("5 · rascunho sai na rota nova, e a listagem não o mostra")
+    @DisplayName("5 · rascunho sai nas duas leituras, e as duas dizem que é rascunho")
     @SuppressWarnings("unchecked")
     void rascunho_sai_aqui_e_nao_na_listagem() {
         Produto rascunho = produtos.salvar(Produto.rascunho(loja, ProdutoDeTeste.CATEGORIA,
@@ -176,7 +181,11 @@ class ConsultaDeProdutoIT extends Infraestrutura {
                 .header("Authorization", "Bearer " + token)
                 .exchange().expectStatus().isOk()
                 .expectBody(Map.class).returnResult().getResponseBody();
-        assertThat((List<Object>) pagina.get("conteudo")).isEmpty();
+        assertThat((List<Map<String, Object>>) pagina.get("conteudo"))
+                .singleElement()
+                .satisfies(item -> assertThat(item)
+                        .containsEntry("id", rascunho.getId().toString())
+                        .containsEntry("estadoDePublicacao", "RASCUNHO"));
     }
 
     // ── 6 · a recusa ────────────────────────────────────────────────────────

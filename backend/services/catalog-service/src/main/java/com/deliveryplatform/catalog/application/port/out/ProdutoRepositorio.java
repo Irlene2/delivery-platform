@@ -33,12 +33,16 @@ public interface ProdutoRepositorio {
     Optional<Produto> buscarPorId(UUID id);
 
     /**
-     * Os produtos publicados de uma loja — a consulta que o primeiro índice da
-     * §7 existe para servir.
+     * Os produtos de uma loja, <b>em qualquer estado de publicação</b> (ADR-068), pela
+     * {@code ordem} e, no empate, pelo id quando quem chamou não pediu ordenação.
      *
-     * <p>Devolve os {@code ATIVO}, e não os <i>vendáveis</i>: vendável é
-     * derivado (§4) e não é campo, então filtrar por ele é trabalho de quem
-     * chamou, sobre o que voltou daqui.
+     * <p><b>Até a E-3d chamava-se {@code publicadosDe} e devolvia só os {@code ATIVO}.</b>
+     * A listagem é a do painel — a rota exige {@code VER_PRODUTO} —, e o comerciante
+     * precisa ver o rascunho que acabou de criar. O cardápio de quem compra entra pela
+     * porta da ADR-018, e não por aqui. O nome segue o vizinho,
+     * {@code CategoriaRepositorio.daLoja}.
+     *
+     * <p>Nem filtra por <i>vendável</i>: vendável é derivado (§4) e não é campo.
      *
      * <p><b>Ganhou {@code Pageable} na G-B3, e devia ter nascido com ele.</b> O
      * {@code CLAUDE.md} diz <i>"Paginação obrigatória em toda listagem. Nada de
@@ -50,7 +54,7 @@ public interface ProdutoRepositorio {
      * protege o {@code domain}, não o {@code application}, e todo adaptador
      * desta porta é Spring Data de qualquer maneira.
      */
-    Page<Produto> publicadosDe(UUID estabelecimentoId, Pageable paginacao);
+    Page<Produto> daLoja(UUID estabelecimentoId, Pageable paginacao);
 
     /**
      * Os produtos da loja que têm algo a reativar: o próprio produto, ou qualquer

@@ -267,7 +267,7 @@ class ReativarNoExpedienteServiceTest {
 
         /** A varredura não lista publicados; o dublê não finge que lista. */
         @Override
-        public Page<Produto> publicadosDe(UUID estabelecimentoId, Pageable paginacao) {
+        public Page<Produto> daLoja(UUID estabelecimentoId, Pageable paginacao) {
             throw new UnsupportedOperationException("fora do que este teste exercita");
         }
 

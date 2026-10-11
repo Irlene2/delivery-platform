@@ -173,7 +173,7 @@ class ConsultarProdutoServiceTest {
         }
 
         @Override
-        public Page<Produto> publicadosDe(UUID estabelecimentoId, Pageable paginacao) {
+        public Page<Produto> daLoja(UUID estabelecimentoId, Pageable paginacao) {
             throw new UnsupportedOperationException("não é deste caso de uso");
         }
 

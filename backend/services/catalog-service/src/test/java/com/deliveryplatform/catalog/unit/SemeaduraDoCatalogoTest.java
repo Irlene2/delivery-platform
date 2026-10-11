@@ -59,7 +59,7 @@ class SemeaduraDoCatalogoTest {
 
     @Test
     void grava_um_produto_publicado_e_esgotado_que_a_proxima_abertura_reativa() {
-        when(produtos.publicadosDe(eq(LOJA), any())).thenReturn(Page.empty());
+        when(produtos.daLoja(eq(LOJA), any())).thenReturn(Page.empty());
         when(categorias.salvar(any())).thenAnswer(chamada -> chamada.getArgument(0));
         when(produtos.salvar(any())).thenAnswer(chamada -> chamada.getArgument(0));
 
@@ -97,7 +97,7 @@ class SemeaduraDoCatalogoTest {
 
     @Test
     void loja_que_ja_tem_produto_nao_ganha_outro() {
-        when(produtos.publicadosDe(eq(LOJA), any()))
+        when(produtos.daLoja(eq(LOJA), any()))
                 .thenReturn(new PageImpl<>(List.of(ProdutoDeTeste.margheritaPublicada())));
 
         semeadura(true).run(new DefaultApplicationArguments());

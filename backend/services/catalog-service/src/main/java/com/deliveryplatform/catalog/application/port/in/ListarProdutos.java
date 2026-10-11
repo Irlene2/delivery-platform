@@ -30,5 +30,6 @@ import java.util.UUID;
  */
 public interface ListarProdutos {
 
-    Page<Produto> publicadosDaLoja(UUID estabelecimentoId, Pageable paginacao);
+    /** Todos os estados de publicação — a listagem é a do painel (ADR-068). */
+    Page<Produto> daLoja(UUID estabelecimentoId, Pageable paginacao);
 }

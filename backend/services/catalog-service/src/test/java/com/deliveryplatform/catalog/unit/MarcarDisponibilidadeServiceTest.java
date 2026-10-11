@@ -163,7 +163,7 @@ class MarcarDisponibilidadeServiceTest {
                     }
 
                     @Override
-                    public org.springframework.data.domain.Page<Produto> publicadosDe(
+                    public org.springframework.data.domain.Page<Produto> daLoja(
                             UUID estabelecimentoId,
                             org.springframework.data.domain.Pageable paginacao) {
                         throw new UnsupportedOperationException("não é deste caso de uso");
@@ -326,7 +326,7 @@ class MarcarDisponibilidadeServiceTest {
             }
 
             @Override
-            public org.springframework.data.domain.Page<Produto> publicadosDe(
+            public org.springframework.data.domain.Page<Produto> daLoja(
                     UUID estabelecimentoId,
                     org.springframework.data.domain.Pageable paginacao) {
                 throw new UnsupportedOperationException("não é deste caso de uso");

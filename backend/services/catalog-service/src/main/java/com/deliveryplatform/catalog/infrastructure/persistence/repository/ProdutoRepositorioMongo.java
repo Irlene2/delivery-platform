@@ -2,7 +2,6 @@ package com.deliveryplatform.catalog.infrastructure.persistence.repository;
 
 import com.deliveryplatform.catalog.application.port.out.ProdutoRepositorio;
 import com.deliveryplatform.catalog.domain.model.EstadoDeDisponibilidade;
-import com.deliveryplatform.catalog.domain.model.EstadoDePublicacao;
 import com.deliveryplatform.catalog.domain.model.Produto;
 import com.deliveryplatform.catalog.infrastructure.persistence.entity.ProdutoDocumento;
 import com.deliveryplatform.catalog.infrastructure.persistence.mapper.ProdutoMapper;
@@ -11,6 +10,7 @@ import org.bson.Document;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -91,16 +91,29 @@ public class ProdutoRepositorioMongo implements ProdutoRepositorio {
         return documentos.findById(id).map(ProdutoMapper::paraDominio);
     }
 
+    /**
+     * Todos os estados de publicação (ADR-068): a listagem é a do painel.
+     *
+     * <p><b>A ordem é da lista, não do banco por acaso.</b> Sem ordenação pedida, vale
+     * {@code ordem} e, no empate, {@code id} — o desempate existe para a sequência ser
+     * a mesma entre duas leituras, e não por significado. Até a E-3d não havia ordem
+     * nenhuma: o Mongo devolvia na ordem natural da coleção. <b>O padrão é só padrão</b>:
+     * a rota aceita {@code sort}, e quem o manda leva o que pediu.
+     */
     @Override
-    public Page<Produto> publicadosDe(UUID estabelecimentoId, Pageable paginacao) {
+    public Page<Produto> daLoja(UUID estabelecimentoId, Pageable paginacao) {
+        Pageable ordenada = paginacao.getSort().isSorted()
+                ? paginacao
+                : PageRequest.of(paginacao.getPageNumber(), paginacao.getPageSize(), ORDEM_DA_LISTA);
         // Page.map preserva o total. Converter para lista e reembrulhar num
         // PageImpl perderia o getTotalElements(), que é justamente o que o
         // cliente não consegue recalcular.
         return documentos
-                .findByEstabelecimentoIdAndEstadoDePublicacao(
-                        estabelecimentoId, EstadoDePublicacao.ATIVO.name(), paginacao)
+                .findByEstabelecimentoId(estabelecimentoId, ordenada)
                 .map(ProdutoMapper::paraDominio);
     }
+
+    private static final Sort ORDEM_DA_LISTA = Sort.by("ordem", "id");
 
     /**
      * A primeira consulta deste repositório sobre array aninhado.

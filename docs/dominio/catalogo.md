@@ -253,11 +253,19 @@ painel ou se o identificador estava errado.
 faria quem não tem vínculo distinguir produto que existe de produto que não existe.
 O `ConsultarProdutoServiceTest` afirma isso contando as buscas.
 
-**Ela devolve qualquer estado de publicação**, e a listagem só os publicados. A
-listagem é a vitrine do cardápio, e esta é a tela de agir sobre um item — o
-comerciante precisa ver o rascunho para publicá-lo, pelo mesmo motivo que a listagem
-mostra o que não está vendável. A resposta carrega `estadoDePublicacao` para a tela
-saber o que está olhando.
+**As duas leituras devolvem qualquer estado de publicação** (ADR-068). O `GET` por id é a
+tela de agir sobre um item; a listagem é **a do painel**, e o comerciante precisa ver o
+rascunho para publicá-lo — pelo mesmo motivo que a lista mostra o que não está vendável.
+
+**Até a E-3d a listagem filtrava `ATIVO`**, com a razão de ser *"a vitrine do cardápio"*. A
+razão não se sustentava: a rota exige `VER_PRODUTO`, a `PermissaoDoCatalogo` só tem
+permissões de comerciante, e **nenhum cliente a chama**. O cardápio de quem compra é do
+`conversation`, pela porta da ADR-018, que não existe em código — e quando existir, entra por
+ela. *Listar não é oferecer: a C10 é sobre cotação.*
+
+**O resumo carrega `estadoDePublicacao`**, e isso é necessário, não cosmético: com rascunho
+na lista, `vendavel: false` confunde *"nunca foi publicado"* com *"acabou tudo"*, e as duas
+pedem ações opostas do comerciante.
 
 **O que ela não traz:** `precoMinimoPossivel`. A tela da opção mostra o acréscimo de
 cada opção, que já vem nos grupos. **Gatilho escrito:** a primeira tela que mostre

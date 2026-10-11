@@ -182,13 +182,21 @@ public class ProdutoController {
     }
 
     /**
-     * Os produtos publicados da loja, paginados.
+     * Os produtos da loja, em <b>qualquer estado de publicação</b>, paginados (ADR-068).
      *
-     * <p><b>Publicados, e não vendáveis.</b> O comerciante precisa ver
-     * exatamente o que não está vendável para poder agir — a pizza cujo grupo
-     * "Tamanho" esgotou inteiro aparece na lista, com {@code vendavel: false}.
-     * Esconder seria a tela deixar de mostrar o problema que ela existe para
-     * resolver.
+     * <p><b>A listagem é a do painel.</b> Até a E-3d ela filtrava {@code ATIVO}, como se
+     * fosse a vitrine — e a rota exige {@code VER_PRODUTO}, que só comerciante tem. O
+     * cardápio de quem compra entra pela porta da ADR-018. Com o produto nascendo
+     * rascunho (E-3c), o filtro escondia do comerciante o que ele acabara de cadastrar.
+     *
+     * <p><b>Nem filtra por vendável.</b> O comerciante precisa ver exatamente o que não
+     * está vendável para poder agir — a pizza cujo grupo "Tamanho" esgotou inteiro
+     * aparece, com {@code vendavel: false}. E cada item traz {@code estadoDePublicacao},
+     * porque com rascunho na lista {@code vendavel: false} sozinho confunde "nunca foi
+     * publicado" com "acabou tudo".
+     *
+     * <p><b>A ordem padrão é {@code ordem}, depois {@code id}</b> — o adaptador a aplica
+     * quando não vem {@code sort}; quem manda {@code sort} leva o que pediu.
      *
      * <p>O tamanho padrão é vinte, e o teto vem de
      * {@code spring.data.web.pageable.max-page-size} — sem ele, um
@@ -203,22 +211,24 @@ public class ProdutoController {
      * {@code sort}, opcionais, que é o que a rota de fato lê.
      */
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "A página de produtos publicados"),
+            @ApiResponse(responseCode = "200", description = "A página de produtos da loja, em qualquer estado de publicação"),
             @ApiResponse(responseCode = "400", description = "Identificador ou paginação malformados", content = @Content),
             @ApiResponse(responseCode = "401", description = "Sem token, ou token inválido", content = @Content),
             @ApiResponse(responseCode = "403", description = "Sem vínculo, sem VER_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa", content = @Content)
     })
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Lista os produtos publicados do estabelecimento",
-            description = "Exige vínculo ativo com VER_PRODUTO, resolvido no merchant-service "
-                    + "com o token de quem pediu. Sem vínculo, sem permissão, loja inexistente "
-                    + "e merchant indisponível devolvem a mesma recusa.")
+    @Operation(summary = "Lista os produtos do estabelecimento, em qualquer estado de publicação",
+            description = "A listagem do painel: rascunho, ativo e inativo, cada um com o "
+                    + "estadoDePublicacao. Sem sort, pela ordem e depois pelo id. Exige vínculo "
+                    + "ativo com VER_PRODUTO, resolvido no merchant-service com o token de quem "
+                    + "pediu. Sem vínculo, sem permissão, loja inexistente e merchant "
+                    + "indisponível devolvem a mesma recusa.")
     public PaginaResponse<ProdutoResumoResponse> listar(
             @PathVariable UUID estabelecimentoId,
             @ParameterObject @PageableDefault(size = 20) Pageable paginacao) {
 
         return PaginaResponse.de(
-                produtos.publicadosDaLoja(estabelecimentoId, paginacao),
+                produtos.daLoja(estabelecimentoId, paginacao),
                 ProdutoResumoResponse::de);
     }
 

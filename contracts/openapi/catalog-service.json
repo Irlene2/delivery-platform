@@ -207,8 +207,8 @@
     "/api/v1/merchants/{estabelecimentoId}/catalog/produtos" : {
       "get" : {
         "tags" : [ "produto-controller" ],
-        "summary" : "Lista os produtos publicados do estabelecimento",
-        "description" : "Exige vínculo ativo com VER_PRODUTO, resolvido no merchant-service com o token de quem pediu. Sem vínculo, sem permissão, loja inexistente e merchant indisponível devolvem a mesma recusa.",
+        "summary" : "Lista os produtos do estabelecimento, em qualquer estado de publicação",
+        "description" : "A listagem do painel: rascunho, ativo e inativo, cada um com o estadoDePublicacao. Sem sort, pela ordem e depois pelo id. Exige vínculo ativo com VER_PRODUTO, resolvido no merchant-service com o token de quem pediu. Sem vínculo, sem permissão, loja inexistente e merchant indisponível devolvem a mesma recusa.",
         "operationId" : "listar",
         "parameters" : [ {
           "name" : "estabelecimentoId",
@@ -252,7 +252,7 @@
         } ],
         "responses" : {
           "200" : {
-            "description" : "A página de produtos publicados",
+            "description" : "A página de produtos da loja, em qualquer estado de publicação",
             "content" : {
               "application/json" : {
                 "schema" : {
@@ -598,6 +598,10 @@
           },
           "vendavel" : {
             "type" : "boolean"
+          },
+          "estadoDePublicacao" : {
+            "type" : "string",
+            "enum" : [ "RASCUNHO", "ATIVO", "INATIVO" ]
           }
         }
       },

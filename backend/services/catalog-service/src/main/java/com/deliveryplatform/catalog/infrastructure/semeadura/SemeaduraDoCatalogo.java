@@ -79,7 +79,7 @@ public class SemeaduraDoCatalogo implements ApplicationRunner {
         if (!propriedades.ligada()) {
             return;
         }
-        if (produtos.publicadosDe(Fixture.LOJA, PageRequest.of(0, 1)).hasContent()) {
+        if (produtos.daLoja(Fixture.LOJA, PageRequest.of(0, 1)).hasContent()) {
             log.info("semeadura: a loja da fixture já tem produto — nada a fazer");
             return;
         }

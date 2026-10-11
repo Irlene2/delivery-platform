@@ -51,7 +51,7 @@ public class ListarProdutosService implements ListarProdutos {
     }
 
     @Override
-    public Page<Produto> publicadosDaLoja(UUID estabelecimentoId, Pageable paginacao) {
+    public Page<Produto> daLoja(UUID estabelecimentoId, Pageable paginacao) {
         ContextoDeAcesso contexto = autorizacao
                 .contexto(estabelecimentoId)
                 .orElseThrow(AcessoNegado::new);
@@ -60,6 +60,6 @@ public class ListarProdutosService implements ListarProdutos {
             throw new AcessoNegado();
         }
 
-        return produtos.publicadosDe(estabelecimentoId, paginacao);
+        return produtos.daLoja(estabelecimentoId, paginacao);
     }
 }
