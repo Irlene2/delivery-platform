@@ -119,7 +119,7 @@ describe('ListaDeProdutos', () => {
 
     montar('p1');
 
-    expect(await screen.findByText(/ainda não tem nenhum produto publicado/i)).toBeInTheDocument();
+    expect(await screen.findByText(/não tem nenhum produto/i)).toBeInTheDocument();
   });
 
   it('com mais páginas, diz quantos está mostrando', async () => {

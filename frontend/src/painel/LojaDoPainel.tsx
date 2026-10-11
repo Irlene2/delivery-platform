@@ -1,5 +1,6 @@
 import { Navigate, Outlet, useLocation, useNavigate, useParams } from 'react-router';
 
+import { CardapioPorSecao } from './CardapioPorSecao';
 import { ProdutoAberto } from './ProdutoAberto';
 import { ListaDeProdutos } from './ListaDeProdutos';
 import { caminhoDaLoja, caminhoDaSecao, secaoDoCaminho } from './caminhos';
@@ -66,16 +67,23 @@ export function SecaoInicial() {
 /** As duas seções que existem são a mesma lista; "Disponibilidade" a mostra com a marcação. */
 const MARCA: Record<Secao, boolean> = { cardapio: false, disponibilidade: true };
 
+/**
+ * O cardápio é lido por seção desde a W-F (ADR-067); a disponibilidade continua a lista
+ * plana com a marcação — ela é sobre o que acabou, e não sobre onde o item mora.
+ */
 export function ListaDaSecao({ secao }: { secao: Secao }) {
   const { estabelecimentoId = '' } = useParams();
   const navegar = useNavigate();
+  const abrir = (produtoId: string) =>
+    void navegar(`${caminhoDaSecao(estabelecimentoId, secao)}/${produtoId}`);
+  if (secao === 'cardapio') {
+    return <CardapioPorSecao estabelecimentoId={estabelecimentoId} aoAbrir={abrir} />;
+  }
   return (
     <ListaDeProdutos
       estabelecimentoId={estabelecimentoId}
       podeMarcar={MARCA[secao]}
-      aoAbrir={(produtoId) =>
-        void navegar(`${caminhoDaSecao(estabelecimentoId, secao)}/${produtoId}`)
-      }
+      aoAbrir={abrir}
     />
   );
 }

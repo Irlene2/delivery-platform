@@ -75,6 +75,8 @@ const MARGHERITA = { id: 'x9', nome: 'Pizza margherita', precoBase: 49.9, vendav
 function responder(lojas: unknown[], produtos: unknown[] = []) {
   chamarFalso.mockImplementation((caminho: string) => {
     if (caminho === '/api/v1/me/estabelecimentos') return Promise.resolve(lojas);
+    // O cardápio compõe as seções com os produtos desde a W-F (ADR-067).
+    if (caminho.endsWith('/catalog/categorias')) return Promise.resolve([]);
     if (caminho.includes('?page=')) {
       return Promise.resolve({
         conteudo: produtos,
@@ -118,7 +120,7 @@ describe('PainelPage', () => {
     await waitFor(() => expect(onde()).toHaveTextContent('/painel/lojas/p1/produtos'));
     await waitFor(() =>
       expect(chamarFalso).toHaveBeenCalledWith(
-        '/api/v1/merchants/p1/catalog/produtos?page=0&size=20',
+        '/api/v1/merchants/p1/catalog/produtos?page=0&size=100',
         { token: 't.o.k' },
       ),
     );
@@ -150,7 +152,7 @@ describe('PainelPage', () => {
     montar('/painel/lojas/c2/produtos');
 
     await waitFor(() =>
-      expect(caminhosPedidos()).toContain('/api/v1/merchants/c2/catalog/produtos?page=0&size=20'),
+      expect(caminhosPedidos()).toContain('/api/v1/merchants/c2/catalog/produtos?page=0&size=100'),
     );
     expect(caminhosPedidos().some((caminho) => caminho.includes('/merchants/p1/'))).toBe(false);
   });
@@ -187,7 +189,7 @@ describe('PainelPage', () => {
     montar('/painel/lojas/c2/produtos');
 
     await waitFor(() =>
-      expect(caminhosPedidos()).toContain('/api/v1/merchants/c2/catalog/produtos?page=0&size=20'),
+      expect(caminhosPedidos()).toContain('/api/v1/merchants/c2/catalog/produtos?page=0&size=100'),
     );
     expect(screen.getByRole('combobox', { name: /loja/i })).toHaveValue('c2');
   });

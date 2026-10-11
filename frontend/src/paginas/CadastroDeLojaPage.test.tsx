@@ -47,7 +47,7 @@ const LOJA_NOVA = {
   permissoes: ['VER_PRODUTO', 'ALTERAR_PRODUTO'],
 };
 
-/** GET das lojas (vazio até criar), POST do cadastro (o que o caso mandar), e cardápio vazio. */
+/** GET das lojas (vazio até criar), POST do cadastro (o que o caso mandar), e cardápio vazio — seções e produtos. */
 function servidor(aoCriar: () => Promise<unknown>) {
   let criada = false;
   chamarFalso.mockImplementation((caminho: string, opcoes?: { metodo?: string }) => {
@@ -60,6 +60,8 @@ function servidor(aoCriar: () => Promise<unknown>) {
     if (caminho === '/api/v1/me/estabelecimentos') {
       return Promise.resolve(criada ? [LOJA_NOVA] : []);
     }
+    // O cardápio compõe as seções com os produtos desde a W-F (ADR-067).
+    if (caminho.endsWith('/catalog/categorias')) return Promise.resolve([]);
     return Promise.resolve({ conteudo: [], pagina: 0, tamanho: 20, total: 0 });
   });
 }

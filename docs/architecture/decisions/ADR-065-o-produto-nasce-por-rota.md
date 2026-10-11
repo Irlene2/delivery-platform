@@ -116,8 +116,8 @@ concorrente.
 
 ### 6. O que esta ADR **não** faz
 
-**Não dá tela ao cardápio** — é a W-G. **Nenhum texto desta rodada diz que o marco 2 está
-cumprido**, e a coluna continua esperando a W-G e uma passagem humana no navegador.
+**Não dá tela ao cardápio** — é a W-F. **Nenhum texto desta rodada diz que o marco 2 está
+cumprido**, e a coluna continua esperando a W-F e uma passagem humana no navegador.
 
 **Não toca em grupos, opções nem no `substituirGrupos`.**
 
@@ -133,7 +133,7 @@ teste pode afirmar o contrário do documento e ficar verde.
 **E as frases da ADR-063 vão ao navegador pela primeira vez.** A recusa de publicação é o
 caminho mais provável de um comerciante encontrar uma das frases novas — *"o grupo «Tamanho»
 precisa de ao menos uma opção para o produto ir ao cardápio"*. Nesta rodada ela não aparece
-em tela nenhuma; aparece no corpo da resposta, e a W-G a mostra.
+em tela nenhuma; aparece no corpo da resposta, e a W-F a mostra.
 
 **O gatilho escrito da ADR-063 vence aqui.** Com a primeira rota de escrita que monta um
 agregado a partir de um corpo, **mede-se quais dos pontos de `INTEGRIDADE` passaram a ser

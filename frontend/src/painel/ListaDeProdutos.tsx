@@ -117,7 +117,7 @@ function ListaCarregada({
   if (produtos.length === 0) {
     return (
       <p className="text-sm text-slate-600 dark:text-slate-300">
-        Esta loja ainda não tem nenhum produto publicado.
+        Esta loja não tem nenhum produto.
       </p>
     );
   }

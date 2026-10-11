@@ -97,7 +97,7 @@ motivo que o escreveu.** Lá estava: *"porta com método que ninguém chama é s
 
 **A tela vai precisar listar seções antes de criar produto**, e a rota de listar existe desde
 a E-3b. **É a primeira vez neste projeto que uma tela precisa de duas rotas do mesmo serviço
-para montar um formulário** — a W-G vai medir isso.
+para montar um formulário** — a W-F vai medir isso.
 
 ## Alternativas consideradas
 

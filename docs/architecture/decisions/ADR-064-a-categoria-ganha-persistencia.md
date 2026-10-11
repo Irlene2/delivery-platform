@@ -121,7 +121,7 @@ a razão que ele dava. **Não é melhorar o que não é assunto:** a fixture apo
 que esta rodada torna gravável.
 
 **O marco 2 não ganha coluna**, e nada neste pacote diz que ganha. Faltam a rota de produto
-(E-3c) e a tela (W-G).
+(E-3c) e a tela (W-F).
 
 ## Alternativas consideradas
 

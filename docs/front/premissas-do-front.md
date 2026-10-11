@@ -156,6 +156,17 @@ declara as zonas aceitas no schema do campo, e o tipo gerado as carrega. A tela 
 partir de um `Record<Fuso, string>` de rótulos, e o `Record` exige do typecheck exatamente
 as chaves da união gerada. **Ler o contrato não é derivar regra** — é o oposto de copiá-la.
 A exceção, escrita no `dividas.md`: as modalidades, que o contrato não nomeia.
+
+**A tela do cardápio compõe duas rotas do mesmo serviço** (ADR-067): as seções e os
+produtos, agrupados no cliente. **É a primeira vista deste front montada com duas
+requisições**, e a ADR-066 previu que ela chegaria quando a regra da seção nasceu.
+
+**Não há rota de "cardápio agrupado" no back, e é decisão:** juntar duas raízes numa
+resposta é modelo de leitura, com dono e invalidação. Esta é uma tela de administração.
+
+**O produto cuja seção não existe aparece num grupo "Sem seção", no fim.** A ADR-066 decidiu
+que a leitura não valida referência; este é o lugar onde essa escolha fica visível, e
+esconder o produto o tornaria inconsertável.
 ---
 
 ## 4 · O que o front tolera, porque o back mudará
@@ -215,7 +226,7 @@ tela, com o gatilho de cada um.
 | `exposedHeaders` no CORS | O front não lê `Location` nem `WWW-Authenticate` de outra origem | a primeira rota que responda `201` com `Location` |
 | `required` nos esquemas do `catalog` e na `LojaDoUsuario` do `merchant` | Todo campo do tipo gerado é opcional, e a tela precisa tratar ausência que não acontece | a primeira tela que leia produto |
 | O **estado da operação** — a loja está aberta agora? | O seletor não pode mostrar aberta/fechada. A `OperacaoDoEstabelecimentoPort` do `estabelecimento.md` §3 não existe em código | sem rodada marcada — a porta não existe (ADR-046, emenda de 30/09/2026), e a rota da G-C1 responde outra pergunta: qual expediente carimbar |
-| Paginação na tela do cardápio | A lista mostra os 20 primeiros e diz quantos há. Quem tiver 200 produtos não alcança o resto | a primeira loja de teste com mais de 20 produtos |
+| Paginação na tela do cardápio | O cardápio pede a página do teto da rota — 100 — e diz quantos há (W-F); a lista da disponibilidade continua com 20. Quem tiver 200 produtos não alcança o resto | a primeira loja de teste com mais de 100 produtos |
 | Rota de escrita do catálogo | Não dá para criar nem editar produto pela tela — só ver | G-C2 |
 
 **Enquanto um item desta tabela não tiver rota, a tela que depende dele não é

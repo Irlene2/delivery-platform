@@ -67,9 +67,10 @@
 | 064 | A categoria ganha persistência, e só criar e listar | ✅ aceita |
 | 065 | O produto nasce por rota, e o cardápio é publicado por quem o monta | ✅ aceita |
 | 066 | A referência do corpo que não resolve é pedido inválido | ✅ aceita |
+| 067 | O cardápio ganha escrita, e a seção passa a significar alguma coisa | ✅ aceita |
 | 068 | A listagem mostra o rascunho, porque quem a chama é o painel | ✅ aceita |
 
-**Sessenta e quatro escritas, duas sem objeto — estas com registro próprio desde
+**Sessenta e cinco escritas, duas sem objeto — estas com registro próprio desde
 25/08/2026 —, nenhuma a escrever.**
 
 ## Onde mora o quê
