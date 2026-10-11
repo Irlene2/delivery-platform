@@ -43,7 +43,7 @@ public final class Categoria {
 
     private Categoria(UUID id, UUID estabelecimentoId, String nome, int ordem, boolean ativa) {
         if (estabelecimentoId == null) {
-            throw new RegraDoCatalogoViolada("categoria sem estabelecimento");
+            throw RegraDoCatalogoViolada.integridade("categoria sem estabelecimento");
         }
         this.id = id;
         this.estabelecimentoId = estabelecimentoId;

@@ -49,14 +49,14 @@ public record Disponibilidade(
 
     public Disponibilidade {
         if (estado == null) {
-            throw new RegraDoCatalogoViolada("disponibilidade sem estado");
+            throw RegraDoCatalogoViolada.integridade("disponibilidade sem estado");
         }
         if ((marcadoEm == null) != (expedienteDeReferencia == null)) {
-            throw new RegraDoCatalogoViolada(
+            throw RegraDoCatalogoViolada.integridade(
                     "carimbo pela metade: marcadoEm e expedienteDeReferencia nascem juntos");
         }
         if (estado == EstadoDeDisponibilidade.ESGOTADO_HOJE && expedienteDeReferencia == null) {
-            throw new RegraDoCatalogoViolada(
+            throw RegraDoCatalogoViolada.integridade(
                     "ESGOTADO_HOJE sem expedienteDeReferencia nunca reativa");
         }
     }

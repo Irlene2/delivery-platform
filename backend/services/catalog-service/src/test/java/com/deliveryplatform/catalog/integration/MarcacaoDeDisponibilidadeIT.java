@@ -251,6 +251,61 @@ class MarcacaoDeDisponibilidadeIT extends Infraestrutura {
                 .isEqualTo(EstadoDeDisponibilidade.DISPONIVEL);
     }
 
+    /**
+     * O produto e a opção que não existem são a mesma figura em níveis diferentes, e por
+     * isso estão lado a lado (ADR-063 §4). Até a E-3b a opção era 400 — "você pediu
+     * errado" para um identificador que só não está aqui.
+     */
+    @Test
+    @DisplayName("opção que não existe neste produto: 404, com a frase do tratador")
+    void opcao_inexistente_e_404() {
+        Produto pizza = margherita();
+        GrupoDeOpcoes tamanho = pizza.getGruposDeOpcoes().getFirst();
+
+        String detail = marcarOpcao(pizza.getId(), tamanho.id(), UUID.randomUUID(), "ACABANDO")
+                .expectStatus().isNotFound()
+                .expectBody(Map.class).returnResult().getResponseBody().get("detail").toString();
+
+        assertThat(detail).isEqualTo("esta opção não existe mais neste produto; recarregue o produto");
+    }
+
+    @Test
+    @DisplayName("e o produto que não existe, pela mesma rota da opção: o 404 que já existia")
+    void produto_inexistente_pela_rota_da_opcao_e_404() {
+        Produto pizza = margherita();
+        GrupoDeOpcoes tamanho = pizza.getGruposDeOpcoes().getFirst();
+
+        marcarOpcao(UUID.randomUUID(), tamanho.id(), tamanho.opcoes().getFirst().id(), "ACABANDO")
+                .expectStatus().isNotFound();
+    }
+
+    @Test
+    @DisplayName("SEM_CONTROLE marcado esgotado: 400 com a frase escrita pelo tratador, sem o nome do enum")
+    void sem_controle_e_400_com_a_frase() {
+        Produto lata = produtos.salvar(Produto.rascunho(loja, ProdutoDeTeste.CATEGORIA, "Lata",
+                Precos.reais("7.00"), ModoDeControle.SEM_CONTROLE, 1));
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> erro = marcar(loja, lata.getId(), "ESGOTADO_HOJE")
+                .expectStatus().isBadRequest()
+                .expectBody(Map.class).returnResult().getResponseBody();
+
+        assertThat(erro.get("detail"))
+                .isEqualTo("«Lata» não tem controle de disponibilidade e não aceita a marcação "
+                        + "«esgotado hoje»");
+    }
+
+    private RestTestClient.ResponseSpec marcarOpcao(UUID produtoId, UUID grupoId, UUID opcaoId,
+                                                    String estado) {
+        return cliente().put()
+                .uri("/api/v1/merchants/" + loja + "/catalog/produtos/" + produtoId
+                        + "/grupos/" + grupoId + "/opcoes/" + opcaoId + "/disponibilidade")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body("{\"estado\":\"" + estado + "\"}")
+                .exchange();
+    }
+
     // ── a borda ─────────────────────────────────────────────────────────────
 
     @Test

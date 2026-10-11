@@ -57,20 +57,21 @@ public record GrupoDeOpcoes(
 
     public GrupoDeOpcoes {
         if (id == null) {
-            throw new RegraDoCatalogoViolada("grupo sem id");
+            throw RegraDoCatalogoViolada.integridade("grupo sem id");
         }
         nome = Textos.exigirPreenchido(nome, "nome do grupo");
         if (minEscolhas < 0) {
-            throw new RegraDoCatalogoViolada("C3: minEscolhas negativo no grupo " + nome);
+            throw new RegraDoCatalogoViolada(RegraDoCatalogoViolada.Motivo.LIMITES_DO_GRUPO,
+                    "C3: minEscolhas negativo no grupo " + nome, nome);
         }
         if (maxEscolhas < 1) {
-            throw new RegraDoCatalogoViolada(
+            throw new RegraDoCatalogoViolada(RegraDoCatalogoViolada.Motivo.LIMITES_DO_GRUPO,
                     "maxEscolhas menor que 1 no grupo " + nome + " — grupo onde nada pode "
-                            + "ser escolhido não é grupo");
+                            + "ser escolhido não é grupo", nome);
         }
         if (minEscolhas > maxEscolhas) {
-            throw new RegraDoCatalogoViolada(
-                    "C3: minEscolhas maior que maxEscolhas no grupo " + nome);
+            throw new RegraDoCatalogoViolada(RegraDoCatalogoViolada.Motivo.LIMITES_DO_GRUPO,
+                    "C3: minEscolhas maior que maxEscolhas no grupo " + nome, nome);
         }
         opcoes = List.copyOf(opcoes == null ? List.of() : opcoes)
                 .stream()

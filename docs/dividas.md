@@ -13,6 +13,19 @@ grep -rn -i "gatilho" backend/ frontend/src/ --include=*.java --include=*.ts --i
 grep -rn "Gatilho escrito\|gatilho escrito" docs/ contracts/ CLAUDE.md backend/ frontend/ --include=*.md --include=*.java --include=*.ts --include=*.tsx --exclude=dividas.md | grep -v "/build/\|/node_modules/" | wc -l
 ```
 
+**Segunda passada, pelas formas em prosa.** O comando acima só acha o que usa a fórmula.
+Condição escrita como *"nesta altura"*, *"por enquanto"*, *"ainda não"*, *"quando houver"*
+é gatilho também, e some deste arquivo — a da `RegraDoCatalogoViolada` venceu na G-E e
+nunca apareceu aqui:
+
+```bash
+grep -rn -i "nesta altura\|por enquanto\|ainda não existe\|quando houver\|até que haja" \
+  docs/ backend/*/*/src/main --include=*.md --include=*.java | grep -v "/build/"
+```
+
+Medido na E-3b: **32 linhas**, e a triagem delas é rodada própria. O que a segunda passada
+achar entra na tabela **com a fórmula**, não com a paráfrase.
+
 **Os comandos produzem candidatos; a tabela é a leitura deles.** Uma menção a
 "gatilho" pode ser a definição de um, a citação de um que já está na tabela, ou o
 relato de um que disparou. A conta, em 10/10/2026:
@@ -44,7 +57,7 @@ este arquivo existe para achar.**
 | 1 | ADR-044:97 (e `gateway/config/JwtProperties.java`:12) | *"Fica registrado como duplicação conhecida, com gatilho: o terceiro módulo que precisar do mesmo decoder."* | o `catalog` montou o terceiro decoder com validador de `iss`/`aud` em 28/09 (`e1e78fa`); hoje são quatro: `grep -rln "JwtIssuerValidator\|audience" backend --include=SecurityConfig.java` devolve `gateway`, `catalog`, `identity`, `merchant`. Nenhuma ADR posterior volta ao assunto | uma decisão: módulo comum de segurança (emenda à ADR-001) ou a duplicação assumida sem gatilho |
 | 2 | `gateway/src/test/.../IdentityDeMentira.java`:36 | *"Fica registrado na ADR-044 como duplicação conhecida, com gatilho: o terceiro módulo que precisar do mesmo dublê."* | há três cópias: `gateway`, `merchant` e `catalog` têm `support/IdentityDeMentira.java`. A ADR-044 **não** registra esta duplicação — `grep -n "dublê\|IdentityDeMentira" docs/architecture/decisions/ADR-044-*.md` volta vazio | a mesma decisão da linha 1, para teste |
 | 4 | `frontend/README.md`:32 | *"**Gatilho para trazê-lo de volta:** a primeira escrita que precise invalidar leitura de **outra** tela."* | **leitura, não medida:** na W-D, marcar uma opção na tela do produto muda o `vendavel` que a lista mostra; a lista é relida por remontagem ao voltar (`ListaDeProdutos.tsx`, `aoVoltar`). Se isso é "invalidar leitura de outra tela", disparou e foi resolvido sem o TanStack Query nem decisão escrita | decidir se a remontagem é a resposta, e escrevê-lo |
-| 52 | este razão (W-E) | *"a primeira tela que mostre um desses três ao comerciante"* — o `TratadorDeErros` do `catalog` repassa `excecao.getMessage()` no `detail` em três tratadores: `ProdutoNaoEncontrado` (404), `LojaSemExpediente` (409), `RegraDoCatalogoViolada` (400), contra a regra do `CLAUDE.md` escrita na W-E | **nasceu disparado.** A tela da W-C mostra o `detail` de todo 400 e 409 da marcação (`disponibilidade.ts`, `recusaDe`: só o 403 descarta), e o 400 e o 409 da marcação são `RegraDoCatalogoViolada` e `LojaSemExpediente`. O censo: `grep -rn "getMessage()" backend/services/*/src/main/java/com/deliveryplatform/*/api/error/TratadorDeErros.java` devolve as linhas 86, 96 e 133 do `catalog` | a frase escrita por tratador, como no `merchant` desde a W-E |
+| 52 | este razão (W-E) | *"a primeira tela que mostre um desses três ao comerciante"* — o `TratadorDeErros` do `catalog` repassava `excecao.getMessage()` no `detail` em três tratadores: `ProdutoNaoEncontrado` (404), `LojaSemExpediente` (409), `RegraDoCatalogoViolada` (400), contra a regra do `CLAUDE.md` escrita na W-E | **nasceu disparado** (W-C) e **pago em um terço na E-3b**: o `RegraDoCatalogoViolada` passou a carregar motivo com dados, o tratador escreve a frase, e os pontos de integridade saem **500** (ADR-063). **Continuam** o `ProdutoNaoEncontrado` (404) e o `LojaSemExpediente` (409). O censo, em 11/10/2026: `grep -rn "getMessage()" backend/services/*/src/main/java/com/deliveryplatform/*/api/error/TratadorDeErros.java` devolve as linhas 91 e 101 do `catalog` fora de `log.warn` | a frase escrita por tratador nos dois que faltam |
 
 ## Rearmado
 
@@ -109,6 +122,8 @@ este arquivo existe para achar.**
 | 50 | ADR-060, seção "Gatilho escrito" | *"**O dia em que o `merchant` precisar de um GET de uma loja por id.**"* | não há `GET /api/v1/me/estabelecimentos/{id}` nem outro GET de loja por id; o predicado do gateway para a coleção é exato (G-B5) — e por isso a criação responde 201 **sem `Location`** | o predicado prefixado e o `Location`, com ADR própria |
 | 51 | ADR-060, seção "Gatilho escrito" | *"**O dia em que uma pessoa física precisar ser impedida de criar lojas sem limite.**"* | não há limite nem unicidade de documento, e ninguém pediu | decisão de produto |
 | 53 | ADR-061, seção "Gatilho escrito" | *"**A primeira tela do painel que não pertença a uma loja** — relatório que cruze duas lojas, conta da pessoa, preferências."* | toda rota sob `/painel` em `App.tsx` é o seletor, o cadastro ou `lojas/:estabelecimentoId/…` | um nível acima de `/painel/lojas/:id` |
+| 55 | ADR-063, seção "Gatilho escrito" | *"**O dia em que alguém for ler o `catalog` e se confundir com uma `RegraDoCatalogoViolada` que é 500.**"* — a classe virou duas espécies com um tipo só, separadas por motivo, e **o nome dela mente para metade** | é julgamento, não fato medível; nenhum relato | a classe partida em duas, com nomes honestos |
+| 56 | ADR-063, seção "Gatilho escrito" | *"**E a primeira rota de escrita do `catalog`** — a E-3c. Ela vai gerar corpos malformados de verdade, e aí se mede quais dos trinta pontos passaram a ser alcançáveis."* | o `catalog` só tem rotas de marcação e de leitura; nenhum ponto de `INTEGRIDADE` é alcançável por corpo (medido na E-3b) | o censo refeito na E-3c; ponto alcançável vira `@NotNull` no DTO |
 | 54 | ADR-061, seção "Gatilho escrito" | *"**O dia em que o seletor tiver mais de uma dúzia de lojas.**"* | não há medida de quantas lojas alguém tem; a fixture e a prova da W-E têm uma cada | busca no servidor, e paginação no `GET /api/v1/me/estabelecimentos` |
 
 **Fora da tabela, de propósito:** a ADR-037:203 adia o refresh token *"para ADR

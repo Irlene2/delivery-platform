@@ -1,5 +1,6 @@
 package com.deliveryplatform.catalog.domain.model;
 
+import com.deliveryplatform.catalog.domain.exception.OpcaoNaoEncontrada;
 import com.deliveryplatform.catalog.domain.exception.RegraDoCatalogoViolada;
 import com.deliveryplatform.valuetypes.Money;
 
@@ -75,13 +76,13 @@ public final class Produto {
     private Produto(UUID id, UUID estabelecimentoId, UUID categoriaId, String nome,
                     Money precoBase, ModoDeControle modoDeControle, int ordem) {
         if (estabelecimentoId == null) {
-            throw new RegraDoCatalogoViolada("produto sem estabelecimento");
+            throw RegraDoCatalogoViolada.integridade("produto sem estabelecimento");
         }
         if (categoriaId == null) {
-            throw new RegraDoCatalogoViolada("produto sem categoria");
+            throw RegraDoCatalogoViolada.integridade("produto sem categoria");
         }
         if (modoDeControle == null) {
-            throw new RegraDoCatalogoViolada("produto sem modo de controle");
+            throw RegraDoCatalogoViolada.integridade("produto sem modo de controle");
         }
         exigirPrecoValido(precoBase);
 
@@ -144,13 +145,13 @@ public final class Produto {
                                        List<GrupoDeOpcoes> gruposDeOpcoes,
                                        Long versao) {
         if (id == null) {
-            throw new RegraDoCatalogoViolada("produto sem id");
+            throw RegraDoCatalogoViolada.integridade("produto sem id");
         }
         if (estadoDePublicacao == null) {
-            throw new RegraDoCatalogoViolada("produto sem estado de publicação");
+            throw RegraDoCatalogoViolada.integridade("produto sem estado de publicação");
         }
         if (disponibilidade == null) {
-            throw new RegraDoCatalogoViolada("produto sem disponibilidade");
+            throw RegraDoCatalogoViolada.integridade("produto sem disponibilidade");
         }
         Produto produto = new Produto(id, estabelecimentoId, categoriaId, nome,
                 precoBase, modoDeControle, ordem);
@@ -192,33 +193,36 @@ public final class Produto {
             return;
         }
         if (precoBase.ehZero()) {
-            throw new RegraDoCatalogoViolada(
+            throw new RegraDoCatalogoViolada(RegraDoCatalogoViolada.Motivo.PUBLICACAO_SEM_PRECO,
                     "C1: preço base zero impede a publicação de " + nome
-                            + " — produto de graça por descuido");
+                            + " — produto de graça por descuido", nome);
         }
         List<String> impossiveis = gruposDeOpcoes.stream()
                 .filter(g -> !g.estruturalmenteSatisfazivel())
                 .map(GrupoDeOpcoes::nome)
                 .toList();
         if (!impossiveis.isEmpty()) {
-            throw new RegraDoCatalogoViolada(
+            throw new RegraDoCatalogoViolada(RegraDoCatalogoViolada.Motivo.PUBLICACAO_GRUPO_IMPOSSIVEL,
                     "C5: grupo obrigatório sem opções suficientes impede a publicação: "
-                            + String.join(", ", impossiveis));
+                            + String.join(", ", impossiveis),
+                    impossiveis.toArray(String[]::new));
         }
         List<String> tetosInalcancaveis = gruposDeOpcoes.stream()
                 .filter(g -> !g.tetoAlcancavel())
                 .map(GrupoDeOpcoes::nome)
                 .toList();
         if (!tetosInalcancaveis.isEmpty()) {
-            throw new RegraDoCatalogoViolada(
+            throw new RegraDoCatalogoViolada(RegraDoCatalogoViolada.Motivo.PUBLICACAO_TETO_INALCANCAVEL,
                     "C4: maxEscolhas maior que o número de opções impede a publicação: "
-                            + String.join(", ", tetosInalcancaveis));
+                            + String.join(", ", tetosInalcancaveis),
+                    tetosInalcancaveis.toArray(String[]::new));
         }
         Money minimo = precoMinimoPossivel();
         if (minimo.ehNegativo() || minimo.ehZero()) {
-            throw new RegraDoCatalogoViolada(
+            throw new RegraDoCatalogoViolada(RegraDoCatalogoViolada.Motivo.PUBLICACAO_PRECO_NAO_POSITIVO,
                     "C2: existe combinação válida cujo preço unitário não é positivo — "
-                            + "mínimo possível " + minimo.valor());
+                            + "mínimo possível " + minimo.valor(),
+                    minimo.valor().toPlainString());
         }
         estadoDePublicacao = EstadoDePublicacao.ATIVO;
     }
@@ -234,7 +238,7 @@ public final class Produto {
      */
     public void inativar() {
         if (estadoDePublicacao == EstadoDePublicacao.RASCUNHO) {
-            throw new RegraDoCatalogoViolada(
+            throw new RegraDoCatalogoViolada(RegraDoCatalogoViolada.Motivo.RASCUNHO_NAO_SE_INATIVA,
                     "rascunho não se inativa: ele nunca apareceu no cardápio");
         }
         estadoDePublicacao = EstadoDePublicacao.INATIVO;
@@ -253,7 +257,7 @@ public final class Produto {
      */
     public void acrescentarGrupo(GrupoDeOpcoes grupo) {
         if (grupo == null) {
-            throw new RegraDoCatalogoViolada("grupo nulo");
+            throw RegraDoCatalogoViolada.integridade("grupo nulo");
         }
         gruposDeOpcoes.add(grupo);
         gruposDeOpcoes.sort(Comparator.comparingInt(GrupoDeOpcoes::ordem));
@@ -289,13 +293,14 @@ public final class Produto {
      */
     public void marcar(Disponibilidade nova) {
         if (nova == null) {
-            throw new RegraDoCatalogoViolada("disponibilidade nula");
+            throw RegraDoCatalogoViolada.integridade("disponibilidade nula");
         }
         if (modoDeControle == ModoDeControle.SEM_CONTROLE
                 && nova.estado() != EstadoDeDisponibilidade.DISPONIVEL) {
-            throw new RegraDoCatalogoViolada(
+            throw new RegraDoCatalogoViolada(RegraDoCatalogoViolada.Motivo.MODO_SEM_CONTROLE,
                     "produto SEM_CONTROLE não acaba: " + nova.estado() + " não se aplica a "
-                            + nome);
+                            + nome,
+                    nova.estado().name(), nome);
         }
         this.disponibilidade = nova;
     }
@@ -326,7 +331,7 @@ public final class Produto {
      */
     public void marcarOpcao(UUID grupoId, UUID opcaoId, Disponibilidade nova) {
         if (nova == null) {
-            throw new RegraDoCatalogoViolada("disponibilidade nula");
+            throw RegraDoCatalogoViolada.integridade("disponibilidade nula");
         }
         for (int i = 0; i < gruposDeOpcoes.size(); i++) {
             GrupoDeOpcoes g = gruposDeOpcoes.get(i);
@@ -343,7 +348,7 @@ public final class Produto {
                     g.id(), g.nome(), g.minEscolhas(), g.maxEscolhas(), g.ordem(), novas));
             return;
         }
-        throw new RegraDoCatalogoViolada("opção não encontrada neste produto");
+        throw new OpcaoNaoEncontrada();
     }
 
     /**
@@ -472,10 +477,10 @@ public final class Produto {
      */
     private static void exigirPrecoValido(Money precoBase) {
         if (precoBase == null) {
-            throw new RegraDoCatalogoViolada("produto sem preço base");
+            throw RegraDoCatalogoViolada.integridade("produto sem preço base");
         }
         if (precoBase.ehNegativo()) {
-            throw new RegraDoCatalogoViolada(
+            throw new RegraDoCatalogoViolada(RegraDoCatalogoViolada.Motivo.PRECO_BASE_INVALIDO,
                     "C1: preço base negativo — desconto é acréscimo negativo em opção, não preço");
         }
     }

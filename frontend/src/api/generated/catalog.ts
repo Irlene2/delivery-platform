@@ -196,7 +196,7 @@ export interface operations {
                     "application/json": components["schemas"]["ProdutoResumoResponse"];
                 };
             };
-            /** @description Corpo inválido, ou opção que não pertence a este produto */
+            /** @description Corpo ou identificador malformado */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -217,7 +217,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description O produto não existe nesta loja — inexistente ou de outra loja, a mesma resposta (ADR-056) */
+            /** @description O produto não existe nesta loja (ADR-056), ou o grupo e a opção não existem neste produto (ADR-063 §4) */
             404: {
                 headers: {
                     [name: string]: unknown;

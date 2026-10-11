@@ -53,14 +53,14 @@ public record Opcao(
 
     public Opcao {
         if (id == null) {
-            throw new RegraDoCatalogoViolada("opção sem id");
+            throw RegraDoCatalogoViolada.integridade("opção sem id");
         }
         nome = Textos.exigirPreenchido(nome, "nome da opção");
         if (acrescimo == null) {
-            throw new RegraDoCatalogoViolada("opção sem acréscimo — use zero, não nulo");
+            throw RegraDoCatalogoViolada.integridade("opção sem acréscimo — use zero, não nulo");
         }
         if (disponibilidade == null) {
-            throw new RegraDoCatalogoViolada("opção sem disponibilidade");
+            throw RegraDoCatalogoViolada.integridade("opção sem disponibilidade");
         }
     }
 

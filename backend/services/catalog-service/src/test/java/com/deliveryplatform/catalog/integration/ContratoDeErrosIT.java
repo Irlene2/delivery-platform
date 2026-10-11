@@ -210,10 +210,12 @@ class ContratoDeErrosIT extends Infraestrutura {
                         }),
 
                 new Provocacao("PUT", MARCAR_OPCAO, 400,
-                        "opção que não é deste produto — RegraDoCatalogoViolada",
+                        "identificador da opção que não é UUID — até a E-3b era a opção alheia, hoje 404",
                         () -> {
                             Cena c = cena("ALTERAR_PRODUTO");
-                            return marcarOpcao(c, c.tamanho().id(), UUID.randomUUID(), "ACABANDO");
+                            return put("/api/v1/merchants/" + c.loja() + "/catalog/produtos/"
+                                    + c.pizza().getId() + "/grupos/" + c.tamanho().id()
+                                    + "/opcoes/nao-e-uuid/disponibilidade", c.token(), "ACABANDO");
                         }),
                 new Provocacao("PUT", MARCAR_OPCAO, 401, "sem token",
                         () -> {
@@ -233,6 +235,12 @@ class ContratoDeErrosIT extends Infraestrutura {
                                     + UUID.randomUUID() + "/grupos/" + c.tamanho().id()
                                     + "/opcoes/" + c.pequena() + "/disponibilidade",
                                     c.token(), "ACABANDO");
+                        }),
+                new Provocacao("PUT", MARCAR_OPCAO, 404,
+                        "opção que não existe neste produto — OpcaoNaoEncontrada, ADR-063 §4",
+                        () -> {
+                            Cena c = cena("ALTERAR_PRODUTO");
+                            return marcarOpcao(c, c.tamanho().id(), UUID.randomUUID(), "ACABANDO");
                         }),
                 new Provocacao("PUT", MARCAR_OPCAO, 409, "ESGOTADO_HOJE numa loja sem horário",
                         () -> {
