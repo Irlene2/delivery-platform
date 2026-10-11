@@ -16,12 +16,6 @@ final class Fixture {
     /** A loja. É o mesmo valor do {@code Fixture.LOJA} do {@code merchant}. */
     static final UUID LOJA = UUID.fromString("5eed0000-0000-4000-8000-000000000001");
 
-    /**
-     * A categoria. Solta de propósito: {@code Categoria} não tem repositório nem
-     * documento, e nada no domínio ou na leitura exige que ela exista gravada.
-     */
-    static final UUID CATEGORIA = UUID.fromString("5eed0000-0000-4000-8000-000000000002");
-
     private Fixture() {
     }
 }

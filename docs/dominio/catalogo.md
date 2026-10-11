@@ -56,6 +56,20 @@ produtos entre categorias sem tocar em nenhum deles. Como parte do produto, a
 ordem das categorias seria um dado replicado em N documentos, e a primeira
 reordenação deixaria metade desatualizada.
 
+**A categoria passa a existir fora do Java** (ADR-064). Até 11/10/2026 havia classe de
+domínio com regras e nenhuma coleção: nenhuma categoria podia ser gravada nem lida, o
+`categoriaId` que o `ProdutoResponse` devolve não tinha onde ser resolvido, e a fixture
+dizia por escrito que a dela era *"solta de propósito"*. A E-3b deu a ela porta,
+documento, coleção e índice, mais **criar** e **listar**.
+
+**Renomear, reordenar, ativar e desativar continuam só no agregado**, e o motivo de
+`reordenar` é de infraestrutura: ele publica `CategoriasReordenadasV1`, e **o `catalog` não
+tem outbox**. Quem publica precisa de um (invariante 7). *Está no `dividas.md`, com
+gatilho.*
+
+**A regra "o produto aponta para uma categoria que existe, e da mesma loja" não nasce
+aqui** — ela é do caso de uso que cria produto, como o javadoc do `Produto` diz.
+
 > **Nota de nomenclatura.** A ADR-018 modela isto em inglês (`Product`,
 > `optionGroups`, `minSelect`), e o código nascerá em português — `Produto`,
 > `gruposDeOpcoes`, `minEscolhas`. A regra está na **ADR-035**: o negócio fala
@@ -398,7 +412,7 @@ grupos e opções é uma árvore lida inteira, gravada inteira.
 |---|---|
 | Esquema | Toda estrutura e todo índice nascem em `changeUnit` do Mongock — ADR-007. Nunca comando no shell |
 | Transação | Replica set de nó único — sem ele não há transação multi-documento e portanto não há outbox — ADR-008 |
-| Índices mínimos | `(estabelecimentoId, estadoDePublicacao)` · `(estabelecimentoId, categoriaId, ordem)` |
+| Índices mínimos | `(estabelecimentoId, estadoDePublicacao)` · `(estabelecimentoId, categoriaId, ordem)` — produto · `(estabelecimentoId, ordem)` — categoria |
 | Cache | Cardápio público no Redis, TTL curto, invalidado por evento |
 | Imagem | `imagemRef` aponta para o MinIO. **Binário nunca entra no documento** |
 

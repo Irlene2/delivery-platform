@@ -44,6 +44,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/merchants/{estabelecimentoId}/catalog/categorias": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Lista as seções do cardápio
+         * @description Exige VER_PRODUTO. Ativas e inativas, pela ordem e, no empate, pelo nome.
+         */
+        get: operations["listar"];
+        put?: never;
+        /**
+         * Cria uma seção do cardápio
+         * @description Exige CRIAR_PRODUTO. A seção nasce ativa. Sem Location: não há rota de uma seção por id, e a tela precisa da lista.
+         */
+        post: operations["criar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/merchants/{estabelecimentoId}/catalog/produtos": {
         parameters: {
             query?: never;
@@ -55,7 +79,7 @@ export interface paths {
          * Lista os produtos publicados do estabelecimento
          * @description Exige vínculo ativo com VER_PRODUTO, resolvido no merchant-service com o token de quem pediu. Sem vínculo, sem permissão, loja inexistente e merchant indisponível devolvem a mesma recusa.
          */
-        get: operations["listar"];
+        get: operations["listar_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -109,6 +133,28 @@ export interface components {
             /** @enum {string} */
             disponibilidade?: "DISPONIVEL" | "ACABANDO" | "ESGOTADO_HOJE" | "ESGOTADO_INDETERMINADO";
             vendavel?: boolean;
+        };
+        /** @description Uma seção nova do cardápio. Nasce ativa. */
+        CategoriaRequest: {
+            /**
+             * @description O nome da seção.
+             * @example Pizzas salgadas
+             */
+            nome: string;
+            /**
+             * Format: int32
+             * @description A posição da seção no cardápio. Empates se resolvem pelo nome.
+             * @example 0
+             */
+            ordem: number;
+        };
+        CategoriaResponse: {
+            /** Format: uuid */
+            id?: string;
+            nome?: string;
+            /** Format: int32 */
+            ordem?: number;
+            ativa?: boolean;
         };
         PaginaResponseProdutoResumoResponse: {
             conteudo?: components["schemas"]["ProdutoResumoResponse"][];
@@ -310,6 +356,96 @@ export interface operations {
         };
     };
     listar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                estabelecimentoId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description As seções, pela ordem; vazia é [] */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategoriaResponse"][];
+                };
+            };
+            /** @description Identificador malformado */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sem token, ou token inválido */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sem vínculo, sem VER_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    criar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                estabelecimentoId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CategoriaRequest"];
+            };
+        };
+        responses: {
+            /** @description A seção criada, ativa */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategoriaResponse"];
+                };
+            };
+            /** @description Corpo malformado — nome em branco, ordem ausente — ou identificador malformado */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sem token, ou token inválido */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sem vínculo, sem CRIAR_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listar_1: {
         parameters: {
             query?: {
                 /** @description Zero-based page index (0..N) */

@@ -64,8 +64,9 @@
 | 060 | A primeira rota de escrita, e o que o agregado exige para a loja nascer | ✅ aceita |
 | 061 | A loja escolhida mora na URL | ✅ aceita |
 | 063 | O erro do catálogo diz de quem é a culpa | ✅ aceita |
+| 064 | A categoria ganha persistência, e só criar e listar | ✅ aceita |
 
-**Sessenta escritas, duas sem objeto — estas com registro próprio desde
+**Sessenta e uma escritas, duas sem objeto — estas com registro próprio desde
 25/08/2026 —, nenhuma a escrever.**
 
 ## Onde mora o quê

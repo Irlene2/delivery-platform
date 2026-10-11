@@ -71,6 +71,43 @@ class MongockIT extends Infraestrutura {
                 .containsExactly("estabelecimentoId", "categoriaId", "ordem");
     }
 
+    /**
+     * O índice da categoria, lido do banco (ADR-064 §5). A C13 é sobre o que o Mongock
+     * criou, e não sobre o {@code changeUnit} existir no código.
+     */
+    @Test
+    @DisplayName("C13: o índice da categoria existe no banco, com as chaves da §7")
+    void c13_o_indice_da_categoria_existe() {
+        Document porOrdem = StreamSupport
+                .stream(mongo.getCollection("categorias").listIndexes().spliterator(), false)
+                .filter(i -> "categoria_por_estabelecimento_e_ordem".equals(i.getString("name")))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError(
+                        "o changeUnit 002 não criou o índice da categoria"));
+
+        assertThat(porOrdem.get("key", Document.class).keySet())
+                .containsExactly("estabelecimentoId", "ordem");
+    }
+
+    /**
+     * O Mongock registra cada {@code changeUnit} executado numa coleção própria, e é
+     * ela que faz uma unidade rodar uma vez só. Os dois {@code changeUnit} do
+     * {@code catalog} estão lá, uma vez cada, com sucesso.
+     */
+    @Test
+    @DisplayName("cada changeUnit está registrado uma vez, executado")
+    void cada_change_unit_rodou_uma_vez() {
+        List<Document> registros = StreamSupport
+                .stream(mongo.getCollection("mongockChangeLog").find().spliterator(), false)
+                .filter(r -> "EXECUTED".equals(r.getString("state")))
+                .filter(r -> "EXECUTION".equals(r.getString("type")))
+                .toList();
+
+        assertThat(registros)
+                .extracting(r -> r.getString("changeId"))
+                .containsOnlyOnce("001-cria-indices-do-produto", "002-cria-indice-da-categoria");
+    }
+
     private Document indiceChamado(String nome) {
         return indicesDeProdutos().stream()
                 .filter(i -> nome.equals(i.getString("name")))

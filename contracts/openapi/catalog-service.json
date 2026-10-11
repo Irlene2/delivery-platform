@@ -155,12 +155,99 @@
         }
       }
     },
+    "/api/v1/merchants/{estabelecimentoId}/catalog/categorias" : {
+      "get" : {
+        "tags" : [ "categoria-controller" ],
+        "summary" : "Lista as seções do cardápio",
+        "description" : "Exige VER_PRODUTO. Ativas e inativas, pela ordem e, no empate, pelo nome.",
+        "operationId" : "listar",
+        "parameters" : [ {
+          "name" : "estabelecimentoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "As seções, pela ordem; vazia é []",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/CategoriaResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Identificador malformado"
+          },
+          "401" : {
+            "description" : "Sem token, ou token inválido"
+          },
+          "403" : {
+            "description" : "Sem vínculo, sem VER_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa"
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "categoria-controller" ],
+        "summary" : "Cria uma seção do cardápio",
+        "description" : "Exige CRIAR_PRODUTO. A seção nasce ativa. Sem Location: não há rota de uma seção por id, e a tela precisa da lista.",
+        "operationId" : "criar",
+        "parameters" : [ {
+          "name" : "estabelecimentoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CategoriaRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "A seção criada, ativa",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CategoriaResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Corpo malformado — nome em branco, ordem ausente — ou identificador malformado"
+          },
+          "401" : {
+            "description" : "Sem token, ou token inválido"
+          },
+          "403" : {
+            "description" : "Sem vínculo, sem CRIAR_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa"
+          }
+        }
+      }
+    },
     "/api/v1/merchants/{estabelecimentoId}/catalog/produtos" : {
       "get" : {
         "tags" : [ "produto-controller" ],
         "summary" : "Lista os produtos publicados do estabelecimento",
         "description" : "Exige vínculo ativo com VER_PRODUTO, resolvido no merchant-service com o token de quem pediu. Sem vínculo, sem permissão, loja inexistente e merchant indisponível devolvem a mesma recusa.",
-        "operationId" : "listar",
+        "operationId" : "listar_1",
         "parameters" : [ {
           "name" : "estabelecimentoId",
           "in" : "path",
@@ -315,6 +402,44 @@
             "enum" : [ "DISPONIVEL", "ACABANDO", "ESGOTADO_HOJE", "ESGOTADO_INDETERMINADO" ]
           },
           "vendavel" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "CategoriaRequest" : {
+        "type" : "object",
+        "description" : "Uma seção nova do cardápio. Nasce ativa.",
+        "properties" : {
+          "nome" : {
+            "type" : "string",
+            "description" : "O nome da seção.",
+            "example" : "Pizzas salgadas",
+            "minLength" : 1
+          },
+          "ordem" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "A posição da seção no cardápio. Empates se resolvem pelo nome.",
+            "example" : 0
+          }
+        },
+        "required" : [ "nome", "ordem" ]
+      },
+      "CategoriaResponse" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "nome" : {
+            "type" : "string"
+          },
+          "ordem" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "ativa" : {
             "type" : "boolean"
           }
         }

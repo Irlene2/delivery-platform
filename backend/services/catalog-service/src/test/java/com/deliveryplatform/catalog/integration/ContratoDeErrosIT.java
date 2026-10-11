@@ -88,6 +88,7 @@ class ContratoDeErrosIT extends Infraestrutura {
     private static final String MARCAR_PRODUTO = BASE + "/{produtoId}/disponibilidade";
     private static final String MARCAR_OPCAO =
             BASE + "/{produtoId}/grupos/{grupoId}/opcoes/{opcaoId}/disponibilidade";
+    private static final String CATEGORIAS = "/api/v1/merchants/{estabelecimentoId}/catalog/categorias";
 
     /**
      * O que o contrato declara e nenhum caso provoca, cada item com o motivo.
@@ -253,6 +254,32 @@ class ContratoDeErrosIT extends Infraestrutura {
                             Cena c = cena("ALTERAR_PRODUTO");
                             MERCHANT.expedienteEstoura();
                             return marcarOpcao(c, c.tamanho().id(), c.pequena(), "ACABANDO");
+                        }),
+
+                new Provocacao("POST", CATEGORIAS, 400, "nome em branco — a forma do DTO",
+                        () -> {
+                            Cena c = cena("CRIAR_PRODUTO");
+                            return criarCategoria(c.loja().toString(), c.token(), "{\"nome\":\" \",\"ordem\":0}");
+                        }),
+                new Provocacao("POST", CATEGORIAS, 401, "sem token",
+                        () -> criarCategoria(UUID.randomUUID().toString(), null,
+                                "{\"nome\":\"Bebidas\",\"ordem\":0}")),
+                new Provocacao("POST", CATEGORIAS, 403, "vínculo sem CRIAR_PRODUTO",
+                        () -> {
+                            Cena c = cena("VER_PRODUTO");
+                            return criarCategoria(c.loja().toString(), c.token(),
+                                    "{\"nome\":\"Bebidas\",\"ordem\":0}");
+                        }),
+
+                new Provocacao("GET", CATEGORIAS, 400, "identificador da loja que não é UUID",
+                        () -> listarCategorias("nao-e-uuid",
+                                comPermissoes(UUID.randomUUID(), "VER_PRODUTO"))),
+                new Provocacao("GET", CATEGORIAS, 401, "sem token",
+                        () -> listarCategorias(UUID.randomUUID().toString(), null)),
+                new Provocacao("GET", CATEGORIAS, 403, "vínculo sem VER_PRODUTO",
+                        () -> {
+                            Cena c = cena("CRIAR_PRODUTO");
+                            return listarCategorias(c.loja().toString(), c.token());
                         }));
     }
 
@@ -376,6 +403,24 @@ class ContratoDeErrosIT extends Infraestrutura {
                 .uri("/api/v1/merchants/" + c.loja() + "/catalog/produtos/" + produtoId);
         if (c.token() != null) {
             requisicao = requisicao.header("Authorization", "Bearer " + c.token());
+        }
+        return requisicao.exchange().returnResult(String.class).getStatus().value();
+    }
+
+    private int criarCategoria(String loja, String token, String corpo) {
+        var requisicao = cliente().post().uri("/api/v1/merchants/" + loja + "/catalog/categorias")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(corpo);
+        if (token != null) {
+            requisicao = requisicao.header("Authorization", "Bearer " + token);
+        }
+        return requisicao.exchange().returnResult(String.class).getStatus().value();
+    }
+
+    private int listarCategorias(String loja, String token) {
+        var requisicao = cliente().get().uri("/api/v1/merchants/" + loja + "/catalog/categorias");
+        if (token != null) {
+            requisicao = requisicao.header("Authorization", "Bearer " + token);
         }
         return requisicao.exchange().returnResult(String.class).getStatus().value();
     }

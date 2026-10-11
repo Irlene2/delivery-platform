@@ -1,7 +1,9 @@
 package com.deliveryplatform.catalog.unit;
 
+import com.deliveryplatform.catalog.application.port.out.CategoriaRepositorio;
 import com.deliveryplatform.catalog.application.port.out.ProdutoRepositorio;
 import com.deliveryplatform.catalog.config.SemeaduraProperties;
+import com.deliveryplatform.catalog.domain.model.Categoria;
 import com.deliveryplatform.catalog.domain.model.EstadoDeDisponibilidade;
 import com.deliveryplatform.catalog.domain.model.EstadoDePublicacao;
 import com.deliveryplatform.catalog.domain.model.Opcao;
@@ -43,25 +45,37 @@ class SemeaduraDoCatalogoTest {
     private static final Instant AGORA = Instant.parse("2026-10-10T05:30:00Z");
 
     @Mock
+    CategoriaRepositorio categorias;
+
+    @Mock
     ProdutoRepositorio produtos;
 
     @Test
     void desligada_nao_toca_no_repositorio() {
         semeadura(false).run(new DefaultApplicationArguments());
 
-        verifyNoInteractions(produtos);
+        verifyNoInteractions(categorias, produtos);
     }
 
     @Test
     void grava_um_produto_publicado_e_esgotado_que_a_proxima_abertura_reativa() {
         when(produtos.publicadosDe(eq(LOJA), any())).thenReturn(Page.empty());
+        when(categorias.salvar(any())).thenAnswer(chamada -> chamada.getArgument(0));
         when(produtos.salvar(any())).thenAnswer(chamada -> chamada.getArgument(0));
 
         semeadura(true).run(new DefaultApplicationArguments());
 
+        ArgumentCaptor<Categoria> secao = ArgumentCaptor.forClass(Categoria.class);
+        verify(categorias).salvar(secao.capture());
         ArgumentCaptor<Produto> gravado = ArgumentCaptor.forClass(Produto.class);
         verify(produtos).salvar(gravado.capture());
         Produto produto = gravado.getValue();
+
+        assertThat(secao.getValue().getEstabelecimentoId()).isEqualTo(LOJA);
+        assertThat(secao.getValue().isAtiva()).isTrue();
+        assertThat(produto.getCategoriaId())
+                .as("até a E-3b era uma constante sem linha; agora é a categoria gravada")
+                .isEqualTo(secao.getValue().getId());
 
         assertThat(produto.getEstabelecimentoId()).isEqualTo(LOJA);
         assertThat(produto.getEstadoDePublicacao()).isEqualTo(EstadoDePublicacao.ATIVO);
@@ -89,10 +103,11 @@ class SemeaduraDoCatalogoTest {
         semeadura(true).run(new DefaultApplicationArguments());
 
         verify(produtos, never()).salvar(any());
+        verifyNoInteractions(categorias);
     }
 
     private SemeaduraDoCatalogo semeadura(boolean ligada) {
         return new SemeaduraDoCatalogo(
-                new SemeaduraProperties(ligada), produtos, Clock.fixed(AGORA, ZoneOffset.UTC));
+                new SemeaduraProperties(ligada), categorias, produtos, Clock.fixed(AGORA, ZoneOffset.UTC));
     }
 }

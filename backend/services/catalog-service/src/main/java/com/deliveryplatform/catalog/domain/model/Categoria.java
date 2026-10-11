@@ -16,11 +16,23 @@ import java.util.UUID;
  * meio do caminho.
  *
  * <p>O {@code catalogo.md} §1 já a lista como raiz, com quatro campos e nada
- * mais. Ela nasce nesta rodada — e não na seguinte — porque o {@link Produto}
+ * mais. Ela nasceu na G-A — e não na rodada seguinte — porque o {@link Produto}
  * carrega {@code categoriaId} e o segundo índice da §7 é
  * {@code (estabelecimentoId, categoriaId, ordem)}: um identificador que aponta
  * para um tipo que não existe é a mesma promessa com sintaxe de código que este
  * repositório recusou no enum sem produtor.
+ *
+ * <p><b>Ganhou persistência na E-3b</b> (ADR-064): porta, documento, coleção e
+ * índice, e duas rotas — criar e listar. {@link #renomear}, {@link #reordenar},
+ * {@link #ativar} e {@link #desativar} continuam sem rota, cada um com gatilho no
+ * {@code dividas.md}; o {@code reordenar} arrasta o outbox do {@code catalog}, que
+ * não existe.
+ *
+ * <h2>A {@code ordem} não tem regra, e é de propósito</h2>
+ *
+ * <p>O agregado aceita qualquer inteiro, inclusive repetido e negativo: o
+ * {@code catalogo.md} §1 não escreve regra sobre ela, e a listagem desempata por
+ * nome e id. Quem cria a seção escolhe onde ela fica.
  *
  * <h2>Categoria inativa não torna o produto invendável</h2>
  *
@@ -41,6 +53,9 @@ public final class Categoria {
     private int ordem;
     private boolean ativa;
 
+    /** A versão do documento (ADR-052), opaca: atravessa o agregado sem ser lida. */
+    private Long versao;
+
     private Categoria(UUID id, UUID estabelecimentoId, String nome, int ordem, boolean ativa) {
         if (estabelecimentoId == null) {
             throw RegraDoCatalogoViolada.integridade("categoria sem estabelecimento");
@@ -55,6 +70,20 @@ public final class Categoria {
     /** Categoria nova nasce ativa: quem cria uma seção quer mostrá-la. */
     public static Categoria nova(UUID estabelecimentoId, String nome, int ordem) {
         return new Categoria(UUID.randomUUID(), estabelecimentoId, nome, ordem, true);
+    }
+
+    /**
+     * O caminho de volta do banco. Passa pelas mesmas recusas da criação: um
+     * documento sem loja ou sem nome não vira categoria.
+     */
+    public static Categoria reconstituir(UUID id, UUID estabelecimentoId, String nome,
+                                         int ordem, boolean ativa, Long versao) {
+        if (id == null) {
+            throw RegraDoCatalogoViolada.integridade("categoria sem id");
+        }
+        Categoria categoria = new Categoria(id, estabelecimentoId, nome, ordem, ativa);
+        categoria.versao = versao;
+        return categoria;
     }
 
     public void renomear(String nome) {
@@ -91,5 +120,9 @@ public final class Categoria {
 
     public boolean isAtiva() {
         return ativa;
+    }
+
+    public Long getVersao() {
+        return versao;
     }
 }

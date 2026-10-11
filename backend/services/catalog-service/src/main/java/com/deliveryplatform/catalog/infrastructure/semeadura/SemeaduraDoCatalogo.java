@@ -1,7 +1,9 @@
 package com.deliveryplatform.catalog.infrastructure.semeadura;
 
+import com.deliveryplatform.catalog.application.port.out.CategoriaRepositorio;
 import com.deliveryplatform.catalog.application.port.out.ProdutoRepositorio;
 import com.deliveryplatform.catalog.config.SemeaduraProperties;
+import com.deliveryplatform.catalog.domain.model.Categoria;
 import com.deliveryplatform.catalog.domain.model.Disponibilidade;
 import com.deliveryplatform.catalog.domain.model.GrupoDeOpcoes;
 import com.deliveryplatform.catalog.domain.model.ModoDeControle;
@@ -26,7 +28,9 @@ import org.springframework.stereotype.Component;
  * fundação</b>: sai do repositório junto com o semeador do {@code merchant}.
  *
  * <p>Atrás de {@code delivery.semeadura.ligada}, falsa por padrão. Grava
- * <b>um</b> produto na loja da {@link Fixture}: publicado, {@code ESGOTADO_HOJE},
+ * <b>uma</b> categoria e <b>um</b> produto nela, na loja da {@link Fixture}. A
+ * categoria é gravada desde a E-3b (ADR-064); até lá o produto apontava para um id
+ * constante sem linha nenhuma, "solto de propósito". O produto: publicado, {@code ESGOTADO_HOJE},
  * e com uma opção do grupo também {@code ESGOTADO_HOJE} — a reativação trata
  * produto e opção, e assim a prova cobre os dois caminhos.
  *
@@ -36,7 +40,7 @@ import org.springframework.stereotype.Component;
  * o mesmo caminho que um comerciante faria, com C1, C4 e C5 cobradas na
  * publicação. A {@code reconstituir} daria um id fixo, mas pula as regras de
  * publicação — é leitura, não escrita. Então a idempotência é pela <b>loja</b>:
- * se ela já tem produto publicado, não faz nada.
+ * se ela já tem produto publicado, não faz nada — nem a categoria, que nasce junto.
  *
  * <h2>Trinta dias atrás, e não ontem</h2>
  *
@@ -56,13 +60,16 @@ public class SemeaduraDoCatalogo implements ApplicationRunner {
     private static final Logger log = LoggerFactory.getLogger(SemeaduraDoCatalogo.class);
 
     private final SemeaduraProperties propriedades;
+    private final CategoriaRepositorio categorias;
     private final ProdutoRepositorio produtos;
     private final Clock relogio;
 
     public SemeaduraDoCatalogo(SemeaduraProperties propriedades,
+                               CategoriaRepositorio categorias,
                                ProdutoRepositorio produtos,
                                Clock relogio) {
         this.propriedades = propriedades;
+        this.categorias = categorias;
         this.produtos = produtos;
         this.relogio = relogio;
     }
@@ -80,7 +87,9 @@ public class SemeaduraDoCatalogo implements ApplicationRunner {
         LocalDate carimbo = LocalDate.ofInstant(marcadoEm, ZoneOffset.UTC);
         Disponibilidade esgotado = Disponibilidade.esgotadoHoje(marcadoEm, carimbo);
 
-        Produto produto = Produto.rascunho(Fixture.LOJA, Fixture.CATEGORIA, "Pizza margherita",
+        Categoria pizzas = categorias.salvar(Categoria.nova(Fixture.LOJA, "Pizzas", 0));
+
+        Produto produto = Produto.rascunho(Fixture.LOJA, pizzas.getId(), "Pizza margherita",
                 Money.de("49.90"), ModoDeControle.QUALITATIVO, 0);
         produto.acrescentarGrupo(GrupoDeOpcoes.novo("Tamanho", 1, 1, 0, List.of(
                 Opcao.nova("Pequena", Money.ZERO, 0),
