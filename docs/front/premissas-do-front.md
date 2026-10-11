@@ -167,6 +167,10 @@ resposta é modelo de leitura, com dono e invalidação. Esta é uma tela de adm
 **O produto cuja seção não existe aparece num grupo "Sem seção", no fim.** A ADR-066 decidiu
 que a leitura não valida referência; este é o lugar onde essa escolha fica visível, e
 esconder o produto o tornaria inconsertável.
+
+**O `ordem` do produto é derivado pela tela** — o maior da seção, mais um —, e **isso é
+dívida nossa**: a borda exige um campo que nenhuma pessoa fornece. *Está no `dividas.md`, com
+gatilho.*
 ---
 
 ## 4 · O que o front tolera, porque o back mudará
@@ -227,7 +231,7 @@ tela, com o gatilho de cada um.
 | `required` nos esquemas do `catalog` e na `LojaDoUsuario` do `merchant` | Todo campo do tipo gerado é opcional, e a tela precisa tratar ausência que não acontece | a primeira tela que leia produto |
 | O **estado da operação** — a loja está aberta agora? | O seletor não pode mostrar aberta/fechada. A `OperacaoDoEstabelecimentoPort` do `estabelecimento.md` §3 não existe em código | sem rodada marcada — a porta não existe (ADR-046, emenda de 30/09/2026), e a rota da G-C1 responde outra pergunta: qual expediente carimbar |
 | Paginação na tela do cardápio | O cardápio pede a página do teto da rota — 100 — e diz quantos há (W-F); a lista da disponibilidade continua com 20. Quem tiver 200 produtos não alcança o resto | a primeira loja de teste com mais de 100 produtos |
-| Rota de escrita do catálogo | Não dá para criar nem editar produto pela tela — só ver | G-C2 |
+| Rota de escrita do catálogo | Criar seção, criar produto e publicar existem desde a W-F (ADR-067). **Editar** produto, despublicar, grupos e opções, renomear e reordenar seção não têm tela — cada um com gatilho no `dividas.md` | a rota de cada um |
 
 **Enquanto um item desta tabela não tiver rota, a tela que depende dele não é
 escrita** — e não é simulada com valor de configuração temporário. Um

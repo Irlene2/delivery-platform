@@ -193,7 +193,14 @@ export function CadastroDeLojaPage() {
         </p>
       </header>
 
-      <form onSubmit={(evento) => void enviar(evento)} className="flex flex-col gap-6" noValidate>
+      {/* A recusa sai quando qualquer campo muda, ou no envio seguinte (ADR-067 §5): na
+          passagem humana de 10/10 ela ficava na tela depois de o campo ser corrigido. */}
+      <form
+        onSubmit={(evento) => void enviar(evento)}
+        onChange={() => definirRecusa(null)}
+        className="flex flex-col gap-6"
+        noValidate
+      >
         <fieldset className="flex flex-col gap-3">
           <legend className="mb-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
             A loja

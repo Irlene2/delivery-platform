@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, useLocation } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
@@ -20,7 +20,15 @@ beforeEach(() => {
   guardar({ token: 't.o.k', expiraEm: Date.now() + 1_800_000 });
 });
 
+/**
+ * Desmonta **antes** de zerar o dublê. O Vitest roda os `afterEach` em pilha, e o
+ * `cleanup` automático do Testing Library — registrado primeiro, no import — roda por
+ * último: entre o `mockReset` e ele, um efeito da navegação para o cardápio ainda
+ * disparava e recebia `undefined` do `chamar`. Medido na W-F: `TypeError: Cannot read
+ * properties of undefined (reading 'then')` em `useRecurso.ts:69`, no A3, uma vez em seis.
+ */
 afterEach(() => {
+  cleanup();
   chamarFalso.mockReset();
 });
 
@@ -206,5 +214,24 @@ describe('CadastroDeLojaPage', () => {
     await waitFor(() => expect(corpoEnviado()).toBeDefined());
     expect((corpoEnviado() as { metodosPorModalidade: unknown }).metodosPorModalidade).toEqual({});
     expect(await screen.findByRole('alert')).toHaveTextContent('escolha ao menos uma modalidade');
+  });
+
+  /**
+   * O achado da passagem humana de 10/10: o aviso ficava depois de o campo ser corrigido.
+   * Desde a W-F ele sai quando qualquer campo muda (ADR-067 §5).
+   */
+  it('a recusa sai quando um campo muda', async () => {
+    servidor(() =>
+      Promise.reject(new ErroDaApi(400, 'documento inválido: informe um CPF ou um CNPJ')),
+    );
+
+    montar();
+    await preencher();
+    await userEvent.click(screen.getByRole('button', { name: 'Cadastrar loja' }));
+    expect(await screen.findByText(/documento inválido/)).toBeInTheDocument();
+
+    await userEvent.type(screen.getByLabelText('CPF ou CNPJ'), '0');
+
+    expect(screen.queryByText(/documento inválido/)).not.toBeInTheDocument();
   });
 });

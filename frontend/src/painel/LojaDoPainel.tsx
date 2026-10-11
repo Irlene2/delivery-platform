@@ -3,9 +3,10 @@ import { Navigate, Outlet, useLocation, useNavigate, useParams } from 'react-rou
 import { CardapioPorSecao } from './CardapioPorSecao';
 import { ProdutoAberto } from './ProdutoAberto';
 import { ListaDeProdutos } from './ListaDeProdutos';
-import { caminhoDaLoja, caminhoDaSecao, secaoDoCaminho } from './caminhos';
+import { caminhoDaLoja, caminhoDaSecao, caminhoDoNovoProduto, secaoDoCaminho } from './caminhos';
 import { useContextoDoPainel } from './contextoDoPainel';
 import { MenuDoPainel } from './MenuDoPainel';
+import { NovoProduto } from './NovoProduto';
 import { secoesDe, type Secao } from './secoes';
 import { SeletorDeLoja } from './SeletorDeLoja';
 
@@ -77,7 +78,7 @@ export function ListaDaSecao({ secao }: { secao: Secao }) {
   const abrir = (produtoId: string) =>
     void navegar(`${caminhoDaSecao(estabelecimentoId, secao)}/${produtoId}`);
   if (secao === 'cardapio') {
-    return <CardapioPorSecao estabelecimentoId={estabelecimentoId} aoAbrir={abrir} />;
+    return <CardapioDaLoja estabelecimentoId={estabelecimentoId} aoAbrir={abrir} />;
   }
   return (
     <ListaDeProdutos
@@ -86,6 +87,40 @@ export function ListaDaSecao({ secao }: { secao: Secao }) {
       aoAbrir={abrir}
     />
   );
+}
+
+/**
+ * O cardápio com os botões que as permissões desta loja abrem — conveniência, como o
+ * menu (premissas §2.2): quem recusa é o servidor.
+ */
+function CardapioDaLoja({
+  estabelecimentoId,
+  aoAbrir,
+}: {
+  estabelecimentoId: string;
+  aoAbrir: (produtoId: string) => void;
+}) {
+  const { lojas } = useContextoDoPainel();
+  const navegar = useNavigate();
+  const permissoes =
+    lojas.find((uma) => uma.estabelecimentoId === estabelecimentoId)?.permissoes ?? [];
+  return (
+    <CardapioPorSecao
+      estabelecimentoId={estabelecimentoId}
+      aoAbrir={aoAbrir}
+      podeCriar={permissoes.includes('CRIAR_PRODUTO')}
+      podePublicar={permissoes.includes('ALTERAR_PRODUTO')}
+      aoNovoProduto={() => void navegar(caminhoDoNovoProduto(estabelecimentoId))}
+    />
+  );
+}
+
+/** `/painel/lojas/:id/produtos/novo` — no 201, volta ao cardápio, que relê. */
+export function NovoProdutoDaLoja() {
+  const { estabelecimentoId = '' } = useParams();
+  const navegar = useNavigate();
+  const voltar = () => void navegar(caminhoDaSecao(estabelecimentoId, 'cardapio'));
+  return <NovoProduto estabelecimentoId={estabelecimentoId} aoCriar={voltar} aoVoltar={voltar} />;
 }
 
 export function ProdutoDaSecao({ secao }: { secao: Secao }) {

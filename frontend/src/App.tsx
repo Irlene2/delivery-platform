@@ -4,7 +4,13 @@ import { CadastrarPage } from './paginas/CadastrarPage';
 import { CadastroDeLojaPage } from './paginas/CadastroDeLojaPage';
 import { PainelPage } from './paginas/PainelPage';
 import { InicioDoPainel } from './painel/InicioDoPainel';
-import { ListaDaSecao, LojaDoPainel, ProdutoDaSecao, SecaoInicial } from './painel/LojaDoPainel';
+import {
+  ListaDaSecao,
+  LojaDoPainel,
+  NovoProdutoDaLoja,
+  ProdutoDaSecao,
+  SecaoInicial,
+} from './painel/LojaDoPainel';
 import { ExigeSessao } from './rotas/ExigeSessao';
 
 /**
@@ -32,6 +38,8 @@ export function App() {
         <Route path="lojas/:estabelecimentoId" element={<LojaDoPainel />}>
           <Route index element={<SecaoInicial />} />
           <Route path="produtos" element={<ListaDaSecao secao="cardapio" />} />
+          {/* Segmento fixo ganha do :produtoId no ranking do roteador. ADR-067 §3. */}
+          <Route path="produtos/novo" element={<NovoProdutoDaLoja />} />
           <Route path="produtos/:produtoId" element={<ProdutoDaSecao secao="cardapio" />} />
           <Route path="disponibilidade" element={<ListaDaSecao secao="disponibilidade" />} />
           <Route

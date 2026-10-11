@@ -22,6 +22,11 @@ export function caminhoDaSecao(estabelecimentoId: string, secao: Secao): string 
   return `${caminhoDaLoja(estabelecimentoId)}/${SEGMENTO[secao]}`;
 }
 
+/** O formulário do produto novo (ADR-067 §3). */
+export function caminhoDoNovoProduto(estabelecimentoId: string): string {
+  return `${caminhoDaSecao(estabelecimentoId, 'cardapio')}/novo`;
+}
+
 /** A seção em que a URL está, ou `null` — é ela que o menu marca como atual. */
 export function secaoDoCaminho(caminho: string): Secao | null {
   const segmento = caminho.split('/')[4];

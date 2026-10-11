@@ -169,6 +169,15 @@ describe('PainelPage', () => {
     await waitFor(() => expect(onde()).toHaveTextContent(/^\/painel\/lojas\/p1\/produtos$/));
   });
 
+  it('/painel/lojas/:id/produtos/novo abre o formulário, e não um produto chamado "novo"', async () => {
+    responder([PIZZARIA]);
+
+    montar('/painel/lojas/p1/produtos/novo');
+
+    expect(await screen.findByRole('heading', { name: 'Novo produto' })).toBeInTheDocument();
+    expect(caminhosPedidos()).not.toContain('/api/v1/merchants/p1/catalog/produtos/novo');
+  });
+
   it('C11 · o nome na lista leva ao endereço do produto', async () => {
     responder([PIZZARIA], [MARGHERITA]);
 

@@ -1,6 +1,6 @@
 # O razão das dívidas
 
-**Gerado em 10/10/2026 na rodada R-1, sobre o commit `6fb73e6`; refeito na E-1, sobre `d7dbcc4` mais a ADR-060, na W-E, sobre `398d828` mais a ADR-061, na E-3b, sobre `9fbcee1` mais a ADR-064, na E-3c, sobre `cbd633c` mais as ADRs 065 e 066 e o `PublicarProdutoService`, e na E-3d, sobre `a3ffe07` mais a ADR-068. Este arquivo é
+**Gerado em 10/10/2026 na rodada R-1, sobre o commit `6fb73e6`; refeito na E-1, sobre `d7dbcc4` mais a ADR-060, na W-E, sobre `398d828` mais a ADR-061, na E-3b, sobre `9fbcee1` mais a ADR-064, na E-3c, sobre `cbd633c` mais as ADRs 065 e 066 e o `PublicarProdutoService`, na E-3d, sobre `a3ffe07` mais a ADR-068, e na W-F, sobre `ec89666` mais a ADR-067. Este arquivo é
 derivado e envelhece:** toda ADR, documento ou javadoc que escrever um gatilho novo o
 torna incompleto. Refaça-o com os comandos abaixo antes de confiar nele.
 
@@ -23,25 +23,25 @@ grep -rn -i "nesta altura\|por enquanto\|ainda não existe\|quando houver\|até 
   docs/ backend/*/*/src/main --include=*.md --include=*.java | grep -v "/build/"
 ```
 
-Medido na E-3b: **32 linhas**; na E-3c, **36** — que já envelheceu na própria rodada: a frase abaixo, escrita depois da medição, levou o número a **37**, e a E-3d mediu 37, com a mesma contagem por arquivo — mais duas da ADR-063 (que cita a frase vencida), uma da ADR-066 e três deste próprio razão, que cita as fórmulas; menos a da `RegraDoCatalogoViolada`, cuja frase vencida saiu na E-3b. Nenhuma é sobre a publicação. A triagem delas é rodada própria. O que a segunda passada
+Medido na E-3b: **32 linhas**; na E-3c, **36** — que já envelheceu na própria rodada: a frase abaixo, escrita depois da medição, levou o número a **37**, e a E-3d mediu 37, com a mesma contagem por arquivo; na W-F, **38**, e a nova é a ADR-067:23 — *"a seção, por enquanto, não significa nada"* —, condição que a própria rodada desfez ao dar tela à seção — mais duas da ADR-063 (que cita a frase vencida), uma da ADR-066 e três deste próprio razão, que cita as fórmulas; menos a da `RegraDoCatalogoViolada`, cuja frase vencida saiu na E-3b. Nenhuma é sobre a publicação. A triagem delas é rodada própria. O que a segunda passada
 achar entra na tabela **com a fórmula**, não com a paráfrase.
 
 **Os comandos produzem candidatos; a tabela é a leitura deles.** Uma menção a
 "gatilho" pode ser a definição de um, a citação de um que já está na tabela, ou o
-relato de um que disparou. A conta, em 11/10/2026, na E-3d:
+relato de um que disparou. A conta, em 11/10/2026, na W-F:
 
 | | linhas |
 | --- | --- |
-| o recorte estreito devolve | **66** |
+| o recorte estreito devolve | **68** |
 | — cópias em `frontend/.tsbuild/`, saída de build que o filtro não exclui | −3 |
 | — citação de um gatilho que já tem linha própria (ADR-045:17, ADR-054:15, ADR-055:12, ADR-059:21, `pedido.md`:397; e, na W-E, `PainelPage.tsx`:28 e as linhas 8, 18, 20 e 142 da ADR-061; e, na E-3b, `RegraDoCatalogoViolada`:25, que cita a linha 55; e, na E-3c, ADR-065:138, que relata o disparo da linha 56) | −12 |
-| — o mesmo gatilho repetido em outro lugar, ou substituído por outro (ADR-045:123, que a ADR-054 substituiu; ADR-043:210, ADR-057:101, ADR-058:91, `como-subir-local.md`:480, `ProdutoResponse`:30, `MarcarDisponibilidadeService`:64, `ContratoDeErrosIT`:73 e :105, `ReativacaoNoExpedienteIT`:58; e, na E-3d, ADR-068:57, a §1 repetindo o primeiro gatilho da seção) | −11 |
+| — o mesmo gatilho repetido em outro lugar, ou substituído por outro (ADR-045:123, que a ADR-054 substituiu; ADR-043:210, ADR-057:101, ADR-058:91, `como-subir-local.md`:480, `ProdutoResponse`:30, `MarcarDisponibilidadeService`:64, `ContratoDeErrosIT`:73 e :105, `ReativacaoNoExpedienteIT`:58; e, na E-3d, ADR-068:57, a §1 repetindo o primeiro gatilho da seção; e, na W-F, ADR-067:95, a §4 repetindo o primeiro da seção) | −12 |
 | — menção que nega um gatilho, e não o escreve (ADR-064:26, *"não havia gatilho escrito"*) | −1 |
-| **= linhas da tabela vindas do recorte estreito** | **39** |
+| **= linhas da tabela vindas do recorte estreito** | **40** |
 | + entraram por outra redação — *"com gatilho:"* (linhas 1 e 2), *"Gatilho para trazê-lo de volta"* (4), *"Quando o segundo chegar"* (6), *"O gatilho para mudar"* (11), *"O gatilho para reabrir"* (19), *"O gatilho, escrito"* (22), *"Gatilho:"* (40 e 42), *"O gatilho para a função mudar de lugar"* (41), *"volta quando houver"* (43), *"Decidir antes do marco 5"* (44), *"Gatilho novo, e são dois"* (20 e 48) | **+14** |
 | + segundos gatilhos dentro de uma seção "## Gatilho escrito", que o comando conta uma vez só, pela linha do título (ADR-057, ADR-058, ADR-059 — linhas 45 a 47; ADR-060 — linhas 50 e 51; ADR-061 — linha 54; ADR-063 — linha 56; ADR-064 — linhas 58, a outra metade do primeiro, 59 e 60; ADR-065 — linha 62; ADR-066 — linhas 63 e 65; ADR-068 — linhas 68 e 69) | **+15** |
 | + escrito neste razão, porque a condição não tem outro lugar onde morar (linha 52) | **+1** |
-| **= linhas da tabela** | **69** |
+| **= linhas da tabela** | **70** |
 
 **A coluna "disparou?" tem quatro respostas.** *sim* — disparou e a dívida foi paga;
 *não* — e a coluna seguinte diz o que se procurou; **disparou e não produziu nada** —
@@ -125,19 +125,20 @@ este arquivo existe para achar.**
 | 51 | ADR-060, seção "Gatilho escrito" | *"**O dia em que uma pessoa física precisar ser impedida de criar lojas sem limite.**"* | não há limite nem unicidade de documento, e ninguém pediu | decisão de produto |
 | 53 | ADR-061, seção "Gatilho escrito" | *"**A primeira tela do painel que não pertença a uma loja** — relatório que cruze duas lojas, conta da pessoa, preferências."* | toda rota sob `/painel` em `App.tsx` é o seletor, o cadastro ou `lojas/:estabelecimentoId/…` | um nível acima de `/painel/lojas/:id` |
 | 55 | ADR-063, seção "Gatilho escrito" | *"**O dia em que alguém for ler o `catalog` e se confundir com uma `RegraDoCatalogoViolada` que é 500.**"* — a classe virou duas espécies com um tipo só, separadas por motivo, e **o nome dela mente para metade** | é julgamento, não fato medível; nenhum relato | a classe partida em duas, com nomes honestos |
-| 57 | ADR-064, seção "Gatilho escrito" | *"**A primeira tela que renomeie, reordene, ative ou desative uma seção.** Aí as três sem evento viram rotas — e **`reordenar` arrasta o outbox do `catalog` junto**."* — o `catalog` **não tem outbox**, e o `CategoriasReordenadasV1` está declarado com o `conversation` como consumidor; enquanto não houver, **reordenar categoria não vira rota** (invariante 7) | `grep -rli "categoria" frontend/src` devolve só `api/generated/catalog.ts`, que é gerado: nenhuma tela reordena seção (E-3b). Medido na E-3a, decidido na E-3b | o outbox do `catalog`, e a rota |
+| 57 | ADR-064, seção "Gatilho escrito" | *"**A primeira tela que renomeie, reordene, ative ou desative uma seção.** Aí as três sem evento viram rotas — e **`reordenar` arrasta o outbox do `catalog` junto**."* — o `catalog` **não tem outbox**, e o `CategoriasReordenadasV1` está declarado com o `conversation` como consumidor; enquanto não houver, **reordenar categoria não vira rota** (invariante 7) | a tela do cardápio (W-F) cria e lista seções, e não renomeia, reordena, ativa nem desativa nenhuma; na E-3b, nenhuma tela tocava em seção. Medido na E-3a, decidido na E-3b | o outbox do `catalog`, e a rota |
 | 58 | ADR-064, seção "Gatilho escrito" (o mesmo gatilho, a outra metade) | `renomear`, `ativar` e `desativar` categoria existem no agregado e não têm rota. *"Entram com a tela, e o gatilho está escrito."* | o mesmo da 57 | as três rotas, sem evento |
 | 59 | ADR-064, seção "Gatilho escrito" | *"**O dia em que alguém quiser separar quem cria produto de quem mexe nas seções.**"* | criar categoria exige `CRIAR_PRODUTO`; ninguém pediu a separação | `GERENCIAR_CARDAPIO`, com o pedido na mão |
 | 60 | ADR-064, seção "Gatilho escrito" | *"**E o dia em que uma loja tiver mais seções do que cabem numa resposta.**"* | não há medida de quantas seções uma loja tem; a fixture tem uma | a listagem paginada |
 | 61 | ADR-065, seção "Gatilho escrito" | *"**A primeira tela que monte um produto com grupos** — é a E-3d, e ela arrasta o método novo na raiz para acrescentar opção."* — `acrescentarGrupo` tem método na raiz e não tem rota; **acrescentar opção não tem método**, e o `GrupoDeOpcoes` é *record* imutável | o corpo do `POST .../produtos` não carrega grupos (E-3c). Medido na E-3a, decidido na E-3c | a primeira tela que monte um produto com grupos |
-| 62 | ADR-065, seção "Gatilho escrito" | *"**O dia em que alguém pedir para despublicar pela tela.** O agregado tem o caminho; a rota não nasce sem chamador."* | não há tela de produto (W-F) | a rota de despublicar |
+| 62 | ADR-065, seção "Gatilho escrito" | *"**O dia em que alguém pedir para despublicar pela tela.** O agregado tem o caminho; a rota não nasce sem chamador."* | a tela do cardápio (W-F) publica e não despublica: o publicado mostra o estado e não tem botão de volta (ADR-067 §6) | a rota de despublicar |
 | 63 | ADR-066, seção "Gatilho escrito" | *"**E o dia em que alguém apagar uma categoria que tem produtos.**"* — não há rota de apagar categoria, e quando houver, a regra da ADR-066 fica do lado errado do tempo: o produto passaria a apontar para coisa que existiu | não há rota nem tela que apague seção | a decisão do que acontece com os produtos da seção |
 | 64 | ADR-066, seção "Gatilho escrito" | *"**A primeira outra referência de corpo que atravesse raízes** — o `entregadorId` de um pedido, o `estabelecimentoId` de uma conversa."* | a `categoriaId` do `ProdutoRequest` é a única (E-3c) | a ADR-066 vira regra da casa, com outro nome |
-| 65 | ADR-066, seção "Gatilho escrito" | *"**O dia em que o front precisar distinguir um campo inválido de outro na mesma resposta.**"* | não há tela de produto (W-F) | um `campo` no corpo de erro, e a ADR-055 emendada |
+| 65 | ADR-066, seção "Gatilho escrito" | *"**O dia em que o front precisar distinguir um campo inválido de outro na mesma resposta.**"* | o formulário do produto (W-F) mostra o `detail` inteiro num aviso, sem destacar campo — e ninguém pediu o destaque | um `campo` no corpo de erro, e a ADR-055 emendada |
 | 66 | `PublicarProdutoService`:30 | *"**Gatilho escrito:** o `conversation` ganhar código, que é quem o consome."* — o `catalogo.md` §8 declara `ProdutoPublicadoV1` na transição `RASCUNHO → ATIVO`, e a rota de publicar (E-3c) não o emite: o `catalog` não tem outbox. A mesma decisão da linha 35, para o outro evento | `conversation-service` sem código de domínio | o outbox do `catalog` e o evento |
 | 67 | ADR-068, seção "Gatilho escrito" (e §1) | *"**O primeiro chamador que precise de um subconjunto por estado.** Aí nasce o parâmetro, com ele."* — a listagem do painel devolve **todos os estados** e **não tem filtro** (ADR-068 §1): parâmetro sem chamador é superfície, e quem precisaria de *"só os publicados"* entra pela porta da ADR-018 | o único chamador da listagem é o `ListaDeProdutos.tsx` do painel; o `SemeaduraDoCatalogo` a usa só como teste de idempotência (E-3d) | o parâmetro, com o chamador |
 | 68 | ADR-068, seção "Gatilho escrito" | *"**O dia em que a lista do painel não couber na tela.** A rota pagina desde a G-B3; a tela não"* | a tela mostra a primeira página, de 20, e avisa | a paginação da tela |
 | 69 | ADR-068, seção "Gatilho escrito" | *"**E o dia em que o cardápio de quem compra existir.** Ele entra pela ADR-018, e se alguém o fizer passar por esta rota, esta ADR é a que está errada"* | `POST /internal/catalog/quote` não existe em código (E-3d) | a porta da ADR-018 |
+| 70 | ADR-067, seção "Gatilho escrito" (e §4) | *"**O segundo cliente da rota de criar produto.** Aí o `ordem` derivado vira regra duplicada em dois lugares, e o conserto é no contrato."* — o `ProdutoRequest` exige `ordem` com `@NotNull`, e **nenhum comerciante tem opinião sobre "ordem 0"**. A tela calcula o maior da seção mais um e não mostra o campo; **a regra "o produto entra no fim da seção" é de domínio e está vivendo no cliente** | o único cliente é o `NovoProduto.tsx` do painel (W-F); a seção nova tem a mesma conta, no `CardapioPorSecao.tsx` | `ordem` opcional no contrato, e o fim da seção decidido no servidor |
 | 54 | ADR-061, seção "Gatilho escrito" | *"**O dia em que o seletor tiver mais de uma dúzia de lojas.**"* | não há medida de quantas lojas alguém tem; a fixture e a prova da W-E têm uma cada | busca no servidor, e paginação no `GET /api/v1/me/estabelecimentos` |
 
 **Fora da tabela, de propósito:** a ADR-037:203 adia o refresh token *"para ADR
