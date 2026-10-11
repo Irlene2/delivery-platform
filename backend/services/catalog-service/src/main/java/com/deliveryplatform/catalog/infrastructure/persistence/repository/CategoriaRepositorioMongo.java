@@ -11,6 +11,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -38,6 +39,12 @@ public class CategoriaRepositorioMongo implements CategoriaRepositorio {
     @Override
     public Categoria salvar(Categoria categoria) {
         return CategoriaMapper.paraDominio(mongo.save(CategoriaMapper.paraDocumento(categoria)));
+    }
+
+    @Override
+    public Optional<Categoria> buscarPorId(UUID id) {
+        return Optional.ofNullable(mongo.findById(id, CategoriaDocumento.class))
+                .map(CategoriaMapper::paraDominio);
     }
 
     @Override

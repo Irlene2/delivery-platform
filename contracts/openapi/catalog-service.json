@@ -155,99 +155,12 @@
         }
       }
     },
-    "/api/v1/merchants/{estabelecimentoId}/catalog/categorias" : {
-      "get" : {
-        "tags" : [ "categoria-controller" ],
-        "summary" : "Lista as seções do cardápio",
-        "description" : "Exige VER_PRODUTO. Ativas e inativas, pela ordem e, no empate, pelo nome.",
-        "operationId" : "listar",
-        "parameters" : [ {
-          "name" : "estabelecimentoId",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string",
-            "format" : "uuid"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "As seções, pela ordem; vazia é []",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "$ref" : "#/components/schemas/CategoriaResponse"
-                  }
-                }
-              }
-            }
-          },
-          "400" : {
-            "description" : "Identificador malformado"
-          },
-          "401" : {
-            "description" : "Sem token, ou token inválido"
-          },
-          "403" : {
-            "description" : "Sem vínculo, sem VER_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa"
-          }
-        }
-      },
-      "post" : {
-        "tags" : [ "categoria-controller" ],
-        "summary" : "Cria uma seção do cardápio",
-        "description" : "Exige CRIAR_PRODUTO. A seção nasce ativa. Sem Location: não há rota de uma seção por id, e a tela precisa da lista.",
-        "operationId" : "criar",
-        "parameters" : [ {
-          "name" : "estabelecimentoId",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string",
-            "format" : "uuid"
-          }
-        } ],
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/CategoriaRequest"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "201" : {
-            "description" : "A seção criada, ativa",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/CategoriaResponse"
-                }
-              }
-            }
-          },
-          "400" : {
-            "description" : "Corpo malformado — nome em branco, ordem ausente — ou identificador malformado"
-          },
-          "401" : {
-            "description" : "Sem token, ou token inválido"
-          },
-          "403" : {
-            "description" : "Sem vínculo, sem CRIAR_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa"
-          }
-        }
-      }
-    },
     "/api/v1/merchants/{estabelecimentoId}/catalog/produtos" : {
       "get" : {
         "tags" : [ "produto-controller" ],
         "summary" : "Lista os produtos publicados do estabelecimento",
         "description" : "Exige vínculo ativo com VER_PRODUTO, resolvido no merchant-service com o token de quem pediu. Sem vínculo, sem permissão, loja inexistente e merchant indisponível devolvem a mesma recusa.",
-        "operationId" : "listar_1",
+        "operationId" : "listar",
         "parameters" : [ {
           "name" : "estabelecimentoId",
           "in" : "path",
@@ -307,6 +220,139 @@
           },
           "403" : {
             "description" : "Sem vínculo, sem VER_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa"
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "produto-controller" ],
+        "summary" : "Cria um produto, em rascunho",
+        "description" : "Exige CRIAR_PRODUTO. A seção tem de ser desta loja: inexistente e de outra loja recebem a mesma recusa. Location aponta para o GET do produto.",
+        "operationId" : "criar",
+        "parameters" : [ {
+          "name" : "estabelecimentoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ProdutoRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "O produto criado, em rascunho",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProdutoResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Corpo malformado, preço negativo (C1), ou seção que não existe nesta loja (ADR-066)"
+          },
+          "401" : {
+            "description" : "Sem token, ou token inválido"
+          },
+          "403" : {
+            "description" : "Sem vínculo, sem CRIAR_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa"
+          }
+        }
+      }
+    },
+    "/api/v1/merchants/{estabelecimentoId}/catalog/categorias" : {
+      "get" : {
+        "tags" : [ "categoria-controller" ],
+        "summary" : "Lista as seções do cardápio",
+        "description" : "Exige VER_PRODUTO. Ativas e inativas, pela ordem e, no empate, pelo nome.",
+        "operationId" : "listar_1",
+        "parameters" : [ {
+          "name" : "estabelecimentoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "As seções, pela ordem; vazia é []",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/CategoriaResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Identificador malformado"
+          },
+          "401" : {
+            "description" : "Sem token, ou token inválido"
+          },
+          "403" : {
+            "description" : "Sem vínculo, sem VER_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa"
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "categoria-controller" ],
+        "summary" : "Cria uma seção do cardápio",
+        "description" : "Exige CRIAR_PRODUTO. A seção nasce ativa. Sem Location: não há rota de uma seção por id, e a tela precisa da lista.",
+        "operationId" : "criar_1",
+        "parameters" : [ {
+          "name" : "estabelecimentoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CategoriaRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "A seção criada, ativa",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CategoriaResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Corpo malformado — nome em branco, ordem ausente — ou identificador malformado"
+          },
+          "401" : {
+            "description" : "Sem token, ou token inválido"
+          },
+          "403" : {
+            "description" : "Sem vínculo, sem CRIAR_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa"
           }
         }
       }
@@ -406,66 +452,45 @@
           }
         }
       },
-      "CategoriaRequest" : {
+      "ProdutoRequest" : {
         "type" : "object",
-        "description" : "Uma seção nova do cardápio. Nasce ativa.",
+        "description" : "Um produto novo. Nasce rascunho; vai ao cardápio pela publicação.",
         "properties" : {
+          "categoriaId" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "A seção do cardápio, que tem de ser desta loja."
+          },
           "nome" : {
             "type" : "string",
-            "description" : "O nome da seção.",
-            "example" : "Pizzas salgadas",
+            "description" : "O nome como o cliente o lê.",
+            "example" : "Coca-Cola lata",
             "minLength" : 1
+          },
+          "descricao" : {
+            "type" : "string",
+            "description" : "Opcional.",
+            "example" : "350 ml"
+          },
+          "precoBase" : {
+            "type" : "number",
+            "description" : "Em reais, duas casas. Zero é aceito no rascunho e recusado na publicação (C1); negativo é recusado aqui.",
+            "example" : 6.0
+          },
+          "modoDeControle" : {
+            "type" : "string",
+            "description" : "SEM_CONTROLE (não acaba) ou QUALITATIVO.",
+            "enum" : [ "SEM_CONTROLE", "QUALITATIVO" ],
+            "example" : "SEM_CONTROLE"
           },
           "ordem" : {
             "type" : "integer",
             "format" : "int32",
-            "description" : "A posição da seção no cardápio. Empates se resolvem pelo nome.",
+            "description" : "A posição do produto na seção.",
             "example" : 0
           }
         },
-        "required" : [ "nome", "ordem" ]
-      },
-      "CategoriaResponse" : {
-        "type" : "object",
-        "properties" : {
-          "id" : {
-            "type" : "string",
-            "format" : "uuid"
-          },
-          "nome" : {
-            "type" : "string"
-          },
-          "ordem" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "ativa" : {
-            "type" : "boolean"
-          }
-        }
-      },
-      "PaginaResponseProdutoResumoResponse" : {
-        "type" : "object",
-        "properties" : {
-          "conteudo" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/ProdutoResumoResponse"
-            }
-          },
-          "pagina" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "tamanho" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "total" : {
-            "type" : "integer",
-            "format" : "int64"
-          }
-        }
+        "required" : [ "categoriaId", "modoDeControle", "nome", "ordem", "precoBase" ]
       },
       "GrupoResponse" : {
         "type" : "object",
@@ -564,6 +589,67 @@
             "items" : {
               "$ref" : "#/components/schemas/GrupoResponse"
             }
+          }
+        }
+      },
+      "CategoriaRequest" : {
+        "type" : "object",
+        "description" : "Uma seção nova do cardápio. Nasce ativa.",
+        "properties" : {
+          "nome" : {
+            "type" : "string",
+            "description" : "O nome da seção.",
+            "example" : "Pizzas salgadas",
+            "minLength" : 1
+          },
+          "ordem" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "A posição da seção no cardápio. Empates se resolvem pelo nome.",
+            "example" : 0
+          }
+        },
+        "required" : [ "nome", "ordem" ]
+      },
+      "CategoriaResponse" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "nome" : {
+            "type" : "string"
+          },
+          "ordem" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "ativa" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "PaginaResponseProdutoResumoResponse" : {
+        "type" : "object",
+        "properties" : {
+          "conteudo" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ProdutoResumoResponse"
+            }
+          },
+          "pagina" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "tamanho" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "total" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         }
       }

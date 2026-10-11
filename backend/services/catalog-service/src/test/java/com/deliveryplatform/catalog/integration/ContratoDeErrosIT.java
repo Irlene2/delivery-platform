@@ -1,6 +1,8 @@
 package com.deliveryplatform.catalog.integration;
 
+import com.deliveryplatform.catalog.application.port.out.CategoriaRepositorio;
 import com.deliveryplatform.catalog.application.port.out.ProdutoRepositorio;
+import com.deliveryplatform.catalog.domain.model.Categoria;
 import com.deliveryplatform.catalog.domain.model.GrupoDeOpcoes;
 import com.deliveryplatform.catalog.domain.model.ModoDeControle;
 import com.deliveryplatform.catalog.domain.model.Produto;
@@ -128,6 +130,9 @@ class ContratoDeErrosIT extends Infraestrutura {
     @Autowired
     ProdutoRepositorio produtos;
 
+    @Autowired
+    CategoriaRepositorio categorias;
+
     // ── as provocações ──────────────────────────────────────────────────────
 
     record Provocacao(String metodo, String caminho, int codigo, String como, IntSupplier chamada) {
@@ -254,6 +259,23 @@ class ContratoDeErrosIT extends Infraestrutura {
                             Cena c = cena("ALTERAR_PRODUTO");
                             MERCHANT.expedienteEstoura();
                             return marcarOpcao(c, c.tamanho().id(), c.pequena(), "ACABANDO");
+                        }),
+
+                new Provocacao("POST", LISTAR, 400,
+                        "seção de outra loja no corpo — ADR-066; a inexistente dá a mesma",
+                        () -> {
+                            Cena c = cena("CRIAR_PRODUTO");
+                            Categoria alheia = categorias.salvar(
+                                    Categoria.nova(UUID.randomUUID(), "Lanches", 0));
+                            return criarProduto(c.loja().toString(), c.token(), alheia.getId());
+                        }),
+                new Provocacao("POST", LISTAR, 401, "sem token",
+                        () -> criarProduto(UUID.randomUUID().toString(), null, UUID.randomUUID())),
+                new Provocacao("POST", LISTAR, 403, "vínculo sem CRIAR_PRODUTO",
+                        () -> {
+                            Cena c = cena("VER_PRODUTO");
+                            Categoria daLoja = categorias.salvar(Categoria.nova(c.loja(), "Bebidas", 0));
+                            return criarProduto(c.loja().toString(), c.token(), daLoja.getId());
                         }),
 
                 new Provocacao("POST", CATEGORIAS, 400, "nome em branco — a forma do DTO",
@@ -403,6 +425,22 @@ class ContratoDeErrosIT extends Infraestrutura {
                 .uri("/api/v1/merchants/" + c.loja() + "/catalog/produtos/" + produtoId);
         if (c.token() != null) {
             requisicao = requisicao.header("Authorization", "Bearer " + c.token());
+        }
+        return requisicao.exchange().returnResult(String.class).getStatus().value();
+    }
+
+    private int criarProduto(String loja, String token, UUID categoriaId) {
+        return criarCategoriaOuProduto("/api/v1/merchants/" + loja + "/catalog/produtos", token,
+                "{\"categoriaId\":\"" + categoriaId + "\",\"nome\":\"Coca-Cola lata\","
+                        + "\"precoBase\":6.00,\"modoDeControle\":\"SEM_CONTROLE\",\"ordem\":0}");
+    }
+
+    private int criarCategoriaOuProduto(String uri, String token, String corpo) {
+        var requisicao = cliente().post().uri(uri)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(corpo);
+        if (token != null) {
+            requisicao = requisicao.header("Authorization", "Bearer " + token);
         }
         return requisicao.exchange().returnResult(String.class).getStatus().value();
     }

@@ -175,6 +175,8 @@ public class TratadorDeErros {
                     + "ser maior que zero; ajuste os acréscimos negativos";
             case RASCUNHO_NAO_SE_INATIVA -> "este produto ainda é rascunho e nunca apareceu no "
                     + "cardápio; não há o que tirar do ar";
+            case CATEGORIA_NAO_ENCONTRADA -> "a seção escolhida não está no cardápio desta "
+                    + "loja; escolha uma das seções da lista";
             case MODO_SEM_CONTROLE -> "«" + d.get(1) + "» não tem controle de disponibilidade e não "
                     + "aceita a marcação «" + estado(d.get(0)) + "»";
             case INTEGRIDADE -> "não foi possível completar a operação";

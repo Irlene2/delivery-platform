@@ -65,8 +65,10 @@
 | 061 | A loja escolhida mora na URL | ✅ aceita |
 | 063 | O erro do catálogo diz de quem é a culpa | ✅ aceita |
 | 064 | A categoria ganha persistência, e só criar e listar | ✅ aceita |
+| 065 | O produto nasce por rota, e o cardápio é publicado por quem o monta | ✅ aceita |
+| 066 | A referência do corpo que não resolve é pedido inválido | ✅ aceita |
 
-**Sessenta e uma escritas, duas sem objeto — estas com registro próprio desde
+**Sessenta e três escritas, duas sem objeto — estas com registro próprio desde
 25/08/2026 —, nenhuma a escrever.**
 
 ## Onde mora o quê

@@ -67,8 +67,14 @@ documento, coleção e índice, mais **criar** e **listar**.
 tem outbox**. Quem publica precisa de um (invariante 7). *Está no `dividas.md`, com
 gatilho.*
 
-**A regra "o produto aponta para uma categoria que existe, e da mesma loja" não nasce
-aqui** — ela é do caso de uso que cria produto, como o javadoc do `Produto` diz.
+**O produto aponta para uma categoria que existe, e da mesma loja** (ADR-066). A regra é do
+**caso de uso que cria produto** — `Categoria` é outra raiz, e agregado não valida agregado,
+como o javadoc do `Produto` escreveu desde a G-B. Ela passou a ser cobrada na **E-3c**, com a
+primeira rota de criação de produto, e **só na escrita**: a leitura não valida referência, para
+que um dado velho não transforme um defeito de ontem em cardápio ilegível hoje.
+
+Não existe, ou é de outra loja: **a mesma recusa, com a frase idêntica** (M7), em **400** com
+motivo — **404 é de identificador que está na URL**, e a categoria vem no corpo.
 
 > **Nota de nomenclatura.** A ADR-018 modela isto em inglês (`Product`,
 > `optionGroups`, `minSelect`), e o código nascerá em português — `Produto`,

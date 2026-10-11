@@ -6,11 +6,18 @@ import java.util.List;
  * Uma regra do catálogo foi violada — ou uma invariante de construção quebrou.
  *
  * <p><b>Duas espécies, um tipo, e o {@link Motivo} as separa</b> (ADR-063). O censo
- * da E-3b achou trinta pontos de lançamento: onze são regra que o comerciante pode
- * causar, dezoito são integridade — nulo onde o nosso código deveria ter posto valor
- * —, e um, a opção que não existe, saiu para {@link OpcaoNaoEncontrada}. Até a E-3b
+ * de 2026-10-11, em {@code cbd633c}, achou <b>30</b> pontos de lançamento em <b>6</b>
+ * arquivos do {@code domain/model} — onze são regra que o comerciante pode causar, e o
+ * resto é integridade: nulo onde o nosso código deveria ter posto valor. Até a E-3b
  * todos saíam <b>400</b>, o que dizia a quem lê que ele errou quando quem errou fomos
- * nós.
+ * nós. O número envelhece a cada rodada, e quem quiser o de hoje roda — as duas
+ * formas, porque a integridade passa pela fábrica:
+ *
+ * <pre>grep -rnE "new RegraDoCatalogoViolada|RegraDoCatalogoViolada\.integridade\(" src/main/java/com/deliveryplatform/catalog/domain/model | wc -l</pre>
+ *
+ * <p>Na E-3c nasceu o primeiro motivo lançado <b>fora</b> de um agregado — a
+ * referência de categoria que não resolve, no caso de uso (ADR-066). O censo acima
+ * conta só os do domínio.
  *
  * <p><b>O motivo não sabe de HTTP</b>, e é de propósito: quem mapeia motivo em código
  * é o {@code TratadorDeErros}. Regra é 400 com a frase composta a partir dos dados;
@@ -53,6 +60,12 @@ public class RegraDoCatalogoViolada extends RuntimeException {
         RASCUNHO_NAO_SE_INATIVA,
         /** Marcar como acabando ou esgotado um produto SEM_CONTROLE. dados: o estado, o nome do produto. */
         MODO_SEM_CONTROLE,
+        /**
+         * A seção que o corpo cita não existe nesta loja — inexistente ou de outra, a
+         * mesma recusa (M7). sem dados. <b>O primeiro motivo lançado fora de um
+         * agregado</b>: pelo caso de uso que cria produto (ADR-066).
+         */
+        CATEGORIA_NAO_ENCONTRADA,
         /** Nulo onde o nosso código deveria ter posto valor. Só um defeito o produz. */
         INTEGRIDADE
     }

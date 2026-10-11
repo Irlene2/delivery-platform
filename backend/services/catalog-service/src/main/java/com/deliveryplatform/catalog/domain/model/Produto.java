@@ -34,7 +34,8 @@ import java.util.UUID;
  * <ul>
  *   <li><b>Se a categoria existe, e se ela é da mesma loja.</b> {@link Categoria}
  *       é outra raiz; agregado não valida agregado. A regra é do caso de uso, e
- *       ela nasce com a rota que cria produto (G-B).</li>
+ *       nasceu com a rota que cria produto — o {@code CriarProdutoService}, na
+ *       E-3c (ADR-066). Escrita na G-B, cobrada desde a E-3c.</li>
  *   <li><b>Se a loja está aberta.</b> Isso é do {@code merchant}, e vem pela
  *       porta ou pelo evento.</li>
  *   <li><b>Que dia é hoje.</b> Não há relógio nem fuso nesta classe. O dia

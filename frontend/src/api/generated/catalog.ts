@@ -44,30 +44,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/merchants/{estabelecimentoId}/catalog/categorias": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Lista as seções do cardápio
-         * @description Exige VER_PRODUTO. Ativas e inativas, pela ordem e, no empate, pelo nome.
-         */
-        get: operations["listar"];
-        put?: never;
-        /**
-         * Cria uma seção do cardápio
-         * @description Exige CRIAR_PRODUTO. A seção nasce ativa. Sem Location: não há rota de uma seção por id, e a tela precisa da lista.
-         */
-        post: operations["criar"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/merchants/{estabelecimentoId}/catalog/produtos": {
         parameters: {
             query?: never;
@@ -79,9 +55,37 @@ export interface paths {
          * Lista os produtos publicados do estabelecimento
          * @description Exige vínculo ativo com VER_PRODUTO, resolvido no merchant-service com o token de quem pediu. Sem vínculo, sem permissão, loja inexistente e merchant indisponível devolvem a mesma recusa.
          */
+        get: operations["listar"];
+        put?: never;
+        /**
+         * Cria um produto, em rascunho
+         * @description Exige CRIAR_PRODUTO. A seção tem de ser desta loja: inexistente e de outra loja recebem a mesma recusa. Location aponta para o GET do produto.
+         */
+        post: operations["criar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/merchants/{estabelecimentoId}/catalog/categorias": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Lista as seções do cardápio
+         * @description Exige VER_PRODUTO. Ativas e inativas, pela ordem e, no empate, pelo nome.
+         */
         get: operations["listar_1"];
         put?: never;
-        post?: never;
+        /**
+         * Cria uma seção do cardápio
+         * @description Exige CRIAR_PRODUTO. A seção nasce ativa. Sem Location: não há rota de uma seção por id, e a tela precisa da lista.
+         */
+        post: operations["criar_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -134,36 +138,40 @@ export interface components {
             disponibilidade?: "DISPONIVEL" | "ACABANDO" | "ESGOTADO_HOJE" | "ESGOTADO_INDETERMINADO";
             vendavel?: boolean;
         };
-        /** @description Uma seção nova do cardápio. Nasce ativa. */
-        CategoriaRequest: {
+        /** @description Um produto novo. Nasce rascunho; vai ao cardápio pela publicação. */
+        ProdutoRequest: {
             /**
-             * @description O nome da seção.
-             * @example Pizzas salgadas
+             * Format: uuid
+             * @description A seção do cardápio, que tem de ser desta loja.
+             */
+            categoriaId: string;
+            /**
+             * @description O nome como o cliente o lê.
+             * @example Coca-Cola lata
              */
             nome: string;
             /**
+             * @description Opcional.
+             * @example 350 ml
+             */
+            descricao?: string;
+            /**
+             * @description Em reais, duas casas. Zero é aceito no rascunho e recusado na publicação (C1); negativo é recusado aqui.
+             * @example 6
+             */
+            precoBase: number;
+            /**
+             * @description SEM_CONTROLE (não acaba) ou QUALITATIVO.
+             * @example SEM_CONTROLE
+             * @enum {string}
+             */
+            modoDeControle: "SEM_CONTROLE" | "QUALITATIVO";
+            /**
              * Format: int32
-             * @description A posição da seção no cardápio. Empates se resolvem pelo nome.
+             * @description A posição do produto na seção.
              * @example 0
              */
             ordem: number;
-        };
-        CategoriaResponse: {
-            /** Format: uuid */
-            id?: string;
-            nome?: string;
-            /** Format: int32 */
-            ordem?: number;
-            ativa?: boolean;
-        };
-        PaginaResponseProdutoResumoResponse: {
-            conteudo?: components["schemas"]["ProdutoResumoResponse"][];
-            /** Format: int32 */
-            pagina?: number;
-            /** Format: int32 */
-            tamanho?: number;
-            /** Format: int64 */
-            total?: number;
         };
         GrupoResponse: {
             /** Format: uuid */
@@ -205,6 +213,37 @@ export interface components {
             disponibilidade?: "DISPONIVEL" | "ACABANDO" | "ESGOTADO_HOJE" | "ESGOTADO_INDETERMINADO";
             vendavel?: boolean;
             gruposDeOpcoes?: components["schemas"]["GrupoResponse"][];
+        };
+        /** @description Uma seção nova do cardápio. Nasce ativa. */
+        CategoriaRequest: {
+            /**
+             * @description O nome da seção.
+             * @example Pizzas salgadas
+             */
+            nome: string;
+            /**
+             * Format: int32
+             * @description A posição da seção no cardápio. Empates se resolvem pelo nome.
+             * @example 0
+             */
+            ordem: number;
+        };
+        CategoriaResponse: {
+            /** Format: uuid */
+            id?: string;
+            nome?: string;
+            /** Format: int32 */
+            ordem?: number;
+            ativa?: boolean;
+        };
+        PaginaResponseProdutoResumoResponse: {
+            conteudo?: components["schemas"]["ProdutoResumoResponse"][];
+            /** Format: int32 */
+            pagina?: number;
+            /** Format: int32 */
+            tamanho?: number;
+            /** Format: int64 */
+            total?: number;
         };
     };
     responses: never;
@@ -357,6 +396,103 @@ export interface operations {
     };
     listar: {
         parameters: {
+            query?: {
+                /** @description Zero-based page index (0..N) */
+                page?: number;
+                /** @description The size of the page to be returned */
+                size?: number;
+                /** @description Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported. */
+                sort?: string[];
+            };
+            header?: never;
+            path: {
+                estabelecimentoId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A página de produtos publicados */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginaResponseProdutoResumoResponse"];
+                };
+            };
+            /** @description Identificador ou paginação malformados */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sem token, ou token inválido */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sem vínculo, sem VER_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    criar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                estabelecimentoId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProdutoRequest"];
+            };
+        };
+        responses: {
+            /** @description O produto criado, em rascunho */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProdutoResponse"];
+                };
+            };
+            /** @description Corpo malformado, preço negativo (C1), ou seção que não existe nesta loja (ADR-066) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sem token, ou token inválido */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sem vínculo, sem CRIAR_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listar_1: {
+        parameters: {
             query?: never;
             header?: never;
             path: {
@@ -398,7 +534,7 @@ export interface operations {
             };
         };
     };
-    criar: {
+    criar_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -437,56 +573,6 @@ export interface operations {
                 content?: never;
             };
             /** @description Sem vínculo, sem CRIAR_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    listar_1: {
-        parameters: {
-            query?: {
-                /** @description Zero-based page index (0..N) */
-                page?: number;
-                /** @description The size of the page to be returned */
-                size?: number;
-                /** @description Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported. */
-                sort?: string[];
-            };
-            header?: never;
-            path: {
-                estabelecimentoId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description A página de produtos publicados */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PaginaResponseProdutoResumoResponse"];
-                };
-            };
-            /** @description Identificador ou paginação malformados */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Sem token, ou token inválido */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Sem vínculo, sem VER_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa */
             403: {
                 headers: {
                     [name: string]: unknown;

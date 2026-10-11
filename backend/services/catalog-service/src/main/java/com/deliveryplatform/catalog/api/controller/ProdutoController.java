@@ -2,9 +2,11 @@ package com.deliveryplatform.catalog.api.controller;
 
 import com.deliveryplatform.catalog.api.dto.MarcacaoRequest;
 import com.deliveryplatform.catalog.api.dto.PaginaResponse;
+import com.deliveryplatform.catalog.api.dto.ProdutoRequest;
 import com.deliveryplatform.catalog.api.dto.ProdutoResponse;
 import com.deliveryplatform.catalog.api.dto.ProdutoResumoResponse;
 import com.deliveryplatform.catalog.application.port.in.ConsultarProduto;
+import com.deliveryplatform.catalog.application.port.in.CriarProduto;
 import com.deliveryplatform.catalog.application.port.in.ListarProdutos;
 import com.deliveryplatform.catalog.application.port.in.MarcarDisponibilidade;
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,14 +17,18 @@ import jakarta.validation.Valid;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import com.deliveryplatform.valuetypes.Money;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.net.URI;
 import java.util.UUID;
 
 /**
@@ -61,12 +67,52 @@ public class ProdutoController {
     private final ListarProdutos produtos;
     private final ConsultarProduto consultas;
     private final MarcarDisponibilidade marcacoes;
+    private final CriarProduto criacao;
 
     public ProdutoController(ListarProdutos produtos, ConsultarProduto consultas,
-                             MarcarDisponibilidade marcacoes) {
+                             MarcarDisponibilidade marcacoes, CriarProduto criacao) {
         this.produtos = produtos;
         this.consultas = consultas;
         this.marcacoes = marcacoes;
+        this.criacao = criacao;
+    }
+
+    /**
+     * O produto nasce <b>rascunho</b> (ADR-065): ir ao cardápio é um segundo ato, com
+     * regras próprias. Sem grupos — eles entram na E-3d.
+     *
+     * <p><b>201 com {@code Location}</b>, porque há para onde apontar: o {@code GET} do
+     * produto por id existe desde a G-F. O precedente das duas criações anteriores — loja
+     * e categoria, sem {@code Location} — é <i>"nunca prometer rota que não existe"</i>, e
+     * aqui ela existe (ADR-065 §3). O caminho é relativo, o mesmo que passa pelo gateway.
+     *
+     * <p><b>Sem 404</b>: o único identificador da URL é a loja, e loja sem vínculo é 403
+     * (M7). A categoria que não resolve vem no corpo e é 400 (ADR-066).
+     */
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "O produto criado, em rascunho"),
+            @ApiResponse(responseCode = "400", description = "Corpo malformado, preço negativo (C1), ou seção que não existe nesta loja (ADR-066)", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Sem token, ou token inválido", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Sem vínculo, sem CRIAR_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa", content = @Content)
+    })
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Cria um produto, em rascunho",
+            description = "Exige CRIAR_PRODUTO. A seção tem de ser desta loja: inexistente e "
+                    + "de outra loja recebem a mesma recusa. Location aponta para o GET do "
+                    + "produto.")
+    public ResponseEntity<ProdutoResponse> criar(
+            @PathVariable UUID estabelecimentoId,
+            @Valid @RequestBody ProdutoRequest pedido) {
+
+        var criado = criacao.criar(estabelecimentoId, new CriarProduto.Pedido(
+                pedido.categoriaId(), pedido.nome(), pedido.descricao(),
+                Money.de(pedido.precoBase()), pedido.modoDeControle(), pedido.ordem()));
+
+        return ResponseEntity
+                .created(URI.create("/api/v1/merchants/" + estabelecimentoId
+                        + "/catalog/produtos/" + criado.getId()))
+                .body(ProdutoResponse.de(criado));
     }
 
     /**
