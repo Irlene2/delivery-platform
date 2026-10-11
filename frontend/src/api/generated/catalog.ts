@@ -4,6 +4,26 @@
  */
 
 export interface paths {
+    "/api/v1/merchants/{estabelecimentoId}/catalog/produtos/{produtoId}/publicacao": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Publica o produto no cardápio
+         * @description Exige ALTERAR_PRODUTO. Idempotente: publicar o que já está publicado responde 200. As invariantes C1, C5, C4 e C2 são cobradas aqui.
+         */
+        put: operations["publicar"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/merchants/{estabelecimentoId}/catalog/produtos/{produtoId}/grupos/{grupoId}/opcoes/{opcaoId}/disponibilidade": {
         parameters: {
             query?: never;
@@ -116,6 +136,47 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        GrupoResponse: {
+            /** Format: uuid */
+            id?: string;
+            nome?: string;
+            /** Format: int32 */
+            minEscolhas?: number;
+            /** Format: int32 */
+            maxEscolhas?: number;
+            /** Format: int32 */
+            ordem?: number;
+            opcoes?: components["schemas"]["OpcaoResponse"][];
+        };
+        OpcaoResponse: {
+            /** Format: uuid */
+            id?: string;
+            nome?: string;
+            acrescimo?: number;
+            /** Format: int32 */
+            ordem?: number;
+            /** @enum {string} */
+            disponibilidade?: "DISPONIVEL" | "ACABANDO" | "ESGOTADO_HOJE" | "ESGOTADO_INDETERMINADO";
+        };
+        ProdutoResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            categoriaId?: string;
+            nome?: string;
+            descricao?: string;
+            precoBase?: number;
+            /** Format: int32 */
+            ordem?: number;
+            /** @enum {string} */
+            modoDeControle?: "SEM_CONTROLE" | "QUALITATIVO";
+            /** @enum {string} */
+            estadoDePublicacao?: "RASCUNHO" | "ATIVO" | "INATIVO";
+            /** @enum {string} */
+            disponibilidade?: "DISPONIVEL" | "ACABANDO" | "ESGOTADO_HOJE" | "ESGOTADO_INDETERMINADO";
+            vendavel?: boolean;
+            gruposDeOpcoes?: components["schemas"]["GrupoResponse"][];
+        };
         /** @description O novo estado de disponibilidade. O carimbo é do servidor. */
         MarcacaoRequest: {
             /**
@@ -173,47 +234,6 @@ export interface components {
              */
             ordem: number;
         };
-        GrupoResponse: {
-            /** Format: uuid */
-            id?: string;
-            nome?: string;
-            /** Format: int32 */
-            minEscolhas?: number;
-            /** Format: int32 */
-            maxEscolhas?: number;
-            /** Format: int32 */
-            ordem?: number;
-            opcoes?: components["schemas"]["OpcaoResponse"][];
-        };
-        OpcaoResponse: {
-            /** Format: uuid */
-            id?: string;
-            nome?: string;
-            acrescimo?: number;
-            /** Format: int32 */
-            ordem?: number;
-            /** @enum {string} */
-            disponibilidade?: "DISPONIVEL" | "ACABANDO" | "ESGOTADO_HOJE" | "ESGOTADO_INDETERMINADO";
-        };
-        ProdutoResponse: {
-            /** Format: uuid */
-            id?: string;
-            /** Format: uuid */
-            categoriaId?: string;
-            nome?: string;
-            descricao?: string;
-            precoBase?: number;
-            /** Format: int32 */
-            ordem?: number;
-            /** @enum {string} */
-            modoDeControle?: "SEM_CONTROLE" | "QUALITATIVO";
-            /** @enum {string} */
-            estadoDePublicacao?: "RASCUNHO" | "ATIVO" | "INATIVO";
-            /** @enum {string} */
-            disponibilidade?: "DISPONIVEL" | "ACABANDO" | "ESGOTADO_HOJE" | "ESGOTADO_INDETERMINADO";
-            vendavel?: boolean;
-            gruposDeOpcoes?: components["schemas"]["GrupoResponse"][];
-        };
         /** @description Uma seção nova do cardápio. Nasce ativa. */
         CategoriaRequest: {
             /**
@@ -254,6 +274,57 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    publicar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                estabelecimentoId: string;
+                produtoId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description O produto, publicado — também quando já estava */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProdutoResponse"];
+                };
+            };
+            /** @description A publicação recusada (C1, C5, C4, C2), com a frase que diz o que corrigir; ou identificador malformado */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sem token, ou token inválido */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sem vínculo, sem ALTERAR_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description O produto não existe nesta loja — inexistente ou de outra loja, a mesma resposta (ADR-056) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     marcarOpcao: {
         parameters: {
             query?: never;

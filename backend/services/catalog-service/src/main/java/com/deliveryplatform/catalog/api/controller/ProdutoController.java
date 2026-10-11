@@ -9,6 +9,7 @@ import com.deliveryplatform.catalog.application.port.in.ConsultarProduto;
 import com.deliveryplatform.catalog.application.port.in.CriarProduto;
 import com.deliveryplatform.catalog.application.port.in.ListarProdutos;
 import com.deliveryplatform.catalog.application.port.in.MarcarDisponibilidade;
+import com.deliveryplatform.catalog.application.port.in.PublicarProduto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -68,13 +69,48 @@ public class ProdutoController {
     private final ConsultarProduto consultas;
     private final MarcarDisponibilidade marcacoes;
     private final CriarProduto criacao;
+    private final PublicarProduto publicacao;
 
     public ProdutoController(ListarProdutos produtos, ConsultarProduto consultas,
-                             MarcarDisponibilidade marcacoes, CriarProduto criacao) {
+                             MarcarDisponibilidade marcacoes, CriarProduto criacao,
+                             PublicarProduto publicacao) {
         this.produtos = produtos;
         this.consultas = consultas;
         this.marcacoes = marcacoes;
         this.criacao = criacao;
+        this.publicacao = publicacao;
+    }
+
+    /**
+     * Leva o produto ao cardápio (ADR-065). <b>{@code PUT} em sub-recurso, sem corpo</b>,
+     * na forma da marcação: o único estado que a publicação pode pôr é {@code ATIVO}, e
+     * repetir é inofensivo — 200 nas duas chamadas, com o estado que vale.
+     *
+     * <p>O 400 é a recusa da publicação — preço zero (C1), grupo impossível (C5), teto
+     * inalcançável (C4), combinação sem preço positivo (C2) —, com a frase que nomeia o
+     * produto ou os grupos e não o código da invariante (ADR-063). Ou identificador
+     * malformado.
+     *
+     * <p><b>Sem 409 declarado</b>, por decisão da ADR-065 §5: repetir não é conflito. A
+     * gravação concorrente do mesmo produto ainda pode dar o 409 do {@code @Version}
+     * (ADR-052) — e, como na marcação, provocá-lo exigiria costura no código de produção.
+     */
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "O produto, publicado — também quando já estava"),
+            @ApiResponse(responseCode = "400", description = "A publicação recusada (C1, C5, C4, C2), com a frase que diz o que corrigir; ou identificador malformado", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Sem token, ou token inválido", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Sem vínculo, sem ALTERAR_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa", content = @Content),
+            @ApiResponse(responseCode = "404", description = "O produto não existe nesta loja — inexistente ou de outra loja, a mesma resposta (ADR-056)", content = @Content)
+    })
+    @PutMapping(path = "/{produtoId}/publicacao", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Publica o produto no cardápio",
+            description = "Exige ALTERAR_PRODUTO. Idempotente: publicar o que já está publicado "
+                    + "responde 200. As invariantes C1, C5, C4 e C2 são cobradas aqui.")
+    public ProdutoResponse publicar(
+            @PathVariable UUID estabelecimentoId,
+            @PathVariable UUID produtoId) {
+
+        return ProdutoResponse.de(publicacao.publicar(estabelecimentoId, produtoId));
     }
 
     /**

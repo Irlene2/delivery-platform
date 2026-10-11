@@ -90,6 +90,7 @@ class ContratoDeErrosIT extends Infraestrutura {
     private static final String MARCAR_PRODUTO = BASE + "/{produtoId}/disponibilidade";
     private static final String MARCAR_OPCAO =
             BASE + "/{produtoId}/grupos/{grupoId}/opcoes/{opcaoId}/disponibilidade";
+    private static final String PUBLICAR = BASE + "/{produtoId}/publicacao";
     private static final String CATEGORIAS = "/api/v1/merchants/{estabelecimentoId}/catalog/categorias";
 
     /**
@@ -261,6 +262,31 @@ class ContratoDeErrosIT extends Infraestrutura {
                             return marcarOpcao(c, c.tamanho().id(), c.pequena(), "ACABANDO");
                         }),
 
+                new Provocacao("PUT", PUBLICAR, 400, "rascunho com preço zero — C1 na publicação",
+                        () -> {
+                            Cena c = cena("ALTERAR_PRODUTO");
+                            Produto brinde = produtos.salvar(Produto.rascunho(c.loja(),
+                                    ProdutoDeTeste.CATEGORIA, "Brinde", Precos.zero(),
+                                    ModoDeControle.SEM_CONTROLE, 1));
+                            return publicar(c, brinde.getId().toString());
+                        }),
+                new Provocacao("PUT", PUBLICAR, 401, "sem token",
+                        () -> {
+                            Cena c = cena("ALTERAR_PRODUTO");
+                            return publicar(c.semToken(), c.pizza().getId().toString());
+                        }),
+                new Provocacao("PUT", PUBLICAR, 403, "vínculo sem ALTERAR_PRODUTO",
+                        () -> {
+                            Cena c = cena("VER_PRODUTO");
+                            return publicar(c, c.pizza().getId().toString());
+                        }),
+                new Provocacao("PUT", PUBLICAR, 404,
+                        "produto que não existe nesta loja — ADR-056; o de outra loja dá o mesmo",
+                        () -> {
+                            Cena c = cena("ALTERAR_PRODUTO");
+                            return publicar(c, UUID.randomUUID().toString());
+                        }),
+
                 new Provocacao("POST", LISTAR, 400,
                         "seção de outra loja no corpo — ADR-066; a inexistente dá a mesma",
                         () -> {
@@ -423,6 +449,15 @@ class ContratoDeErrosIT extends Infraestrutura {
     private int ler(Cena c, String produtoId) {
         var requisicao = cliente().get()
                 .uri("/api/v1/merchants/" + c.loja() + "/catalog/produtos/" + produtoId);
+        if (c.token() != null) {
+            requisicao = requisicao.header("Authorization", "Bearer " + c.token());
+        }
+        return requisicao.exchange().returnResult(String.class).getStatus().value();
+    }
+
+    private int publicar(Cena c, String produtoId) {
+        var requisicao = cliente().put()
+                .uri("/api/v1/merchants/" + c.loja() + "/catalog/produtos/" + produtoId + "/publicacao");
         if (c.token() != null) {
             requisicao = requisicao.header("Authorization", "Bearer " + c.token());
         }

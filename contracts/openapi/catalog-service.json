@@ -9,6 +9,55 @@
     "bearerAuth" : [ ]
   } ],
   "paths" : {
+    "/api/v1/merchants/{estabelecimentoId}/catalog/produtos/{produtoId}/publicacao" : {
+      "put" : {
+        "tags" : [ "produto-controller" ],
+        "summary" : "Publica o produto no cardápio",
+        "description" : "Exige ALTERAR_PRODUTO. Idempotente: publicar o que já está publicado responde 200. As invariantes C1, C5, C4 e C2 são cobradas aqui.",
+        "operationId" : "publicar",
+        "parameters" : [ {
+          "name" : "estabelecimentoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "produtoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "O produto, publicado — também quando já estava",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProdutoResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "A publicação recusada (C1, C5, C4, C2), com a frase que diz o que corrigir; ou identificador malformado"
+          },
+          "401" : {
+            "description" : "Sem token, ou token inválido"
+          },
+          "403" : {
+            "description" : "Sem vínculo, sem ALTERAR_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa"
+          },
+          "404" : {
+            "description" : "O produto não existe nesta loja — inexistente ou de outra loja, a mesma resposta (ADR-056)"
+          }
+        }
+      }
+    },
     "/api/v1/merchants/{estabelecimentoId}/catalog/produtos/{produtoId}/grupos/{grupoId}/opcoes/{opcaoId}/disponibilidade" : {
       "put" : {
         "tags" : [ "produto-controller" ],
@@ -409,89 +458,6 @@
   },
   "components" : {
     "schemas" : {
-      "MarcacaoRequest" : {
-        "type" : "object",
-        "description" : "O novo estado de disponibilidade. O carimbo é do servidor.",
-        "properties" : {
-          "estado" : {
-            "type" : "string",
-            "description" : "DISPONIVEL, ACABANDO, ESGOTADO_HOJE ou ESGOTADO_INDETERMINADO.",
-            "enum" : [ "DISPONIVEL", "ACABANDO", "ESGOTADO_HOJE", "ESGOTADO_INDETERMINADO" ],
-            "example" : "ESGOTADO_HOJE"
-          }
-        },
-        "required" : [ "estado" ]
-      },
-      "ProdutoResumoResponse" : {
-        "type" : "object",
-        "properties" : {
-          "id" : {
-            "type" : "string",
-            "format" : "uuid"
-          },
-          "categoriaId" : {
-            "type" : "string",
-            "format" : "uuid"
-          },
-          "nome" : {
-            "type" : "string"
-          },
-          "precoBase" : {
-            "type" : "number"
-          },
-          "ordem" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "disponibilidade" : {
-            "type" : "string",
-            "enum" : [ "DISPONIVEL", "ACABANDO", "ESGOTADO_HOJE", "ESGOTADO_INDETERMINADO" ]
-          },
-          "vendavel" : {
-            "type" : "boolean"
-          }
-        }
-      },
-      "ProdutoRequest" : {
-        "type" : "object",
-        "description" : "Um produto novo. Nasce rascunho; vai ao cardápio pela publicação.",
-        "properties" : {
-          "categoriaId" : {
-            "type" : "string",
-            "format" : "uuid",
-            "description" : "A seção do cardápio, que tem de ser desta loja."
-          },
-          "nome" : {
-            "type" : "string",
-            "description" : "O nome como o cliente o lê.",
-            "example" : "Coca-Cola lata",
-            "minLength" : 1
-          },
-          "descricao" : {
-            "type" : "string",
-            "description" : "Opcional.",
-            "example" : "350 ml"
-          },
-          "precoBase" : {
-            "type" : "number",
-            "description" : "Em reais, duas casas. Zero é aceito no rascunho e recusado na publicação (C1); negativo é recusado aqui.",
-            "example" : 6.0
-          },
-          "modoDeControle" : {
-            "type" : "string",
-            "description" : "SEM_CONTROLE (não acaba) ou QUALITATIVO.",
-            "enum" : [ "SEM_CONTROLE", "QUALITATIVO" ],
-            "example" : "SEM_CONTROLE"
-          },
-          "ordem" : {
-            "type" : "integer",
-            "format" : "int32",
-            "description" : "A posição do produto na seção.",
-            "example" : 0
-          }
-        },
-        "required" : [ "categoriaId", "modoDeControle", "nome", "ordem", "precoBase" ]
-      },
       "GrupoResponse" : {
         "type" : "object",
         "properties" : {
@@ -591,6 +557,89 @@
             }
           }
         }
+      },
+      "MarcacaoRequest" : {
+        "type" : "object",
+        "description" : "O novo estado de disponibilidade. O carimbo é do servidor.",
+        "properties" : {
+          "estado" : {
+            "type" : "string",
+            "description" : "DISPONIVEL, ACABANDO, ESGOTADO_HOJE ou ESGOTADO_INDETERMINADO.",
+            "enum" : [ "DISPONIVEL", "ACABANDO", "ESGOTADO_HOJE", "ESGOTADO_INDETERMINADO" ],
+            "example" : "ESGOTADO_HOJE"
+          }
+        },
+        "required" : [ "estado" ]
+      },
+      "ProdutoResumoResponse" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "categoriaId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "nome" : {
+            "type" : "string"
+          },
+          "precoBase" : {
+            "type" : "number"
+          },
+          "ordem" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "disponibilidade" : {
+            "type" : "string",
+            "enum" : [ "DISPONIVEL", "ACABANDO", "ESGOTADO_HOJE", "ESGOTADO_INDETERMINADO" ]
+          },
+          "vendavel" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "ProdutoRequest" : {
+        "type" : "object",
+        "description" : "Um produto novo. Nasce rascunho; vai ao cardápio pela publicação.",
+        "properties" : {
+          "categoriaId" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "A seção do cardápio, que tem de ser desta loja."
+          },
+          "nome" : {
+            "type" : "string",
+            "description" : "O nome como o cliente o lê.",
+            "example" : "Coca-Cola lata",
+            "minLength" : 1
+          },
+          "descricao" : {
+            "type" : "string",
+            "description" : "Opcional.",
+            "example" : "350 ml"
+          },
+          "precoBase" : {
+            "type" : "number",
+            "description" : "Em reais, duas casas. Zero é aceito no rascunho e recusado na publicação (C1); negativo é recusado aqui.",
+            "example" : 6.0
+          },
+          "modoDeControle" : {
+            "type" : "string",
+            "description" : "SEM_CONTROLE (não acaba) ou QUALITATIVO.",
+            "enum" : [ "SEM_CONTROLE", "QUALITATIVO" ],
+            "example" : "SEM_CONTROLE"
+          },
+          "ordem" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "A posição do produto na seção.",
+            "example" : 0
+          }
+        },
+        "required" : [ "categoriaId", "modoDeControle", "nome", "ordem", "precoBase" ]
       },
       "CategoriaRequest" : {
         "type" : "object",

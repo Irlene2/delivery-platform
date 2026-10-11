@@ -1,6 +1,6 @@
 # O razão das dívidas
 
-**Gerado em 10/10/2026 na rodada R-1, sobre o commit `6fb73e6`; refeito na E-1, sobre `d7dbcc4` mais a ADR-060, na W-E, sobre `398d828` mais a ADR-061, na E-3b, sobre `9fbcee1` mais a ADR-064, e na E-3c, sobre `cbd633c` mais as ADRs 065 e 066. Este arquivo é
+**Gerado em 10/10/2026 na rodada R-1, sobre o commit `6fb73e6`; refeito na E-1, sobre `d7dbcc4` mais a ADR-060, na W-E, sobre `398d828` mais a ADR-061, na E-3b, sobre `9fbcee1` mais a ADR-064, e na E-3c, sobre `cbd633c` mais as ADRs 065 e 066 e o `PublicarProdutoService`. Este arquivo é
 derivado e envelhece:** toda ADR, documento ou javadoc que escrever um gatilho novo o
 torna incompleto. Refaça-o com os comandos abaixo antes de confiar nele.
 
@@ -32,16 +32,16 @@ relato de um que disparou. A conta, em 11/10/2026, na E-3c:
 
 | | linhas |
 | --- | --- |
-| o recorte estreito devolve | **63** |
+| o recorte estreito devolve | **64** |
 | — cópias em `frontend/.tsbuild/`, saída de build que o filtro não exclui | −3 |
 | — citação de um gatilho que já tem linha própria (ADR-045:17, ADR-054:15, ADR-055:12, ADR-059:21, `pedido.md`:397; e, na W-E, `PainelPage.tsx`:28 e as linhas 8, 18, 20 e 142 da ADR-061; e, na E-3b, `RegraDoCatalogoViolada`:25, que cita a linha 55; e, na E-3c, ADR-065:138, que relata o disparo da linha 56) | −12 |
 | — o mesmo gatilho repetido em outro lugar, ou substituído por outro (ADR-045:123, que a ADR-054 substituiu; ADR-043:210, ADR-057:101, ADR-058:91, `como-subir-local.md`:480, `ProdutoResponse`:30, `MarcarDisponibilidadeService`:64, `ContratoDeErrosIT`:73 e :105, `ReativacaoNoExpedienteIT`:58) | −10 |
 | — menção que nega um gatilho, e não o escreve (ADR-064:26, *"não havia gatilho escrito"*) | −1 |
-| **= linhas da tabela vindas do recorte estreito** | **37** |
+| **= linhas da tabela vindas do recorte estreito** | **38** |
 | + entraram por outra redação — *"com gatilho:"* (linhas 1 e 2), *"Gatilho para trazê-lo de volta"* (4), *"Quando o segundo chegar"* (6), *"O gatilho para mudar"* (11), *"O gatilho para reabrir"* (19), *"O gatilho, escrito"* (22), *"Gatilho:"* (40 e 42), *"O gatilho para a função mudar de lugar"* (41), *"volta quando houver"* (43), *"Decidir antes do marco 5"* (44), *"Gatilho novo, e são dois"* (20 e 48) | **+14** |
 | + segundos gatilhos dentro de uma seção "## Gatilho escrito", que o comando conta uma vez só, pela linha do título (ADR-057, ADR-058, ADR-059 — linhas 45 a 47; ADR-060 — linhas 50 e 51; ADR-061 — linha 54; ADR-063 — linha 56; ADR-064 — linhas 58, a outra metade do primeiro, 59 e 60; ADR-065 — linha 62; ADR-066 — linhas 63 e 65) | **+13** |
 | + escrito neste razão, porque a condição não tem outro lugar onde morar (linha 52) | **+1** |
-| **= linhas da tabela** | **65** |
+| **= linhas da tabela** | **66** |
 
 **A coluna "disparou?" tem quatro respostas.** *sim* — disparou e a dívida foi paga;
 *não* — e a coluna seguinte diz o que se procurou; **disparou e não produziu nada** —
@@ -134,6 +134,7 @@ este arquivo existe para achar.**
 | 63 | ADR-066, seção "Gatilho escrito" | *"**E o dia em que alguém apagar uma categoria que tem produtos.**"* — não há rota de apagar categoria, e quando houver, a regra da ADR-066 fica do lado errado do tempo: o produto passaria a apontar para coisa que existiu | não há rota nem tela que apague seção | a decisão do que acontece com os produtos da seção |
 | 64 | ADR-066, seção "Gatilho escrito" | *"**A primeira outra referência de corpo que atravesse raízes** — o `entregadorId` de um pedido, o `estabelecimentoId` de uma conversa."* | a `categoriaId` do `ProdutoRequest` é a única (E-3c) | a ADR-066 vira regra da casa, com outro nome |
 | 65 | ADR-066, seção "Gatilho escrito" | *"**O dia em que o front precisar distinguir um campo inválido de outro na mesma resposta.**"* | não há tela de produto (W-G) | um `campo` no corpo de erro, e a ADR-055 emendada |
+| 66 | `PublicarProdutoService`:30 | *"**Gatilho escrito:** o `conversation` ganhar código, que é quem o consome."* — o `catalogo.md` §8 declara `ProdutoPublicadoV1` na transição `RASCUNHO → ATIVO`, e a rota de publicar (E-3c) não o emite: o `catalog` não tem outbox. A mesma decisão da linha 35, para o outro evento | `conversation-service` sem código de domínio | o outbox do `catalog` e o evento |
 | 54 | ADR-061, seção "Gatilho escrito" | *"**O dia em que o seletor tiver mais de uma dúzia de lojas.**"* | não há medida de quantas lojas alguém tem; a fixture e a prova da W-E têm uma cada | busca no servidor, e paginação no `GET /api/v1/me/estabelecimentos` |
 
 **Fora da tabela, de propósito:** a ADR-037:203 adia o refresh token *"para ADR
