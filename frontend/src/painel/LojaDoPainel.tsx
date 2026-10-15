@@ -1,6 +1,7 @@
 import { Navigate, Outlet, useLocation, useNavigate, useParams } from 'react-router';
 
 import { CardapioPorSecao } from './CardapioPorSecao';
+import { ConvidarParaEquipe } from './ConvidarParaEquipe';
 import { ProdutoAberto } from './ProdutoAberto';
 import { ListaDeProdutos } from './ListaDeProdutos';
 import { caminhoDaLoja, caminhoDaSecao, caminhoDoNovoProduto, secaoDoCaminho } from './caminhos';
@@ -66,7 +67,7 @@ export function SecaoInicial() {
 }
 
 /** As duas seções que existem são a mesma lista; "Disponibilidade" a mostra com a marcação. */
-const MARCA: Record<Secao, boolean> = { cardapio: false, disponibilidade: true };
+const MARCA: Record<Secao, boolean> = { cardapio: false, disponibilidade: true, equipe: false };
 
 /**
  * O cardápio é lido por seção desde a W-F (ADR-067); a disponibilidade continua a lista
@@ -121,6 +122,18 @@ export function NovoProdutoDaLoja() {
   const navegar = useNavigate();
   const voltar = () => void navegar(caminhoDaSecao(estabelecimentoId, 'cardapio'));
   return <NovoProduto estabelecimentoId={estabelecimentoId} aoCriar={voltar} aoVoltar={voltar} />;
+}
+
+/**
+ * `/painel/lojas/:id/equipe` — o convite, e sem lista (ADR-070 §1). As caixas oferecidas
+ * são as permissões que o `GET /me/estabelecimentos` deu para esta loja.
+ */
+export function EquipeDaLoja() {
+  const { estabelecimentoId = '' } = useParams();
+  const { lojas } = useContextoDoPainel();
+  const permissoes =
+    lojas.find((uma) => uma.estabelecimentoId === estabelecimentoId)?.permissoes ?? [];
+  return <ConvidarParaEquipe estabelecimentoId={estabelecimentoId} minhasPermissoes={permissoes} />;
 }
 
 export function ProdutoDaSecao({ secao }: { secao: Secao }) {

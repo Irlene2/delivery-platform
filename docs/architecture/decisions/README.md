@@ -70,8 +70,9 @@
 | 067 | O cardápio ganha escrita, e a seção passa a significar alguma coisa | ✅ aceita |
 | 068 | A listagem mostra o rascunho, porque quem a chama é o painel | ✅ aceita |
 | 069 | O convite chega pela mão de quem convida, e o token se lê uma vez | ✅ aceita |
+| 070 | A tela do convite, e o segredo que já está no navegador de quem o recebeu | ✅ aceita |
 
-**Sessenta e seis escritas, duas sem objeto — estas com registro próprio desde
+**Sessenta e sete escritas, duas sem objeto — estas com registro próprio desde
 25/08/2026 —, nenhuma a escrever.**
 
 ## Onde mora o quê

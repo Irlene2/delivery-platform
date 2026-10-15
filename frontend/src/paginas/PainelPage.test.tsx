@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, useLocation } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
@@ -176,6 +176,22 @@ describe('PainelPage', () => {
 
     expect(await screen.findByRole('heading', { name: 'Novo produto' })).toBeInTheDocument();
     expect(caminhosPedidos()).not.toContain('/api/v1/merchants/p1/catalog/produtos/novo');
+  });
+
+  /** Duas lojas no contexto, uma com GERENCIAR_EQUIPE e outra sem — e a asserção é sobre as duas. */
+  it('A1 · a seção Equipe só aparece na loja em que se tem GERENCIAR_EQUIPE', async () => {
+    responder([PIZZARIA, CANTINA]);
+
+    const primeira = montar('/painel/lojas/p1/produtos');
+    const menu = await screen.findByRole('navigation', { name: 'Seções desta loja' });
+    await userEvent.click(within(menu).getByRole('button', { name: 'Equipe' }));
+    await waitFor(() => expect(onde()).toHaveTextContent('/painel/lojas/p1/equipe'));
+    expect(await screen.findByRole('heading', { name: 'Equipe' })).toBeInTheDocument();
+    primeira.unmount();
+
+    montar('/painel/lojas/c2/produtos');
+    const outro = await screen.findByRole('navigation', { name: 'Seções desta loja' });
+    expect(within(outro).queryByRole('button', { name: 'Equipe' })).toBeNull();
   });
 
   it('C11 · o nome na lista leva ao endereço do produto', async () => {

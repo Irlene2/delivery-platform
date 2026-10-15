@@ -6,6 +6,7 @@ import { PainelPage } from './paginas/PainelPage';
 import { InicioDoPainel } from './painel/InicioDoPainel';
 import {
   ListaDaSecao,
+  EquipeDaLoja,
   LojaDoPainel,
   NovoProdutoDaLoja,
   ProdutoDaSecao,
@@ -42,6 +43,7 @@ export function App() {
           <Route path="produtos/novo" element={<NovoProdutoDaLoja />} />
           <Route path="produtos/:produtoId" element={<ProdutoDaSecao secao="cardapio" />} />
           <Route path="disponibilidade" element={<ListaDaSecao secao="disponibilidade" />} />
+          <Route path="equipe" element={<EquipeDaLoja />} />
           <Route
             path="disponibilidade/:produtoId"
             element={<ProdutoDaSecao secao="disponibilidade" />}

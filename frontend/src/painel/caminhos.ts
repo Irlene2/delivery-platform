@@ -12,6 +12,7 @@ export const NOVA_LOJA = '/painel/lojas/nova';
 const SEGMENTO: Record<Secao, string> = {
   cardapio: 'produtos',
   disponibilidade: 'disponibilidade',
+  equipe: 'equipe',
 };
 
 export function caminhoDaLoja(estabelecimentoId: string): string {
