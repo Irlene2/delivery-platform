@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>delivery-platform · painel</title>
     <meta name="description" content="Painel do comerciante." />
+    <!-- ADR-070 §3: o token do convite mora na URL, e a página do convite chama o gateway,
+         que é outra origem. Para outra origem vai só a origem, nunca o caminho. Era o padrão
+         do navegador; declarado aqui, vira decisão do repositório. -->
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
   </head>
   <body>
     <div id="raiz"></div>

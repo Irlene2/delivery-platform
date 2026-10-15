@@ -138,3 +138,21 @@ POST /api/v1/convites/nao-existe/aceite   401   ← barrado no gateway, antes do
 
 *Os nomes deste documento envelhecem com o compose. Ao renomear um serviço, emende a tabela
 "Quais serviços cada rodada reconstrói" na mesma rodada.*
+
+---
+
+## 6 · O que a passagem produz
+
+**Uma passagem humana produz texto, não um "funcionou".** A cada passo, anote **o que
+apareceu na tela**: a frase exata, o estado do item, o número, o endereço na barra.
+
+**Por quê:** em 15/10 a coluna do marco 2 foi cumprida e a frase que a provava não foi
+copiada por ninguém. O que ficou foi *"tudo certo"* — e *"tudo certo"* não distingue a tela
+que mostrou a frase certa da tela que mostrou qualquer outra.
+
+**A regra, e ela vale para teste também:** prova que passa por um olho e não vira texto está
+perdida. A memória de quem viu não é fonte.
+
+**A W-G mexe só no front**: o `frontend` não é serviço do compose — ele roda no Vite, no
+Windows (`npm run dev`) —, e nenhum dos passos 1 a 4 se aplica a ele. Os jars do
+`merchant-service` e do `gateway` são os da E-2, recriados em 15/10 por este roteiro.

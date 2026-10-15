@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router';
 import { EntrarPage } from './paginas/EntrarPage';
 import { CadastrarPage } from './paginas/CadastrarPage';
 import { CadastroDeLojaPage } from './paginas/CadastroDeLojaPage';
+import { ConvitePage } from './paginas/ConvitePage';
 import { PainelPage } from './paginas/PainelPage';
 import { InicioDoPainel } from './painel/InicioDoPainel';
 import {
@@ -25,6 +26,8 @@ export function App() {
       <Route path="/" element={<Navigate to="/painel" replace />} />
       <Route path="/entrar" element={<EntrarPage />} />
       <Route path="/cadastrar" element={<CadastrarPage />} />
+      {/* ADR-070 §4: pública, fora do ExigeSessao — quem abre o link pode não ter conta. */}
+      <Route path="/convite/:token" element={<ConvitePage />} />
       {/* ADR-061: a loja escolhida mora na URL, e cada tela do painel tem endereço. */}
       <Route
         path="/painel"

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { Link, useLocation, useNavigate } from 'react-router';
 import { cadastrar, pedirCodigo } from '../api/autenticacao';
 import { useSessao } from '../auth/useSessao';
 import { ErroDaApi, SemResposta } from '../api/cliente';
@@ -39,6 +39,8 @@ import { Campo } from '../componentes/Campo';
 export function CadastrarPage() {
   const { entrar } = useSessao();
   const navegar = useNavigate();
+  const local = useLocation();
+  const destino = (local.state as { de?: string } | null)?.de ?? '/painel';
 
   const [passo, setPasso] = useState<'telefone' | 'dados'>('telefone');
   const [telefone, setTelefone] = useState('');
@@ -115,7 +117,9 @@ export function CadastrarPage() {
       // O signup não devolve token. O login em seguida evita uma segunda tela
       // pedindo o que a pessoa acabou de digitar.
       await entrar(telefone.trim(), senha);
-      void navegar('/painel', { replace: true });
+      // O destino de quem chegou desviado — o convite, hoje (ADR-070 §3) —, pelo mesmo
+      // state.de do ExigeSessao e do EntrarPage. Sem ele, o painel, como sempre foi.
+      void navegar(destino, { replace: true });
     } catch (causa) {
       setErro(traduzir(causa));
     } finally {

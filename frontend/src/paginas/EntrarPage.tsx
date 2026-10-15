@@ -125,6 +125,7 @@ export function EntrarPage() {
         Ainda não tem conta?{' '}
         <Link
           to="/cadastrar"
+          state={local.state as { de?: string } | null}
           className="font-medium text-slate-900 underline underline-offset-4 dark:text-slate-100"
         >
           Criar conta

@@ -58,9 +58,27 @@ Portanto, e sem exceção:
 
 ### 2.2 O guarda de rota é conveniência, não segurança
 
-Toda rota deste sistema exige token, e a autorização é resolvida no servidor a
-cada requisição. O `ExigeSessao` existe para a pessoa não ver um painel piscando
-antes do 401. **Apagá-lo não abriria dado nenhum.**
+Toda rota deste sistema exige token — **salvo a entrada (login e cadastro) e, desde a W-G,
+a leitura do convite** —, e a autorização é resolvida no servidor a cada requisição. O
+`ExigeSessao` existe para a pessoa não ver um painel piscando antes do 401. **Apagá-lo não
+abriria dado nenhum.**
+
+**A página do convite é pública** (ADR-070): `/convite/:token` fica fora do `ExigeSessao`, e
+é a primeira tela deste front sem sessão que **não é entrada nem cadastro**. Ela mostra o que
+a rota pública do `merchant` devolve — o nome da loja, o papel com que se entra e a validade
+— e **nada que identifique pessoa**.
+
+**O token mora na URL, do começo ao fim.** Quem abre o link **já o tem no navegador**: ele
+chegou por mensagem e está na barra de endereços daquela pessoa. O que a ADR-069 impede é
+**multiplicá-lo em lugares que outros leem** — o corpo de erro que o servidor monta, o log do
+servidor. Por isso o desvio do cadastro leva o destino pelo **estado do roteador**
+(`state.de`, o mesmo do `ExigeSessao`, medido na W-G), e **não** em `sessionStorage`: seria
+uma cópia a mais, que sobrevive à navegação, para não ganhar nada.
+
+**O link do convite é montado no front**, com a própria origem: o `merchant` devolve o token
+e **não conhece o endereço das telas**. E o `index.html` declara
+`strict-origin-when-cross-origin`: para o gateway, que é outra origem, vai a origem e nunca o
+caminho com o token.
 
 ### 2.3 O token é opaco
 
@@ -225,7 +243,7 @@ tela, com o gatilho de cada um.
 | --- | --- | --- |
 | ~~Rota que diga **quais lojas o portador tem**~~ | ~~Não há tela depois do login. Todas as rotas de negócio começam com `{estabelecimentoId}`~~ | **resolvido na G-B5** — `GET /api/v1/me/estabelecimentos` |
 | ~~Rota **pública** de contexto de acesso~~ | ~~O menu do painel não se monta. A que existe é `/internal/`, que o gateway não roteia~~ | **resolvido na G-B5**, e não vai existir: seria uma segunda verdade sobre o mesmo vínculo. `GET /api/v1/me/estabelecimentos` já traz papel e permissões de cada loja; o `/internal/…/contexto-de-acesso` continua só para serviço |
-| Rota que devolva **o usuário do token** | O painel não sabe o nome de quem entrou | a G-B5 **não** a entregou; sem rodada marcada |
+| Rota que devolva **o usuário do token** | O painel não sabe o nome de quem entrou — e, desde a W-G, **a tela de equipe não tem o que escrever na coluna da pessoa**: uma lista de membros seria uma lista de identificadores (ADR-070 §1). A página do convite também não diz quem convidou | a G-B5 **não** a entregou; sem rodada marcada |
 | **Refresh token** | Trinta minutos e login outra vez, no meio do expediente | ADR-037 registra como dívida assumida |
 | `exposedHeaders` no CORS | O front não lê `Location` nem `WWW-Authenticate` de outra origem | a primeira rota que responda `201` com `Location` |
 | `required` nos esquemas do `catalog` e na `LojaDoUsuario` do `merchant` | Todo campo do tipo gerado é opcional, e a tela precisa tratar ausência que não acontece | a primeira tela que leia produto |
