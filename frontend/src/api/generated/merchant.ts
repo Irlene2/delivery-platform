@@ -4,6 +4,26 @@
  */
 
 export interface paths {
+    "/api/v1/merchants/{estabelecimentoId}/team/convites": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Convida alguém para a equipe
+         * @description Exige GERENCIAR_EQUIPE, e só se oferece o que se tem (A2). O token do convite só aparece nesta resposta; o transporte é humano, pela mão de quem convida (ADR-069).
+         */
+        post: operations["convidar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/estabelecimentos": {
         parameters: {
             query?: never;
@@ -92,6 +112,27 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @description O convite: o telefone de quem vai entrar e as permissões oferecidas. */
+        ConviteRequest: {
+            /**
+             * @description O telefone da pessoa convidada — o endereço, não a credencial.
+             * @example (81) 98765-4321
+             */
+            telefone: string;
+            /** @description As permissões oferecidas. Só as que quem convida tem (A2). */
+            permissoes: ("VER_PRODUTO" | "CRIAR_PRODUTO" | "ALTERAR_PRODUTO" | "DESATIVAR_PRODUTO" | "VER_PEDIDO" | "ALTERAR_STATUS" | "VER_VENDAS" | "VER_ENTREGA" | "GERENCIAR_EQUIPE" | "GERENCIAR_JORNADA")[];
+        };
+        /** @description O convite emitido. O token só aparece nesta resposta. */
+        ConviteEmitidoResponse: {
+            /** @description A credencial do convite. Mostre para copiar; não há como reler. */
+            token?: string;
+            /**
+             * Format: date-time
+             * @description Até quando o convite vale.
+             */
+            expiraEm?: string;
+            permissoes?: ("VER_PRODUTO" | "CRIAR_PRODUTO" | "ALTERAR_PRODUTO" | "DESATIVAR_PRODUTO" | "VER_PEDIDO" | "ALTERAR_STATUS" | "VER_VENDAS" | "VER_ENTREGA" | "GERENCIAR_EQUIPE" | "GERENCIAR_JORNADA")[];
+        };
         CriarEstabelecimentoRequest: {
             identificacao: components["schemas"]["IdentificacaoRequest"];
             politicaDeTroco: components["schemas"]["PoliticaDeTrocoRequest"];
@@ -176,6 +217,53 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    convidar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                estabelecimentoId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConviteRequest"];
+            };
+        };
+        responses: {
+            /** @description O convite emitido, com o token — que não se lê de novo */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConviteEmitidoResponse"];
+                };
+            };
+            /** @description Corpo malformado, telefone inválido, ou permissão oferecida que quem convida não tem (A2) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sem token, ou token inválido */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sem vínculo, sem GERENCIAR_EQUIPE ou loja inexistente — a mesma recusa */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     minhasLojas: {
         parameters: {
             query?: never;

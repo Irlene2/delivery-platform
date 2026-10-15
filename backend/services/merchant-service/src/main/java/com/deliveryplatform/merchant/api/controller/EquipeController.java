@@ -1,21 +1,30 @@
 package com.deliveryplatform.merchant.api.controller;
 
+import com.deliveryplatform.merchant.api.dto.ConviteEmitidoResponse;
+import com.deliveryplatform.merchant.api.dto.ConviteRequest;
 import com.deliveryplatform.merchant.api.dto.EquipeResponse;
 import com.deliveryplatform.merchant.api.dto.MembroResponse;
 import com.deliveryplatform.merchant.api.seguranca.SujeitoDoToken;
 import com.deliveryplatform.merchant.application.port.in.ConsultarEquipe;
+import com.deliveryplatform.merchant.application.port.in.ConvidarParaEquipe;
+import com.deliveryplatform.merchant.domain.model.Convite;
 import com.deliveryplatform.merchant.domain.model.EstadoDoMembro;
 import com.deliveryplatform.merchant.domain.model.Membro;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -42,9 +51,43 @@ import java.util.UUID;
 public class EquipeController {
 
     private final ConsultarEquipe equipes;
+    private final ConvidarParaEquipe gestao;
 
-    public EquipeController(ConsultarEquipe equipes) {
+    public EquipeController(ConsultarEquipe equipes, ConvidarParaEquipe gestao) {
         this.equipes = equipes;
+        this.gestao = gestao;
+    }
+
+    /**
+     * Convida alguém para a equipe (ADR-069). <b>O 201 devolve o token uma vez</b>, e ele
+     * não aparece em nenhuma leitura depois: token é credencial, e credencial que se relê
+     * vaza. Perdeu? Emite outro — o anterior continua valendo até expirar.
+     *
+     * <p><b>Sem {@code Location}</b>: o recurso que se lê é endereçado pelo próprio token,
+     * e pô-lo num cabeçalho é pô-lo em mais um lugar que se copia sem querer.
+     */
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "O convite emitido, com o token — que não se lê de novo"),
+            @ApiResponse(responseCode = "400", description = "Corpo malformado, telefone inválido, ou permissão oferecida que quem convida não tem (A2)", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Sem token, ou token inválido", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Sem vínculo, sem GERENCIAR_EQUIPE ou loja inexistente — a mesma recusa", content = @Content)
+    })
+    @PostMapping(path = "/convites", consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Convida alguém para a equipe",
+            description = "Exige GERENCIAR_EQUIPE, e só se oferece o que se tem (A2). O token "
+                    + "do convite só aparece nesta resposta; o transporte é humano, pela mão "
+                    + "de quem convida (ADR-069).")
+    public ConviteEmitidoResponse convidar(
+            @PathVariable UUID estabelecimentoId,
+            @AuthenticationPrincipal Jwt token,
+            @Valid @RequestBody ConviteRequest pedido) {
+
+        Convite convite = gestao.convidar(estabelecimentoId, SujeitoDoToken.de(token),
+                pedido.telefone(), pedido.permissoes());
+        return new ConviteEmitidoResponse(
+                convite.getToken(), convite.getExpiraEm(), convite.getPermissoesOferecidas());
     }
 
     /**

@@ -66,6 +66,7 @@ class ContratoDeErrosIT extends Infraestrutura {
     private static final String EXPEDIENTE = "/internal/merchants/{estabelecimentoId}/expediente-corrente";
     private static final String EQUIPE = "/api/v1/merchants/{estabelecimentoId}/team";
     private static final String MINHAS_LOJAS = "/api/v1/me/estabelecimentos";
+    private static final String CONVITES = "/api/v1/merchants/{estabelecimentoId}/team/convites";
 
     /** O que o contrato declara e nenhum caso provoca. Hoje: nada. */
     private static final Map<String, String> NAO_PROVOCAVEIS = Map.of();
@@ -141,7 +142,26 @@ class ContratoDeErrosIT extends Infraestrutura {
                                 CriarEstabelecimentoIT.CORPO.formatted("Loja", "123"), estranho())),
                 new Provocacao("POST", MINHAS_LOJAS, 401, "sem token",
                         () -> post("/api/v1/me/estabelecimentos",
-                                CriarEstabelecimentoIT.CORPO.formatted("Loja", "123.456.789-09"), null)));
+                                CriarEstabelecimentoIT.CORPO.formatted("Loja", "123.456.789-09"), null)),
+
+                // Convidar (ADR-069): 201, 400, 401, 403.
+                new Provocacao("POST", CONVITES, 400, "telefone que não é telefone",
+                        () -> {
+                            UUID loja = loja();
+                            String token = IDENTITY.tokenDe(vinculado(loja, Permissao.GERENCIAR_EQUIPE));
+                            return post("/api/v1/merchants/" + loja + "/team/convites",
+                                    ConvidarIT.CORPO.formatted("abc", ""), token);
+                        }),
+                new Provocacao("POST", CONVITES, 401, "sem token",
+                        () -> post("/api/v1/merchants/" + UUID.randomUUID() + "/team/convites",
+                                ConvidarIT.CORPO.formatted("(81) 98765-4321", ""), null)),
+                new Provocacao("POST", CONVITES, 403, "vínculo sem GERENCIAR_EQUIPE",
+                        () -> {
+                            UUID loja = loja();
+                            String token = IDENTITY.tokenDe(vinculado(loja, Permissao.VER_PRODUTO));
+                            return post("/api/v1/merchants/" + loja + "/team/convites",
+                                    ConvidarIT.CORPO.formatted("(81) 98765-4321", ""), token);
+                        }));
     }
 
     // ── as duas direções ────────────────────────────────────────────────────

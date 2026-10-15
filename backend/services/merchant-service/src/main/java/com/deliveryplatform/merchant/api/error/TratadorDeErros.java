@@ -2,6 +2,7 @@ package com.deliveryplatform.merchant.api.error;
 
 import com.deliveryplatform.merchant.application.exception.AcessoNegado;
 import com.deliveryplatform.merchant.application.exception.CadastroDeLojaRecusado;
+import com.deliveryplatform.merchant.application.exception.ConviteRecusado;
 import com.deliveryplatform.merchant.application.exception.SemExpedientePorHorario;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -73,6 +74,23 @@ public class TratadorDeErros {
     @ExceptionHandler(CadastroDeLojaRecusado.class)
     public ProblemDetail cadastroDeLojaRecusado(CadastroDeLojaRecusado excecao) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, fraseDe(excecao.motivo()));
+    }
+
+    /**
+     * 400 para o convite que o agregado recusa (ADR-069). A frase é daqui, por motivo,
+     * e não diz quais permissões faltam: o nome do enum é técnico, e a tela que oferece
+     * as caixas é a mesma que sabe quais o autor tem.
+     */
+    @ExceptionHandler(ConviteRecusado.class)
+    public ProblemDetail conviteRecusado(ConviteRecusado excecao) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, fraseDe(excecao.motivo()));
+    }
+
+    static String fraseDe(ConviteRecusado.Motivo motivo) {
+        return switch (motivo) {
+            case TELEFONE -> "telefone inválido";
+            case PERMISSAO_QUE_NAO_TEM -> "você só pode oferecer permissões que você mesmo tem";
+        };
     }
 
     static String fraseDe(CadastroDeLojaRecusado.Motivo motivo) {
