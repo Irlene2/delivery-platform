@@ -29,7 +29,8 @@ describe('MenuDoPainel', () => {
   });
 
   it('permissão sem tela não vira item de menu', () => {
-    montar(['GERENCIAR_EQUIPE', 'VER_VENDAS', 'VER_ENTREGA']);
+    // Até a W-G o GERENCIAR_EQUIPE estava nesta lista; desde ela, a Equipe tem tela.
+    montar(['GERENCIAR_JORNADA', 'VER_VENDAS', 'VER_ENTREGA']);
 
     expect(screen.queryAllByRole('button')).toHaveLength(0);
     expect(screen.getByText(/ainda não tem nenhuma permissão com tela/i)).toBeInTheDocument();

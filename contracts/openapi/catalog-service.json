@@ -9,11 +9,206 @@
     "bearerAuth" : [ ]
   } ],
   "paths" : {
+    "/api/v1/merchants/{estabelecimentoId}/catalog/produtos/{produtoId}/publicacao" : {
+      "put" : {
+        "tags" : [ "produto-controller" ],
+        "summary" : "Publica o produto no cardápio",
+        "description" : "Exige ALTERAR_PRODUTO. Idempotente: publicar o que já está publicado responde 200. As invariantes C1, C5, C4 e C2 são cobradas aqui.",
+        "operationId" : "publicar",
+        "parameters" : [ {
+          "name" : "estabelecimentoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "produtoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "O produto, publicado — também quando já estava",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProdutoResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "A publicação recusada (C1, C5, C4, C2), com a frase que diz o que corrigir; ou identificador malformado"
+          },
+          "401" : {
+            "description" : "Sem token, ou token inválido"
+          },
+          "403" : {
+            "description" : "Sem vínculo, sem ALTERAR_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa"
+          },
+          "404" : {
+            "description" : "O produto não existe nesta loja — inexistente ou de outra loja, a mesma resposta (ADR-056)"
+          }
+        }
+      }
+    },
+    "/api/v1/merchants/{estabelecimentoId}/catalog/produtos/{produtoId}/grupos/{grupoId}/opcoes/{opcaoId}/disponibilidade" : {
+      "put" : {
+        "tags" : [ "produto-controller" ],
+        "summary" : "Marca a disponibilidade de uma opção do produto",
+        "description" : "Mesmo carimbo e mesmas recusas da marcação do produto. Devolve o produto recalculado, porque marcar uma opção pode derrubar o vendavel.",
+        "operationId" : "marcarOpcao",
+        "parameters" : [ {
+          "name" : "estabelecimentoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "produtoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "grupoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "opcaoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/MarcacaoRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "O produto recalculado",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProdutoResumoResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Corpo ou identificador malformado"
+          },
+          "401" : {
+            "description" : "Sem token, ou token inválido"
+          },
+          "403" : {
+            "description" : "Sem vínculo, sem ALTERAR_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa"
+          },
+          "404" : {
+            "description" : "O produto não existe nesta loja (ADR-056), ou o grupo e a opção não existem neste produto (ADR-063 §4)"
+          },
+          "409" : {
+            "description" : "ESGOTADO_HOJE numa loja que não abre por horário (ADR-049), ou o produto mudou durante a marcação (ADR-052)"
+          },
+          "503" : {
+            "description" : "O merchant não respondeu sobre o expediente"
+          }
+        }
+      }
+    },
+    "/api/v1/merchants/{estabelecimentoId}/catalog/produtos/{produtoId}/disponibilidade" : {
+      "put" : {
+        "tags" : [ "produto-controller" ],
+        "summary" : "Marca a disponibilidade do produto",
+        "description" : "O carimbo é do servidor: o instante pelo relógio do serviço e o expediente perguntado ao merchant (ADR-049). Exige ALTERAR_PRODUTO. 409 quando a loja não abre por horário e o estado é ESGOTADO_HOJE. Devolve o produto recalculado.",
+        "operationId" : "marcarProduto",
+        "parameters" : [ {
+          "name" : "estabelecimentoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "produtoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/MarcacaoRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "O produto recalculado",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProdutoResumoResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Corpo inválido, ou estado que o modo do produto não tem (SEM_CONTROLE não acaba)"
+          },
+          "401" : {
+            "description" : "Sem token, ou token inválido"
+          },
+          "403" : {
+            "description" : "Sem vínculo, sem ALTERAR_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa"
+          },
+          "404" : {
+            "description" : "O produto não existe nesta loja — inexistente ou de outra loja, a mesma resposta (ADR-056)"
+          },
+          "409" : {
+            "description" : "ESGOTADO_HOJE numa loja que não abre por horário (ADR-049), ou o produto mudou durante a marcação (ADR-052)"
+          },
+          "503" : {
+            "description" : "O merchant não respondeu sobre o expediente"
+          }
+        }
+      }
+    },
     "/api/v1/merchants/{estabelecimentoId}/catalog/produtos" : {
       "get" : {
         "tags" : [ "produto-controller" ],
-        "summary" : "Lista os produtos publicados do estabelecimento",
-        "description" : "Exige vínculo ativo com VER_PRODUTO, resolvido no merchant-service com o token de quem pediu. Sem vínculo, sem permissão, loja inexistente e merchant indisponível devolvem a mesma recusa.",
+        "summary" : "Lista os produtos do estabelecimento, em qualquer estado de publicação",
+        "description" : "A listagem do painel: rascunho, ativo e inativo, cada um com o estadoDePublicacao. Sem sort, pela ordem e depois pelo id. Exige vínculo ativo com VER_PRODUTO, resolvido no merchant-service com o token de quem pediu. Sem vínculo, sem permissão, loja inexistente e merchant indisponível devolvem a mesma recusa.",
         "operationId" : "listar",
         "parameters" : [ {
           "name" : "estabelecimentoId",
@@ -57,7 +252,7 @@
         } ],
         "responses" : {
           "200" : {
-            "description" : "OK",
+            "description" : "A página de produtos da loja, em qualquer estado de publicação",
             "content" : {
               "application/json" : {
                 "schema" : {
@@ -65,6 +260,197 @@
                 }
               }
             }
+          },
+          "400" : {
+            "description" : "Identificador ou paginação malformados"
+          },
+          "401" : {
+            "description" : "Sem token, ou token inválido"
+          },
+          "403" : {
+            "description" : "Sem vínculo, sem VER_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa"
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "produto-controller" ],
+        "summary" : "Cria um produto, em rascunho",
+        "description" : "Exige CRIAR_PRODUTO. A seção tem de ser desta loja: inexistente e de outra loja recebem a mesma recusa. Location aponta para o GET do produto.",
+        "operationId" : "criar",
+        "parameters" : [ {
+          "name" : "estabelecimentoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ProdutoRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "O produto criado, em rascunho",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProdutoResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Corpo malformado, preço negativo (C1), ou seção que não existe nesta loja (ADR-066)"
+          },
+          "401" : {
+            "description" : "Sem token, ou token inválido"
+          },
+          "403" : {
+            "description" : "Sem vínculo, sem CRIAR_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa"
+          }
+        }
+      }
+    },
+    "/api/v1/merchants/{estabelecimentoId}/catalog/categorias" : {
+      "get" : {
+        "tags" : [ "categoria-controller" ],
+        "summary" : "Lista as seções do cardápio",
+        "description" : "Exige VER_PRODUTO. Ativas e inativas, pela ordem e, no empate, pelo nome.",
+        "operationId" : "listar_1",
+        "parameters" : [ {
+          "name" : "estabelecimentoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "As seções, pela ordem; vazia é []",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/CategoriaResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Identificador malformado"
+          },
+          "401" : {
+            "description" : "Sem token, ou token inválido"
+          },
+          "403" : {
+            "description" : "Sem vínculo, sem VER_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa"
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "categoria-controller" ],
+        "summary" : "Cria uma seção do cardápio",
+        "description" : "Exige CRIAR_PRODUTO. A seção nasce ativa. Sem Location: não há rota de uma seção por id, e a tela precisa da lista.",
+        "operationId" : "criar_1",
+        "parameters" : [ {
+          "name" : "estabelecimentoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CategoriaRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "A seção criada, ativa",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CategoriaResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Corpo malformado — nome em branco, ordem ausente — ou identificador malformado"
+          },
+          "401" : {
+            "description" : "Sem token, ou token inválido"
+          },
+          "403" : {
+            "description" : "Sem vínculo, sem CRIAR_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa"
+          }
+        }
+      }
+    },
+    "/api/v1/merchants/{estabelecimentoId}/catalog/produtos/{produtoId}" : {
+      "get" : {
+        "tags" : [ "produto-controller" ],
+        "summary" : "Um produto do estabelecimento, com os grupos e as opções",
+        "description" : "Exige VER_PRODUTO. Devolve o produto em qualquer estado de publicação. 404 para produto inexistente ou de outra loja, com o mesmo corpo.",
+        "operationId" : "consultar",
+        "parameters" : [ {
+          "name" : "estabelecimentoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "produtoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "O produto, com grupos e opções",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProdutoResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Identificador malformado"
+          },
+          "401" : {
+            "description" : "Sem token, ou token inválido"
+          },
+          "403" : {
+            "description" : "Sem vínculo, sem VER_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa"
+          },
+          "404" : {
+            "description" : "O produto não existe nesta loja — inexistente ou de outra loja, a mesma resposta"
           }
         }
       }
@@ -72,28 +458,118 @@
   },
   "components" : {
     "schemas" : {
-      "PaginaResponseProdutoResumoResponse" : {
+      "GrupoResponse" : {
         "type" : "object",
         "properties" : {
-          "conteudo" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "nome" : {
+            "type" : "string"
+          },
+          "minEscolhas" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "maxEscolhas" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "ordem" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "opcoes" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/ProdutoResumoResponse"
+              "$ref" : "#/components/schemas/OpcaoResponse"
             }
-          },
-          "pagina" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "tamanho" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "total" : {
-            "type" : "integer",
-            "format" : "int64"
           }
         }
+      },
+      "OpcaoResponse" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "nome" : {
+            "type" : "string"
+          },
+          "acrescimo" : {
+            "type" : "number"
+          },
+          "ordem" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "disponibilidade" : {
+            "type" : "string",
+            "enum" : [ "DISPONIVEL", "ACABANDO", "ESGOTADO_HOJE", "ESGOTADO_INDETERMINADO" ]
+          }
+        }
+      },
+      "ProdutoResponse" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "categoriaId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "nome" : {
+            "type" : "string"
+          },
+          "descricao" : {
+            "type" : "string"
+          },
+          "precoBase" : {
+            "type" : "number"
+          },
+          "ordem" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "modoDeControle" : {
+            "type" : "string",
+            "enum" : [ "SEM_CONTROLE", "QUALITATIVO" ]
+          },
+          "estadoDePublicacao" : {
+            "type" : "string",
+            "enum" : [ "RASCUNHO", "ATIVO", "INATIVO" ]
+          },
+          "disponibilidade" : {
+            "type" : "string",
+            "enum" : [ "DISPONIVEL", "ACABANDO", "ESGOTADO_HOJE", "ESGOTADO_INDETERMINADO" ]
+          },
+          "vendavel" : {
+            "type" : "boolean"
+          },
+          "gruposDeOpcoes" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/GrupoResponse"
+            }
+          }
+        }
+      },
+      "MarcacaoRequest" : {
+        "type" : "object",
+        "description" : "O novo estado de disponibilidade. O carimbo é do servidor.",
+        "properties" : {
+          "estado" : {
+            "type" : "string",
+            "description" : "DISPONIVEL, ACABANDO, ESGOTADO_HOJE ou ESGOTADO_INDETERMINADO.",
+            "enum" : [ "DISPONIVEL", "ACABANDO", "ESGOTADO_HOJE", "ESGOTADO_INDETERMINADO" ],
+            "example" : "ESGOTADO_HOJE"
+          }
+        },
+        "required" : [ "estado" ]
       },
       "ProdutoResumoResponse" : {
         "type" : "object",
@@ -122,6 +598,111 @@
           },
           "vendavel" : {
             "type" : "boolean"
+          },
+          "estadoDePublicacao" : {
+            "type" : "string",
+            "enum" : [ "RASCUNHO", "ATIVO", "INATIVO" ]
+          }
+        }
+      },
+      "ProdutoRequest" : {
+        "type" : "object",
+        "description" : "Um produto novo. Nasce rascunho; vai ao cardápio pela publicação.",
+        "properties" : {
+          "categoriaId" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "A seção do cardápio, que tem de ser desta loja."
+          },
+          "nome" : {
+            "type" : "string",
+            "description" : "O nome como o cliente o lê.",
+            "example" : "Coca-Cola lata",
+            "minLength" : 1
+          },
+          "descricao" : {
+            "type" : "string",
+            "description" : "Opcional.",
+            "example" : "350 ml"
+          },
+          "precoBase" : {
+            "type" : "number",
+            "description" : "Em reais, duas casas. Zero é aceito no rascunho e recusado na publicação (C1); negativo é recusado aqui.",
+            "example" : 6.0
+          },
+          "modoDeControle" : {
+            "type" : "string",
+            "description" : "SEM_CONTROLE (não acaba) ou QUALITATIVO.",
+            "enum" : [ "SEM_CONTROLE", "QUALITATIVO" ],
+            "example" : "SEM_CONTROLE"
+          },
+          "ordem" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "A posição do produto na seção.",
+            "example" : 0
+          }
+        },
+        "required" : [ "categoriaId", "modoDeControle", "nome", "ordem", "precoBase" ]
+      },
+      "CategoriaRequest" : {
+        "type" : "object",
+        "description" : "Uma seção nova do cardápio. Nasce ativa.",
+        "properties" : {
+          "nome" : {
+            "type" : "string",
+            "description" : "O nome da seção.",
+            "example" : "Pizzas salgadas",
+            "minLength" : 1
+          },
+          "ordem" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "A posição da seção no cardápio. Empates se resolvem pelo nome.",
+            "example" : 0
+          }
+        },
+        "required" : [ "nome", "ordem" ]
+      },
+      "CategoriaResponse" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "nome" : {
+            "type" : "string"
+          },
+          "ordem" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "ativa" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "PaginaResponseProdutoResumoResponse" : {
+        "type" : "object",
+        "properties" : {
+          "conteudo" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ProdutoResumoResponse"
+            }
+          },
+          "pagina" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "tamanho" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "total" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         }
       }

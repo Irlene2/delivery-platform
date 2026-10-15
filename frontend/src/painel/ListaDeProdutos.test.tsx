@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 
 import { ErroDaApi } from '../api/cliente';
@@ -119,7 +119,7 @@ describe('ListaDeProdutos', () => {
 
     montar('p1');
 
-    expect(await screen.findByText(/ainda não tem nenhum produto publicado/i)).toBeInTheDocument();
+    expect(await screen.findByText(/não tem nenhum produto/i)).toBeInTheDocument();
   });
 
   it('com mais páginas, diz quantos está mostrando', async () => {
@@ -130,5 +130,35 @@ describe('ListaDeProdutos', () => {
     montar('p1');
 
     expect(await screen.findByText(/Mostrando 1 de 37/)).toBeInTheDocument();
+  });
+
+  // W-D abriu o produto pelo nome; desde a W-E abrir é navegar (ADR-061), e a lista só
+  // avisa quem a montou. O caminho inteiro — abrir, ler, voltar e reler — está no
+  // PainelPage.test, por endereço.
+  it('o nome avisa qual produto abrir, pelo id', async () => {
+    chamarFalso.mockResolvedValue(
+      pagina([{ id: 'x9', nome: 'Pizza margherita', precoBase: 49.9, vendavel: true }]),
+    );
+    const aoAbrir = vi.fn();
+
+    render(
+      <SessaoProvider>
+        <ListaDeProdutos estabelecimentoId="p1" aoAbrir={aoAbrir} />
+      </SessaoProvider>,
+    );
+    fireEvent.click(await screen.findByRole('button', { name: 'Pizza margherita' }));
+
+    expect(aoAbrir).toHaveBeenCalledWith('x9');
+  });
+
+  it('sem quem abra, o nome é só texto', async () => {
+    chamarFalso.mockResolvedValue(
+      pagina([{ id: 'x9', nome: 'Pizza margherita', precoBase: 49.9, vendavel: true }]),
+    );
+
+    montar('p1');
+
+    expect(await screen.findByText('Pizza margherita')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Pizza margherita' })).toBeNull();
   });
 });

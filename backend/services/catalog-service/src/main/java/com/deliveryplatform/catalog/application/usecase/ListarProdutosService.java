@@ -34,7 +34,7 @@ import java.util.UUID;
  * caminho neste método que devolva produto quando a autorização não foi obtida.
  *
  * <p><b>O que este método não faz:</b> não filtra por vendável. O
- * {@code vendavel} é derivado (§5 do {@code catalogo.md}) e não é campo, então
+ * {@code vendavel} é derivado (§4 do {@code catalogo.md}) e não é campo, então
  * quem quiser só os vendáveis filtra o que voltou — e o cardápio do comerciante
  * precisa ver justamente o que <i>não</i> está vendável, para agir.
  */
@@ -51,7 +51,7 @@ public class ListarProdutosService implements ListarProdutos {
     }
 
     @Override
-    public Page<Produto> publicadosDaLoja(UUID estabelecimentoId, Pageable paginacao) {
+    public Page<Produto> daLoja(UUID estabelecimentoId, Pageable paginacao) {
         ContextoDeAcesso contexto = autorizacao
                 .contexto(estabelecimentoId)
                 .orElseThrow(AcessoNegado::new);
@@ -60,6 +60,6 @@ public class ListarProdutosService implements ListarProdutos {
             throw new AcessoNegado();
         }
 
-        return produtos.publicadosDe(estabelecimentoId, paginacao);
+        return produtos.daLoja(estabelecimentoId, paginacao);
     }
 }

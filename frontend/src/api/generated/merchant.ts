@@ -4,6 +4,70 @@
  */
 
 export interface paths {
+    "/api/v1/merchants/{estabelecimentoId}/team/convites": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Convida alguém para a equipe
+         * @description Exige GERENCIAR_EQUIPE, e só se oferece o que se tem (A2). O token do convite só aparece nesta resposta; o transporte é humano, pela mão de quem convida (ADR-069).
+         */
+        post: operations["convidar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/estabelecimentos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * As lojas de que o portador do token faz parte
+         * @description Só vínculos ATIVOS. Traz papel e permissões de cada uma, para o front montar o seletor de loja e o menu numa chamada só. Lista vazia quando não há vínculo ativo em nenhuma loja.
+         */
+        get: operations["minhasLojas"];
+        put?: never;
+        /**
+         * Cria uma loja, e o portador do token passa a ser o fundador dela
+         * @description O corpo traz identificação, política de troco, tipo de operação e métodos por modalidade. A loja nasce sem horário e sem área de entrega; pedido mínimo e desconto de retirada nascem em zero.
+         */
+        post: operations["criar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/convites/{token}/aceite": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Aceita o convite
+         * @description Exige sessão e nenhuma permissão. A A2 é conferida de novo aqui: se quem convidou perdeu o que ofereceu, o aceite é recusado.
+         */
+        post: operations["aceitar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/internal/merchants/{estabelecimentoId}/me/contexto-de-acesso": {
         parameters: {
             query?: never;
@@ -64,7 +128,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/me/estabelecimentos": {
+    "/api/v1/convites/{token}": {
         parameters: {
             query?: never;
             header?: never;
@@ -72,10 +136,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * As lojas de que o portador do token faz parte
-         * @description Só vínculos ATIVOS. Traz papel e permissões de cada uma, para o front montar o seletor de loja e o menu numa chamada só. Lista vazia quando não há vínculo ativo em nenhuma loja.
+         * O convite, para quem recebeu o link
+         * @description Público: quem recebe um convite ainda não tem sessão. Devolve só o nome da loja, o papel e a validade.
          */
-        get: operations["minhasLojas"];
+        get: operations["ver"];
         put?: never;
         post?: never;
         delete?: never;
@@ -88,6 +152,68 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @description O convite: o telefone de quem vai entrar e as permissões oferecidas. */
+        ConviteRequest: {
+            /**
+             * @description O telefone da pessoa convidada — o endereço, não a credencial.
+             * @example (81) 98765-4321
+             */
+            telefone: string;
+            /** @description As permissões oferecidas. Só as que quem convida tem (A2). */
+            permissoes: ("VER_PRODUTO" | "CRIAR_PRODUTO" | "ALTERAR_PRODUTO" | "DESATIVAR_PRODUTO" | "VER_PEDIDO" | "ALTERAR_STATUS" | "VER_VENDAS" | "VER_ENTREGA" | "GERENCIAR_EQUIPE" | "GERENCIAR_JORNADA")[];
+        };
+        /** @description O convite emitido. O token só aparece nesta resposta. */
+        ConviteEmitidoResponse: {
+            /** @description A credencial do convite. Mostre para copiar; não há como reler. */
+            token?: string;
+            /**
+             * Format: date-time
+             * @description Até quando o convite vale.
+             */
+            expiraEm?: string;
+            permissoes?: ("VER_PRODUTO" | "CRIAR_PRODUTO" | "ALTERAR_PRODUTO" | "DESATIVAR_PRODUTO" | "VER_PEDIDO" | "ALTERAR_STATUS" | "VER_VENDAS" | "VER_ENTREGA" | "GERENCIAR_EQUIPE" | "GERENCIAR_JORNADA")[];
+        };
+        CriarEstabelecimentoRequest: {
+            identificacao: components["schemas"]["IdentificacaoRequest"];
+            politicaDeTroco: components["schemas"]["PoliticaDeTrocoRequest"];
+            /** @enum {string} */
+            tipoDeOperacao: "PRODUCAO" | "SEPARACAO" | "MISTA";
+            metodosPorModalidade: {
+                [key: string]: ("DINHEIRO" | "CARTAO" | "PIX")[];
+            };
+        };
+        IdentificacaoRequest: {
+            nome: string;
+            documento: string;
+            telefone: string;
+            enderecoTextual: string;
+            bairro: string;
+            /**
+             * @description Identificador IANA do conjunto brasileiro (M16, ADR-025). O conjunto é o de FusoHorario.identificadoresAceitos(), e o AllowableValuesDoFusoTest impede as duas listas de divergirem.
+             * @default America/Sao_Paulo
+             * @enum {string}
+             */
+            fusoHorario: "America/Araguaina" | "America/Bahia" | "America/Belem" | "America/Boa_Vista" | "America/Campo_Grande" | "America/Cuiaba" | "America/Eirunepe" | "America/Fortaleza" | "America/Maceio" | "America/Manaus" | "America/Noronha" | "America/Porto_Velho" | "America/Recife" | "America/Rio_Branco" | "America/Santarem" | "America/Sao_Paulo";
+        };
+        PoliticaDeTrocoRequest: {
+            fundoMaximoDeTroco: number;
+            aceitaPedidoSemTrocoDisponivel?: boolean;
+        };
+        LojaDoUsuario: {
+            /** Format: uuid */
+            estabelecimentoId?: string;
+            nome?: string;
+            /** @enum {string} */
+            papel?: "ADMINISTRADOR" | "COLABORADOR";
+            permissoes?: ("VER_PRODUTO" | "CRIAR_PRODUTO" | "ALTERAR_PRODUTO" | "DESATIVAR_PRODUTO" | "VER_PEDIDO" | "ALTERAR_STATUS" | "VER_VENDAS" | "VER_ENTREGA" | "GERENCIAR_EQUIPE" | "GERENCIAR_JORNADA")[];
+        };
+        AceiteResponse: {
+            /** Format: uuid */
+            estabelecimentoId?: string;
+            /** @enum {string} */
+            papel?: "ADMINISTRADOR" | "COLABORADOR";
+            permissoes?: ("VER_PRODUTO" | "CRIAR_PRODUTO" | "ALTERAR_PRODUTO" | "DESATIVAR_PRODUTO" | "VER_PEDIDO" | "ALTERAR_STATUS" | "VER_VENDAS" | "VER_ENTREGA" | "GERENCIAR_EQUIPE" | "GERENCIAR_JORNADA")[];
+        };
         ContextoDeAcesso: {
             /** Format: uuid */
             usuarioId?: string;
@@ -129,13 +255,16 @@ export interface components {
             /** Format: date-time */
             desde: string;
         };
-        LojaDoUsuario: {
-            /** Format: uuid */
-            estabelecimentoId?: string;
-            nome?: string;
-            /** @enum {string} */
+        /** @description O mínimo que convence: a loja, o papel e até quando vale. */
+        ConvitePublicoResponse: {
+            nomeDaLoja?: string;
+            /**
+             * @description Sempre COLABORADOR: convite nunca concede outro papel.
+             * @enum {string}
+             */
             papel?: "ADMINISTRADOR" | "COLABORADOR";
-            permissoes?: ("VER_PRODUTO" | "CRIAR_PRODUTO" | "ALTERAR_PRODUTO" | "DESATIVAR_PRODUTO" | "VER_PEDIDO" | "ALTERAR_STATUS" | "VER_VENDAS" | "VER_ENTREGA" | "GERENCIAR_EQUIPE" | "GERENCIAR_JORNADA")[];
+            /** Format: date-time */
+            expiraEm?: string;
         };
     };
     responses: never;
@@ -146,6 +275,161 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    convidar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                estabelecimentoId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConviteRequest"];
+            };
+        };
+        responses: {
+            /** @description O convite emitido, com o token — que não se lê de novo */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConviteEmitidoResponse"];
+                };
+            };
+            /** @description Corpo malformado, telefone inválido, ou permissão oferecida que quem convida não tem (A2) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sem token, ou token inválido */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sem vínculo, sem GERENCIAR_EQUIPE ou loja inexistente — a mesma recusa */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    minhasLojas: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description As lojas em que o portador tem vínculo ativo */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LojaDoUsuario"][];
+                };
+            };
+            /** @description Sem token, ou token inválido */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    criar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CriarEstabelecimentoRequest"];
+            };
+        };
+        responses: {
+            /** @description A loja criada, e o portador é o fundador dela */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LojaDoUsuario"];
+                };
+            };
+            /** @description Corpo que o agregado recusa */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sem token, ou token inválido */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    aceitar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description O vínculo que nasceu */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AceiteResponse"];
+                };
+            };
+            /** @description Sem sessão */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Convite inexistente, expirado, já aceito ou cancelado — a mesma resposta */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Quem convidou não pode mais conceder o que ofereceu (A2), ou quem aceita já é da equipe */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     doPortador: {
         parameters: {
             query?: never;
@@ -157,7 +441,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description O contexto do portador nesta loja */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -165,6 +449,27 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ContextoDeAcesso"];
                 };
+            };
+            /** @description Identificador da loja malformado */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sem token, ou token inválido */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sem vínculo ativo com a loja, ou loja inexistente — a mesma recusa */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -179,7 +484,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description O expediente de referência para carimbar */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -187,6 +492,34 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ExpedienteCorrenteResponse"];
                 };
+            };
+            /** @description Identificador da loja malformado */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sem token, ou token inválido */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sem vínculo ativo com a loja, ou loja inexistente — a mesma recusa */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description A loja não abre por horário (ADR-049 §5) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -201,7 +534,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description A equipe da loja */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -210,25 +543,55 @@ export interface operations {
                     "application/json": components["schemas"]["EquipeResponse"];
                 };
             };
+            /** @description Identificador da loja malformado */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sem token, ou token inválido */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sem vínculo, sem GERENCIAR_EQUIPE ou loja inexistente — a mesma recusa */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
         };
     };
-    minhasLojas: {
+    ver: {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                token: string;
+            };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description A loja, o papel e a validade do convite */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LojaDoUsuario"][];
+                    "application/json": components["schemas"]["ConvitePublicoResponse"];
                 };
+            };
+            /** @description Convite inexistente, expirado, já aceito ou cancelado — a mesma resposta */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

@@ -1,12 +1,19 @@
 package com.deliveryplatform.merchant.application.usecase;
 
 import com.deliveryplatform.merchant.application.exception.AcessoNegado;
+import com.deliveryplatform.merchant.application.exception.ConviteRecusado;
+import com.deliveryplatform.merchant.application.port.in.ConvidarParaEquipe;
+import com.deliveryplatform.merchant.application.port.out.ConviteRepositorio;
 import com.deliveryplatform.merchant.application.port.out.MembroRepositorio;
 import com.deliveryplatform.merchant.application.port.out.Outbox;
 import com.deliveryplatform.merchant.domain.evento.VinculoAlteradoV1;
+import com.deliveryplatform.merchant.domain.exception.PermissaoNaoPossuida;
+import com.deliveryplatform.merchant.domain.exception.TelefoneInvalido;
+import com.deliveryplatform.merchant.domain.model.Convite;
 import com.deliveryplatform.merchant.domain.model.Equipe;
 import com.deliveryplatform.merchant.domain.model.Membro;
 import com.deliveryplatform.merchant.domain.model.Permissao;
+import com.deliveryplatform.merchant.domain.model.Telefone;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -55,16 +62,66 @@ import java.util.UUID;
  * depois, e nunca separados por quem chama.
  */
 @Service
-public class GerenciarEquipeService {
+public class GerenciarEquipeService implements ConvidarParaEquipe {
 
     private final MembroRepositorio membros;
+    private final ConviteRepositorio convites;
     private final Outbox outbox;
     private final Clock relogio;
 
-    public GerenciarEquipeService(MembroRepositorio membros, Outbox outbox, Clock relogio) {
+    public GerenciarEquipeService(MembroRepositorio membros, ConviteRepositorio convites,
+                                  Outbox outbox, Clock relogio) {
         this.membros = membros;
+        this.convites = convites;
         this.outbox = outbox;
         this.relogio = relogio;
+    }
+
+    // ── convidar: a escrita da equipe que não muda vínculo (E-2, ADR-069) ────
+
+    /**
+     * Emite um convite. <b>Mora aqui, e não num serviço paralelo</b>, porque este é o dono
+     * das escritas da equipe — e passa pelo mesmo cadeado da loja que as sete.
+     *
+     * <p><b>Não passa pelo {@link #executar}, e não emite</b>, e é de propósito: o funil
+     * existe para que toda escrita que <i>muda vínculo</i> registre o
+     * {@code VinculoAlteradoV1}. Convidar não muda vínculo nenhum — o vínculo nasce no
+     * aceite, que registra pelo {@link #registrarVinculoNascido}. Emitir aqui diria aos
+     * outros serviços que algo mudou na autorização quando nada mudou.
+     *
+     * <p><b>A autorização vem antes do cadeado</b>, como no {@code GET .../team}: sem
+     * vínculo ativo com {@code GERENCIAR_EQUIPE} é o 403 único (M7) — loja que não existe
+     * inclusive —, e o cadeado só é tomado para quem pode. O domínio confere A1 e A2 de
+     * novo, dentro da equipe travada; a checagem de fora é só para não travar a loja de
+     * quem não tem nada a fazer nela.
+     *
+     * <p>A <b>validade</b> é a do agregado ({@code Convite.VALIDADE}); este caso de uso não
+     * escolhe prazo.
+     */
+    @Override
+    @Transactional
+    public Convite convidar(UUID lojaId, UUID autorUsuarioId, String telefone,
+                            Set<Permissao> oferecidas) {
+        membros.buscarPorUsuarioELoja(autorUsuarioId, lojaId)
+                .filter(vinculo -> vinculo.pode(Permissao.GERENCIAR_EQUIPE))
+                .orElseThrow(AcessoNegado::new);
+
+        Telefone destino;
+        try {
+            destino = Telefone.de(telefone);
+        } catch (TelefoneInvalido invalido) {
+            throw new ConviteRecusado(ConviteRecusado.Motivo.TELEFONE, invalido);
+        }
+
+        Instant agora = Instant.now(relogio).truncatedTo(ChronoUnit.MICROS);
+        Equipe equipe = membros.equipeParaAlteracao(lojaId);
+        Convite convite;
+        try {
+            convite = equipe.convidar(daEquipe(equipe, autorUsuarioId), destino, oferecidas, agora);
+        } catch (PermissaoNaoPossuida a2) {
+            throw new ConviteRecusado(ConviteRecusado.Motivo.PERMISSAO_QUE_NAO_TEM, a2);
+        }
+        return convites.salvar(convite);
     }
 
     // ── as sete ─────────────────────────────────────────────────────────────
@@ -150,6 +207,9 @@ public class GerenciarEquipeService {
      * {@code Convite}. Em vez de duplicar o funil, o
      * {@code AceitarConviteService} chama este método <b>dentro da mesma
      * transação</b> em que gravou o {@code Membro}.
+     *
+     * <p>O segundo chamador é a semeadura de desenvolvimento (ADR-059), que grava o
+     * fundador da loja da fixture pelo mesmo caminho — e nunca um terceiro funil.
      */
     @Transactional(propagation = Propagation.MANDATORY)
     public void registrarVinculoNascido(Membro novo, Instant agora) {

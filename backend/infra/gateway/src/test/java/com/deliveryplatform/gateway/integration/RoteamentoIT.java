@@ -64,7 +64,8 @@ class RoteamentoIT extends GatewayNoAr {
             "/api/v1/merchants/{loja}/orders,                 order",
             "/api/v1/merchants/{loja}/payments,               payment",
             "/api/v1/merchants/{loja}/deliveries,             delivery",
-            "/api/v1/couriers/me/entregas,                    delivery"
+            "/api/v1/couriers/me/entregas,                    delivery",
+            "/api/v1/convites/um-token-qualquer,              merchant"
     })
     void a_rota_leva_ao_servico_certo(String modelo, String servicoEsperado) {
         String caminho = modelo.trim().replace("{loja}", LOJA);

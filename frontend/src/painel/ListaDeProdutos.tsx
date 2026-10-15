@@ -1,14 +1,27 @@
+import { useState } from 'react';
+
 import { ErroDaApi } from '../api/cliente';
+import type { ProdutoDoContrato } from '../api/disponibilidade';
 import { useRecurso } from '../api/useRecurso';
-import { caminhoDosProdutos, paraTela, type PaginaDoContrato } from './produtos';
+import { MarcarDisponibilidade } from './MarcarDisponibilidade';
+import {
+  caminhoDosProdutos,
+  paraTela,
+  produtoParaTela,
+  type PaginaDoContrato,
+  type Produto,
+} from './produtos';
 
 /**
- * O cardápio publicado da loja escolhida — a rota que a G-B3 abriu, com tela
- * pela primeira vez.
+ * O cardápio da loja escolhida — a rota que a G-B3 abriu, com tela pela primeira
+ * vez. Desde a E-3d (ADR-068) a rota devolve **todos os estados de publicação**,
+ * rascunho inclusive, cada item com `estadoDePublicacao`: a listagem é a do painel,
+ * e o cardápio de quem compra entra pela porta da ADR-018. Esta tela ainda não
+ * mostra o estado — é a W-F.
  *
  * ## `vendavel` é a coluna que esta tela existe para mostrar
  *
- * A rota devolve os **publicados**, não os vendáveis, e cada item traz
+ * A rota não filtra pelos vendáveis, e cada item traz
  * `vendavel` já calculado — porque o cliente não consegue derivá-lo sem os
  * grupos de opções, que o resumo não carrega. Um produto ativo e não vendável é
  * cadastro perfeito num dia ruim: a pizza está `DISPONIVEL` e todos os tamanhos
@@ -23,11 +36,66 @@ import { caminhoDosProdutos, paraTela, type PaginaDoContrato } from './produtos'
  * autorização funcionando. A mensagem diz isso. O menu já não oferece o link a
  * essa pessoa; este caso existe para quem chegou pela URL, ou para quem perdeu
  * a permissão com a aba aberta.
+ *
+ * ## Com `podeMarcar`, cada item ganha os quatro estados (W-C)
+ *
+ * É a seção "Disponibilidade", que só existe para quem tem `ALTERAR_PRODUTO`. O
+ * item marcado é **substituído pelo produto que o servidor devolveu** — é aí que o
+ * `vendavel` recalculado aparece.
+ *
+ * ## O nome abre o produto (W-D), e desde a W-E por endereço
+ *
+ * Clicar no nome chama `aoAbrir`, e quem monta a lista navega para o endereço do
+ * produto (ADR-061). Até a W-E o produto aberto era estado desta lista — a terceira
+ * tela posta pelo precedente do estado, com o gatilho do `MenuDoPainel` já vencido.
+ * Voltar remonta a lista, e ela relê: marcar uma opção pode ter mudado o `vendavel`.
+ *
+ * Recarregar é remontar: a lista de dentro leva uma `key` que muda, e o
+ * `useRecurso` dela busca de novo. Assim o `useRecurso`, que é de todas as telas,
+ * não ganhou parâmetro para servir esta.
  */
-export function ListaDeProdutos({ estabelecimentoId }: { estabelecimentoId: string | null }) {
+export function ListaDeProdutos({
+  estabelecimentoId,
+  podeMarcar = false,
+  aoAbrir,
+}: {
+  estabelecimentoId: string | null;
+  podeMarcar?: boolean;
+  aoAbrir?: (produtoId: string) => void;
+}) {
+  const [geracao, definirGeracao] = useState(0);
+
+  return (
+    <ListaCarregada
+      key={geracao}
+      estabelecimentoId={estabelecimentoId}
+      podeMarcar={podeMarcar}
+      aoRecarregar={() => definirGeracao((atual) => atual + 1)}
+      aoAbrir={aoAbrir}
+    />
+  );
+}
+
+function ListaCarregada({
+  estabelecimentoId,
+  podeMarcar,
+  aoRecarregar,
+  aoAbrir,
+}: {
+  estabelecimentoId: string | null;
+  podeMarcar: boolean;
+  aoRecarregar: () => void;
+  aoAbrir: ((produtoId: string) => void) | undefined;
+}) {
   const recurso = useRecurso<PaginaDoContrato>(
     estabelecimentoId === null ? null : caminhoDosProdutos(estabelecimentoId),
   );
+  const [devolvidos, definirDevolvidos] = useState<ReadonlyMap<string, Produto>>(new Map());
+
+  function substituir(produto: ProdutoDoContrato) {
+    const naTela = produtoParaTela(produto);
+    definirDevolvidos((atual) => new Map(atual).set(naTela.id, naTela));
+  }
 
   if (recurso.estado === 'carregando') {
     return <p className="text-sm text-slate-500 dark:text-slate-400">Carregando o cardápio…</p>;
@@ -49,7 +117,7 @@ export function ListaDeProdutos({ estabelecimentoId }: { estabelecimentoId: stri
   if (produtos.length === 0) {
     return (
       <p className="text-sm text-slate-600 dark:text-slate-300">
-        Esta loja ainda não tem nenhum produto publicado.
+        Esta loja não tem nenhum produto.
       </p>
     );
   }
@@ -57,21 +125,43 @@ export function ListaDeProdutos({ estabelecimentoId }: { estabelecimentoId: stri
   return (
     <div>
       <ul className="divide-y divide-slate-200 dark:divide-slate-700">
-        {produtos.map((produto) => (
-          <li key={produto.id} className="flex items-baseline justify-between gap-4 py-3">
-            <span className="text-slate-900 dark:text-slate-100">{produto.nome}</span>
-            <span className="flex items-baseline gap-3">
-              {!produto.vendavel && (
-                <span className="rounded bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
-                  não vendável
+        {produtos
+          .map((daLista) => devolvidos.get(daLista.id) ?? daLista)
+          .map((produto) => (
+            <li key={produto.id} className="py-3">
+              <div className="flex items-baseline justify-between gap-4">
+                {aoAbrir === undefined ? (
+                  <span className="text-slate-900 dark:text-slate-100">{produto.nome}</span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => aoAbrir(produto.id)}
+                    className="text-left text-slate-900 underline-offset-2 hover:underline dark:text-slate-100"
+                  >
+                    {produto.nome}
+                  </button>
+                )}
+                <span className="flex items-baseline gap-3">
+                  {!produto.vendavel && (
+                    <span className="rounded bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+                      não vendável
+                    </span>
+                  )}
+                  <span className="tabular-nums text-slate-700 dark:text-slate-300">
+                    {produto.preco}
+                  </span>
                 </span>
+              </div>
+              {podeMarcar && estabelecimentoId !== null && (
+                <MarcarDisponibilidade
+                  estabelecimentoId={estabelecimentoId}
+                  produto={produto}
+                  aoMarcar={substituir}
+                  aoRecarregar={aoRecarregar}
+                />
               )}
-              <span className="tabular-nums text-slate-700 dark:text-slate-300">
-                {produto.preco}
-              </span>
-            </span>
-          </li>
-        ))}
+            </li>
+          ))}
       </ul>
 
       {temMais && (

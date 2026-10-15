@@ -1,5 +1,6 @@
 package com.deliveryplatform.catalog.unit;
 
+import com.deliveryplatform.catalog.domain.exception.OpcaoNaoEncontrada;
 import com.deliveryplatform.catalog.domain.exception.RegraDoCatalogoViolada;
 import com.deliveryplatform.catalog.domain.model.Disponibilidade;
 import com.deliveryplatform.catalog.domain.model.EstadoDeDisponibilidade;
@@ -137,14 +138,14 @@ class DisponibilidadeDaOpcaoTest {
         UUID opcao = sabores.opcoes().getFirst().id();
 
         assertThatThrownBy(() -> p.marcarOpcao(UUID.randomUUID(), opcao, Disponibilidade.inicial()))
-                .isInstanceOf(RegraDoCatalogoViolada.class)
+                .isInstanceOf(OpcaoNaoEncontrada.class)
                 .hasMessageContaining("não encontrada");
 
         assertThatThrownBy(() ->
                 p.marcarOpcao(sabores.id(), UUID.randomUUID(), Disponibilidade.inicial()))
                 .as("a reativação vai varrer opções por id; engolir o id errado faria "
                         + "um sabor ficar esgotado para sempre, sem erro em lugar nenhum")
-                .isInstanceOf(RegraDoCatalogoViolada.class)
+                .isInstanceOf(OpcaoNaoEncontrada.class)
                 .hasMessageContaining("não encontrada");
     }
 

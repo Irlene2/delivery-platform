@@ -58,9 +58,27 @@ Portanto, e sem exceção:
 
 ### 2.2 O guarda de rota é conveniência, não segurança
 
-Toda rota deste sistema exige token, e a autorização é resolvida no servidor a
-cada requisição. O `ExigeSessao` existe para a pessoa não ver um painel piscando
-antes do 401. **Apagá-lo não abriria dado nenhum.**
+Toda rota deste sistema exige token — **salvo a entrada (login e cadastro) e, desde a W-G,
+a leitura do convite** —, e a autorização é resolvida no servidor a cada requisição. O
+`ExigeSessao` existe para a pessoa não ver um painel piscando antes do 401. **Apagá-lo não
+abriria dado nenhum.**
+
+**A página do convite é pública** (ADR-070): `/convite/:token` fica fora do `ExigeSessao`, e
+é a primeira tela deste front sem sessão que **não é entrada nem cadastro**. Ela mostra o que
+a rota pública do `merchant` devolve — o nome da loja, o papel com que se entra e a validade
+— e **nada que identifique pessoa**.
+
+**O token mora na URL, do começo ao fim.** Quem abre o link **já o tem no navegador**: ele
+chegou por mensagem e está na barra de endereços daquela pessoa. O que a ADR-069 impede é
+**multiplicá-lo em lugares que outros leem** — o corpo de erro que o servidor monta, o log do
+servidor. Por isso o desvio do cadastro leva o destino pelo **estado do roteador**
+(`state.de`, o mesmo do `ExigeSessao`, medido na W-G), e **não** em `sessionStorage`: seria
+uma cópia a mais, que sobrevive à navegação, para não ganhar nada.
+
+**O link do convite é montado no front**, com a própria origem: o `merchant` devolve o token
+e **não conhece o endereço das telas**. E o `index.html` declara
+`strict-origin-when-cross-origin`: para o gateway, que é outra origem, vai a origem e nunca o
+caminho com o token.
 
 ### 2.3 O token é opaco
 
@@ -76,9 +94,42 @@ No `catalog`, o mesmo 403 com o mesmo corpo sai para: sem vínculo, sem permiss�
 loja não é sua" de "o sistema está com problema". Escolher uma das quatro na
 mensagem é mentir com mais confiança do que o servidor.
 
+### 2.5 O que a tela mostra quando o servidor recusa (W-C)
+
+O `detail` do `ProblemDetail`, como veio, e **sem interpretar o texto** — ADR-055.
+Frase de recusa é escrita uma vez, no servidor, onde a regra mora; uma segunda
+redação no front diverge da primeira sem ninguém notar.
+
+Três consequências que o código tem de respeitar:
+
+- **quem lê o corpo de erro é o `cliente.ts`, e só ele** (`lerDetalhe`, desde a
+  W-A). O contrato declara os erros sem corpo — os tipos gerados dizem
+  `content?: never` —, então nenhuma tela lê corpo de erro por conta própria;
+- **`detail` que não é texto não vai à tela**, e texto em branco também não. Cai
+  na mensagem por código. Resposta de erro pode vir do gateway, de um proxy ou da
+  página de erro do contêiner;
+- **no 403 o texto do servidor não é mostrado.** Ele é fixo e genérico de propósito
+  (§2.4), e o que a tela faz é oferecer recarregar o painel — o menu é montado das
+  permissões que o servidor respondeu, e um 403 numa ação oferecida significa que
+  elas mudaram.
+
+
+### 2.6 A loja escolhida mora na URL (W-E)
+
+**A loja escolhida mora na URL** (ADR-061). `/painel/lojas/:estabelecimentoId` é o prefixo
+de tudo que pertence a uma loja. Recarregar não perde a loja; o `201` da criação tem
+destino; e "abre a tela X da loja Y" é um endereço. O id que está na URL **não é conferido
+no navegador**: a tela pede os dados, e quem recusa é o servidor, com o 403 idêntico a "não
+existe" (§2.4).
+
+**Zero lojas não é erro, e tem mais de uma causa:** conta nova, convidada que ainda não
+aceitou, suspensa, removida da última loja. Por isso o `/painel` **mostra** o convite em
+vez de redirecionar para o cadastro — o texto *"ainda não faz parte de nenhuma loja"* é
+verdade nas quatro, e *"cadastre a sua loja"* só na primeira. O convite leva ao cadastro
+por um link.
 ---
 
-## 3 · Dinheiro
+## 3 · Dinheiro, e regra de domínio
 
 > ADR-009: `BigDecimal`, escala 2, `HALF_UP`.
 
@@ -94,6 +145,50 @@ com `Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })`.
 O protótipo fazia `Number(item.price) * Number(item.qty)` no navegador e somava
 uma taxa fixa de R$ 5 — que, além de ser float, contraria P5.
 
+**E o front não deriva regra de domínio** (R-1, 10/10/2026). O `vendavel` é o caso
+que trouxe isto à tona (W-D): a tela do produto aberto tem **todos** os dados para
+recalculá-lo — os grupos, o mínimo de cada um, o estado de cada opção — e mostra o
+que o servidor mandou. A regra mora no `catalogo.md` §4 ("Vendabilidade derivada") e
+é derivada no `catalog`; derivá-la outra vez aqui seria um segundo lugar onde ela
+está escrita, e no dia em que ela mudar a tela passaria a mentir **sem nada ficar
+vermelho**.
+
+O argumento é o mesmo que a ADR-059 usou contra semear por SQL, aplicado à borda de
+cima em vez da de baixo: **não duplicar a regra — chamar quem a tem.**
+
+**O que prova isto é um dublê que mente.** Um produto com uma opção esgotada e
+`vendavel: true` não distingue as duas implementações: se o grupo ainda tem opção
+suficiente, a regra aplicada certo também dá `true` — medido na W-D, recalcular pela
+§4 deixou esse caso verde. O caso que distingue manda `vendavel: false` num produto
+que a regra daria como vendável: um estado que ela nunca produziria, e que só uma tela
+que lê o servidor mostra.
+
+
+**O formulário não antecipa recusa de domínio** (W-E). Campo obrigatório é forma, e a tela
+o marca. **Invariante não:** o botão do cadastro de loja não é desabilitado pela M12, e a
+tela mostra o `detail` do 400 como veio (ADR-055). Antecipar a regra seria mantê-la em dois
+lugares — o erro que a W-D consertou no `vendavel`.
+
+**E a lista do seletor de fuso vem do contrato**, não de uma constante solta: o `merchant`
+declara as zonas aceitas no schema do campo, e o tipo gerado as carrega. A tela as lista a
+partir de um `Record<Fuso, string>` de rótulos, e o `Record` exige do typecheck exatamente
+as chaves da união gerada. **Ler o contrato não é derivar regra** — é o oposto de copiá-la.
+A exceção, escrita no `dividas.md`: as modalidades, que o contrato não nomeia.
+
+**A tela do cardápio compõe duas rotas do mesmo serviço** (ADR-067): as seções e os
+produtos, agrupados no cliente. **É a primeira vista deste front montada com duas
+requisições**, e a ADR-066 previu que ela chegaria quando a regra da seção nasceu.
+
+**Não há rota de "cardápio agrupado" no back, e é decisão:** juntar duas raízes numa
+resposta é modelo de leitura, com dono e invalidação. Esta é uma tela de administração.
+
+**O produto cuja seção não existe aparece num grupo "Sem seção", no fim.** A ADR-066 decidiu
+que a leitura não valida referência; este é o lugar onde essa escolha fica visível, e
+esconder o produto o tornaria inconsertável.
+
+**O `ordem` do produto é derivado pela tela** — o maior da seção, mais um —, e **isso é
+dívida nossa**: a borda exige um campo que nenhuma pessoa fornece. *Está no `dividas.md`, com
+gatilho.*
 ---
 
 ## 4 · O que o front tolera, porque o back mudará
@@ -148,13 +243,13 @@ tela, com o gatilho de cada um.
 | --- | --- | --- |
 | ~~Rota que diga **quais lojas o portador tem**~~ | ~~Não há tela depois do login. Todas as rotas de negócio começam com `{estabelecimentoId}`~~ | **resolvido na G-B5** — `GET /api/v1/me/estabelecimentos` |
 | ~~Rota **pública** de contexto de acesso~~ | ~~O menu do painel não se monta. A que existe é `/internal/`, que o gateway não roteia~~ | **resolvido na G-B5**, e não vai existir: seria uma segunda verdade sobre o mesmo vínculo. `GET /api/v1/me/estabelecimentos` já traz papel e permissões de cada loja; o `/internal/…/contexto-de-acesso` continua só para serviço |
-| Rota que devolva **o usuário do token** | O painel não sabe o nome de quem entrou | a G-B5 **não** a entregou; sem rodada marcada |
+| Rota que devolva **o usuário do token** | O painel não sabe o nome de quem entrou — e, desde a W-G, **a tela de equipe não tem o que escrever na coluna da pessoa**: uma lista de membros seria uma lista de identificadores (ADR-070 §1). A página do convite também não diz quem convidou | a G-B5 **não** a entregou; sem rodada marcada |
 | **Refresh token** | Trinta minutos e login outra vez, no meio do expediente | ADR-037 registra como dívida assumida |
 | `exposedHeaders` no CORS | O front não lê `Location` nem `WWW-Authenticate` de outra origem | a primeira rota que responda `201` com `Location` |
 | `required` nos esquemas do `catalog` e na `LojaDoUsuario` do `merchant` | Todo campo do tipo gerado é opcional, e a tela precisa tratar ausência que não acontece | a primeira tela que leia produto |
 | O **estado da operação** — a loja está aberta agora? | O seletor não pode mostrar aberta/fechada. A `OperacaoDoEstabelecimentoPort` do `estabelecimento.md` §3 não existe em código | sem rodada marcada — a porta não existe (ADR-046, emenda de 30/09/2026), e a rota da G-C1 responde outra pergunta: qual expediente carimbar |
-| Paginação na tela do cardápio | A lista mostra os 20 primeiros e diz quantos há. Quem tiver 200 produtos não alcança o resto | a primeira loja de teste com mais de 20 produtos |
-| Rota de escrita do catálogo | Não dá para criar nem editar produto pela tela — só ver | G-C2 |
+| Paginação na tela do cardápio | O cardápio pede a página do teto da rota — 100 — e diz quantos há (W-F); a lista da disponibilidade continua com 20. Quem tiver 200 produtos não alcança o resto | a primeira loja de teste com mais de 100 produtos |
+| Rota de escrita do catálogo | Criar seção, criar produto e publicar existem desde a W-F (ADR-067). **Editar** produto, despublicar, grupos e opções, renomear e reordenar seção não têm tela — cada um com gatilho no `dividas.md` | a rota de cada um |
 
 **Enquanto um item desta tabela não tiver rota, a tela que depende dele não é
 escrita** — e não é simulada com valor de configuração temporário. Um
@@ -186,4 +281,10 @@ interpolação é, por si, a razão: no dia em que o nome do produto vier da API
 | 403 não desloga | teste `403 NÃO derruba a sessão` |
 | O corpo do login usa `telefone` e `senha` | teste `manda telefone e senha` |
 | O tipo do corpo casa com o contrato | `npm run tipos:conferir`, no CI |
+| A tela mostra o `detail`, e só texto não vazio vira `detail` | testes `corpo sem detail textual não vira detalhe` (cliente) e `3 · a recusa mostra o detail do servidor, como veio` |
+| No 403 o texto do servidor não vai à tela | testes `no 403 descarta o detail…` e `5 · no 403, não mostra o texto do servidor…` |
+| Estado de enum desconhecido não concede nada | testes `estado que o front não conhece vira null…` e `estado que o front não conhece não aparece como "Disponível"` |
+| O front não deriva regra de domínio | teste `3b · e quando o servidor diz que não é vendável, a tela diz também` |
+| O formulário não antecipa a M12 | teste `A7 · a tela não antecipa a M12: matriz vazia, botão habilitado, e a requisição acontece` |
+| A lista de fusos é a do contrato | o `typecheck`, pelo `Record<Fuso, string>` do `CadastroDeLojaPage`; e, do lado do servidor, o `AllowableValuesDoFusoTest` |
 | As seis premissas | **ninguém, e é por isso que este documento existe.** Nenhuma máquina confere que uma tela não foi desenhada. |

@@ -1,8 +1,10 @@
 package com.deliveryplatform.catalog.domain.model;
 
+import com.deliveryplatform.catalog.domain.exception.OpcaoNaoEncontrada;
 import com.deliveryplatform.catalog.domain.exception.RegraDoCatalogoViolada;
 import com.deliveryplatform.valuetypes.Money;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -32,7 +34,8 @@ import java.util.UUID;
  * <ul>
  *   <li><b>Se a categoria existe, e se ela é da mesma loja.</b> {@link Categoria}
  *       é outra raiz; agregado não valida agregado. A regra é do caso de uso, e
- *       ela nasce com a rota que cria produto (G-B).</li>
+ *       nasceu com a rota que cria produto — o {@code CriarProdutoService}, na
+ *       E-3c (ADR-066). Escrita na G-B, cobrada desde a E-3c.</li>
  *   <li><b>Se a loja está aberta.</b> Isso é do {@code merchant}, e vem pela
  *       porta ou pelo evento.</li>
  *   <li><b>Que dia é hoje.</b> Não há relógio nem fuso nesta classe. O dia
@@ -58,16 +61,29 @@ public final class Produto {
 
     private final List<GrupoDeOpcoes> gruposDeOpcoes = new ArrayList<>();
 
+    /**
+     * A versão do documento, e ela <b>não é do domínio</b> (ADR-052).
+     *
+     * <p>O mapeador a recebe do banco ao reconstituir e a devolve ao gravar.
+     * Nenhum método desta classe a lê, compara ou escreve, e quem a usar numa
+     * regra está errado: ela existe porque o mapeador reconstrói o documento, e
+     * uma versão que não atravesse o agregado chegaria nula em toda gravação —
+     * o que o Spring Data entende como documento novo.
+     *
+     * <p>Nula em produto que nunca foi gravado, de propósito.
+     */
+    private Long versao;
+
     private Produto(UUID id, UUID estabelecimentoId, UUID categoriaId, String nome,
                     Money precoBase, ModoDeControle modoDeControle, int ordem) {
         if (estabelecimentoId == null) {
-            throw new RegraDoCatalogoViolada("produto sem estabelecimento");
+            throw RegraDoCatalogoViolada.integridade("produto sem estabelecimento");
         }
         if (categoriaId == null) {
-            throw new RegraDoCatalogoViolada("produto sem categoria");
+            throw RegraDoCatalogoViolada.integridade("produto sem categoria");
         }
         if (modoDeControle == null) {
-            throw new RegraDoCatalogoViolada("produto sem modo de controle");
+            throw RegraDoCatalogoViolada.integridade("produto sem modo de controle");
         }
         exigirPrecoValido(precoBase);
 
@@ -127,15 +143,16 @@ public final class Produto {
                                        EstadoDePublicacao estadoDePublicacao,
                                        ModoDeControle modoDeControle,
                                        Disponibilidade disponibilidade,
-                                       List<GrupoDeOpcoes> gruposDeOpcoes) {
+                                       List<GrupoDeOpcoes> gruposDeOpcoes,
+                                       Long versao) {
         if (id == null) {
-            throw new RegraDoCatalogoViolada("produto sem id");
+            throw RegraDoCatalogoViolada.integridade("produto sem id");
         }
         if (estadoDePublicacao == null) {
-            throw new RegraDoCatalogoViolada("produto sem estado de publicação");
+            throw RegraDoCatalogoViolada.integridade("produto sem estado de publicação");
         }
         if (disponibilidade == null) {
-            throw new RegraDoCatalogoViolada("produto sem disponibilidade");
+            throw RegraDoCatalogoViolada.integridade("produto sem disponibilidade");
         }
         Produto produto = new Produto(id, estabelecimentoId, categoriaId, nome,
                 precoBase, modoDeControle, ordem);
@@ -146,6 +163,7 @@ public final class Produto {
         if (gruposDeOpcoes != null) {
             gruposDeOpcoes.forEach(produto::acrescentarGrupo);
         }
+        produto.versao = versao;
         return produto;
     }
 
@@ -176,33 +194,36 @@ public final class Produto {
             return;
         }
         if (precoBase.ehZero()) {
-            throw new RegraDoCatalogoViolada(
+            throw new RegraDoCatalogoViolada(RegraDoCatalogoViolada.Motivo.PUBLICACAO_SEM_PRECO,
                     "C1: preço base zero impede a publicação de " + nome
-                            + " — produto de graça por descuido");
+                            + " — produto de graça por descuido", nome);
         }
         List<String> impossiveis = gruposDeOpcoes.stream()
                 .filter(g -> !g.estruturalmenteSatisfazivel())
                 .map(GrupoDeOpcoes::nome)
                 .toList();
         if (!impossiveis.isEmpty()) {
-            throw new RegraDoCatalogoViolada(
+            throw new RegraDoCatalogoViolada(RegraDoCatalogoViolada.Motivo.PUBLICACAO_GRUPO_IMPOSSIVEL,
                     "C5: grupo obrigatório sem opções suficientes impede a publicação: "
-                            + String.join(", ", impossiveis));
+                            + String.join(", ", impossiveis),
+                    impossiveis.toArray(String[]::new));
         }
         List<String> tetosInalcancaveis = gruposDeOpcoes.stream()
                 .filter(g -> !g.tetoAlcancavel())
                 .map(GrupoDeOpcoes::nome)
                 .toList();
         if (!tetosInalcancaveis.isEmpty()) {
-            throw new RegraDoCatalogoViolada(
+            throw new RegraDoCatalogoViolada(RegraDoCatalogoViolada.Motivo.PUBLICACAO_TETO_INALCANCAVEL,
                     "C4: maxEscolhas maior que o número de opções impede a publicação: "
-                            + String.join(", ", tetosInalcancaveis));
+                            + String.join(", ", tetosInalcancaveis),
+                    tetosInalcancaveis.toArray(String[]::new));
         }
         Money minimo = precoMinimoPossivel();
         if (minimo.ehNegativo() || minimo.ehZero()) {
-            throw new RegraDoCatalogoViolada(
+            throw new RegraDoCatalogoViolada(RegraDoCatalogoViolada.Motivo.PUBLICACAO_PRECO_NAO_POSITIVO,
                     "C2: existe combinação válida cujo preço unitário não é positivo — "
-                            + "mínimo possível " + minimo.valor());
+                            + "mínimo possível " + minimo.valor(),
+                    minimo.valor().toPlainString());
         }
         estadoDePublicacao = EstadoDePublicacao.ATIVO;
     }
@@ -218,7 +239,7 @@ public final class Produto {
      */
     public void inativar() {
         if (estadoDePublicacao == EstadoDePublicacao.RASCUNHO) {
-            throw new RegraDoCatalogoViolada(
+            throw new RegraDoCatalogoViolada(RegraDoCatalogoViolada.Motivo.RASCUNHO_NAO_SE_INATIVA,
                     "rascunho não se inativa: ele nunca apareceu no cardápio");
         }
         estadoDePublicacao = EstadoDePublicacao.INATIVO;
@@ -237,7 +258,7 @@ public final class Produto {
      */
     public void acrescentarGrupo(GrupoDeOpcoes grupo) {
         if (grupo == null) {
-            throw new RegraDoCatalogoViolada("grupo nulo");
+            throw RegraDoCatalogoViolada.integridade("grupo nulo");
         }
         gruposDeOpcoes.add(grupo);
         gruposDeOpcoes.sort(Comparator.comparingInt(GrupoDeOpcoes::ordem));
@@ -273,13 +294,14 @@ public final class Produto {
      */
     public void marcar(Disponibilidade nova) {
         if (nova == null) {
-            throw new RegraDoCatalogoViolada("disponibilidade nula");
+            throw RegraDoCatalogoViolada.integridade("disponibilidade nula");
         }
         if (modoDeControle == ModoDeControle.SEM_CONTROLE
                 && nova.estado() != EstadoDeDisponibilidade.DISPONIVEL) {
-            throw new RegraDoCatalogoViolada(
+            throw new RegraDoCatalogoViolada(RegraDoCatalogoViolada.Motivo.MODO_SEM_CONTROLE,
                     "produto SEM_CONTROLE não acaba: " + nova.estado() + " não se aplica a "
-                            + nome);
+                            + nome,
+                    nova.estado().name(), nome);
         }
         this.disponibilidade = nova;
     }
@@ -310,7 +332,7 @@ public final class Produto {
      */
     public void marcarOpcao(UUID grupoId, UUID opcaoId, Disponibilidade nova) {
         if (nova == null) {
-            throw new RegraDoCatalogoViolada("disponibilidade nula");
+            throw RegraDoCatalogoViolada.integridade("disponibilidade nula");
         }
         for (int i = 0; i < gruposDeOpcoes.size(); i++) {
             GrupoDeOpcoes g = gruposDeOpcoes.get(i);
@@ -327,7 +349,48 @@ public final class Produto {
                     g.id(), g.nome(), g.minEscolhas(), g.maxEscolhas(), g.ordem(), novas));
             return;
         }
-        throw new RegraDoCatalogoViolada("opção não encontrada neste produto");
+        throw new OpcaoNaoEncontrada();
+    }
+
+    /**
+     * Devolve ao cardápio tudo o que acabou em expediente anterior a
+     * {@code expedienteQueAbriu}. É o ato que a §3 do {@code catalogo.md} exige na
+     * abertura, e o par da pergunta que a G-C1 corrigiu.
+     *
+     * <p><b>Quem decide é o {@link Disponibilidade#deveReativarNoExpediente}</b>,
+     * por item. Este método só percorre e aplica, pelos caminhos que já existem —
+     * {@link #marcar} e {@link #marcarOpcao} —, para que as invariantes deles
+     * continuem valendo.
+     *
+     * <p><b>Volta sem carimbo.</b> O par {@code marcadoEm}/{@code expedienteDeReferencia}
+     * existe para a comparação da reativação; depois dela não há comparação a
+     * fazer, e meio par é o que a ADR-049 proíbe.
+     *
+     * <p>Produto e opções no mesmo ato, porque o documento é gravado inteiro de
+     * qualquer forma e o {@code vendavel} do produto depende das opções (§4).
+     * {@code SEM_CONTROLE} não é caso especial: o produto não pode estar
+     * {@code ESGOTADO_HOJE}, mas uma opção dele pode.
+     *
+     * @return {@code true} se alguma coisa mudou. {@code false} é resposta
+     *         legítima: a consulta acha candidatos, e o predicado pode recusá-los.
+     */
+    public boolean reativarNoExpediente(LocalDate expedienteQueAbriu) {
+        boolean mudou = false;
+
+        if (disponibilidade.deveReativarNoExpediente(expedienteQueAbriu)) {
+            marcar(Disponibilidade.inicial());
+            mudou = true;
+        }
+
+        for (GrupoDeOpcoes grupo : getGruposDeOpcoes()) {
+            for (Opcao opcao : grupo.opcoes()) {
+                if (opcao.disponibilidade().deveReativarNoExpediente(expedienteQueAbriu)) {
+                    marcarOpcao(grupo.id(), opcao.id(), Disponibilidade.inicial());
+                    mudou = true;
+                }
+            }
+        }
+        return mudou;
     }
 
     // ── o preço mínimo (C2) ─────────────────────────────────────────────────
@@ -415,10 +478,10 @@ public final class Produto {
      */
     private static void exigirPrecoValido(Money precoBase) {
         if (precoBase == null) {
-            throw new RegraDoCatalogoViolada("produto sem preço base");
+            throw RegraDoCatalogoViolada.integridade("produto sem preço base");
         }
         if (precoBase.ehNegativo()) {
-            throw new RegraDoCatalogoViolada(
+            throw new RegraDoCatalogoViolada(RegraDoCatalogoViolada.Motivo.PRECO_BASE_INVALIDO,
                     "C1: preço base negativo — desconto é acréscimo negativo em opção, não preço");
         }
     }
@@ -472,6 +535,11 @@ public final class Produto {
     /** Cópia imutável: quem quiser mudar grupo passa pela raiz. */
     public List<GrupoDeOpcoes> getGruposDeOpcoes() {
         return List.copyOf(gruposDeOpcoes);
+    }
+
+    /** Só para o mapeador — ver o javadoc do campo (ADR-052). */
+    public Long getVersao() {
+        return versao;
     }
 
     /**

@@ -34,13 +34,13 @@ spring:
     password: ${RABBITMQ_PASSWORD}
     publisher-confirm-type: correlated
     publisher-returns: true
+    # Esta é a fábrica auto-configurada, a do OuvinteDeVinculoAlterado, que confirma
+    # à mão. Não há bloco `retry` aqui, de propósito (I-B): o que existia declarava
+    # `max-attempts`, que não existe no Boot 4.1.1 e nunca foi lido; e o consumo que
+    # retenta tem a própria fábrica, com a ADR-026 (ConfiguracaoDoConsumoDeExpediente).
     listener:
       simple:
         acknowledge-mode: manual
-        retry:
-          enabled: true
-          initial-interval: 2s
-          max-attempts: 5
 
   security:
     oauth2:
@@ -57,6 +57,11 @@ spring:
         max-page-size: 100
 
 delivery:
+  # A fixture de desenvolvimento (ADR-059): uma loja e um produto gravados pelo
+  # agregado na subida. Falsa por padrão — ligada fora da máquina de quem
+  # desenvolve, é dado inventado em produção. Andaime: sai com as rotas de escrita.
+  semeadura:
+    ligada: ${DELIVERY_SEMEADURA:false}
   # A documentação viva (Swagger UI e /v3/api-docs) sem token — ADR-050. O
   # padrão é false, e é assim que o serviço sobe em qualquer lugar que não seja
   # o seu computador: esquecer fecha.
@@ -81,6 +86,14 @@ delivery:
   # serviço não sobe (ADR-048 §1).
   escuta:
     exchange: delivery.eventos
+  # A reativação na abertura do expediente (catalogo.md §3, ADR-052).
+  reativacao:
+    # Teto de identificadores por volta da varredura. Não é paginação de
+    # exposição — nada disto sai numa resposta —, é teto de memória.
+    lote: 50
+    # Tentativas por produto quando a gravação esbarra num conflito de versão.
+    # Conflito aqui é duas pessoas no mesmo produto no mesmo segundo.
+    tentativas: 3
 
 # Mongock cumpre para o MongoDB o papel do Flyway no SQL — ADR-017.
 # ATENÇÃO: este bloco é irmão de `spring`, não filho. Estava aninhado por
@@ -107,6 +120,11 @@ management:
       show-details: never
 
 springdoc:
+  # Desligado de propósito (ADR-053): ligado, toda resposta que um
+  # @RestControllerAdvice anuncia vira resposta de TODAS as operações — medido
+  # na G-E, o 409 da loja sem horário apareceu no GET da listagem. Cada rota
+  # declara as próprias recusas em @ApiResponses, e o ContratoDeErrosIT prova.
+  override-with-generic-response: false
   swagger-ui:
     path: /swagger-ui.html
 

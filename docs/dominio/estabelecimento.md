@@ -224,6 +224,27 @@ vínculo reativa o mesmo registro e o rebaixa — senão um gerente restauraria 
 `ADMINISTRADOR` removido sem nenhum administrador na operação, que é escalada
 com aparência de gentileza.
 
+**O convite ganhou borda na E-2** (ADR-069). Emitir exige a permissão de equipe; o **201
+devolve o link uma vez**, e ele não aparece em nenhuma leitura depois disso — token é
+credencial. O transporte é **humano**, pela mão de quem convida, como a ADR-042 decidiu para
+o código de verificação: não há `CanalPort`.
+
+**A leitura do convite é pública**, endereçada pelo token, e devolve **o nome da loja, o
+papel e a validade** — e nada que identifique pessoa. **Quem convidou não aparece**: o nome
+mora no `identity` e a rota que o traria não existe. *Gatilho escrito.*
+
+**Inválido, expirado e já usado respondem a mesma coisa** — 404, mesmo corpo. É a M7 aplicada
+a um identificador sem autorização: distinguir contaria quais tokens existiram.
+
+**O aceite exige sessão e nenhuma permissão** — exigir permissão seria exigir que já fosse da
+loja —, e **a A2 é conferida ali de novo**, como este documento já mandava desde a B2.
+
+> **Medido na E-2.** O 201 devolve o **token**, e quem monta o link é a tela. O papel da
+> leitura pública é sempre `COLABORADOR`, porque o convite não carrega papel. A recusa por
+> A2 no aceite é **409**, com frase própria — só chega a ela quem tem o token. E **cancelar
+> convite existe no agregado** (`Equipe.cancelarConvite`) **e não tem rota**: criar outro não
+> cancela o primeiro.
+
 ### As minhas lojas
 
 Uma pessoa pode ter vínculo com mais de uma loja, e o sistema nunca soube
@@ -427,6 +448,30 @@ revogada continuando a valer, em silêncio.
 ---
 
 ## 4. Configuração de operação
+
+### Quem cria a loja, e com o quê
+
+Qualquer pessoa autenticada cria, por `POST /api/v1/me/estabelecimentos`, e nasce
+**fundadora** dela: `ADMINISTRADOR`, ativa, com todas as permissões — a loja nunca
+existe sem dono, e é para isso que a fábrica `Membro.fundador` existe (ADR-060).
+
+A loja nasce com **identificação, política de troco e operação**. A operação entra no
+cadastro porque a **M12** a exige: loja sem modalidade com forma de pagar é loja que não
+opera. Os **mínimos** e o **desconto de retirada** não são pedidos — nascem em zero por
+`Operacao.nova`, e zero tem significado escrito (*"sem mínimo"*), o que faz a **M17**
+passar por construção.
+
+A loja nasce **sem horário e sem área de entrega**. Não é cadastro incompleto:
+`Disponibilidade.semHorario()` é um estado nomeado, e significa *"nunca abre por
+horário"* — o estado de quem ainda não preencheu a tela. As áreas entram pela H1.3, e as
+M9 e M10 passam a valer quando houver duas.
+
+**E a assimetria é deliberada:** horário vazio **fecha** a loja, operação padrão a
+**abriria** — prometendo uma forma de pagar que o comerciante não escolheu, com dinheiro
+chegando à porta (P1).
+
+**Uma pessoa pode ter várias lojas, e não há unicidade de documento** — já estava
+decidido, e está no javadoc do `EstabelecimentoRepositorio`.
 
 ### Tipo de operação
 

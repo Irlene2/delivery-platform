@@ -57,6 +57,19 @@ qualquer outra coisa   autenticado
 
 **Nada além disso**, e desta vez a frase vem com teste.
 
+> **Emenda de 15/10/2026 (E-2, ADR-069) — a lista ganha a quarta, e a frase acima passa a
+> valer para quatro.** Quem estende o conjunto emenda a frase que o fecha:
+>
+> ```
+> GET /api/v1/convites/*   público   — quem recebe um convite ainda não tem sessão
+> ```
+>
+> `/api/v1/convites/**` é **público só no `GET` de um segmento**: quem recebe um convite
+> ainda não tem sessão, e pode nem ter conta (ADR-069 §2). O que a rota pública devolve é o
+> mínimo que convence — loja, papel, validade — e **o aceite, sob o mesmo prefixo, exige token
+> aqui e sessão no serviço**. O `CadeiaDeFiltrosIT` prova as três: o `GET` passa, o `POST
+> .../aceite` é 401, e o `GET` de dois segmentos também.
+
 ### 2. Por que `/api/v1/auth/**` inteiro, e não rota a rota
 
 A alternativa estreita — liberar `login`, `signup` e `verification-code`

@@ -191,33 +191,110 @@ class ProdutoRepositorioIT extends Infraestrutura {
         }
     }
 
+    /**
+     * A listagem do painel (ADR-068). <b>Até a E-3d esta classe afirmava o contrário</b>:
+     * <i>"publicadosDe traz só os ATIVO, e só os da loja pedida"</i>, e uma loja com só
+     * rascunho voltava vazia. Os dois testes mudaram de sentido — a loja continua sendo a
+     * única, e o estado deixou de filtrar.
+     */
     @Nested
-    class AConsultaDoPrimeiroIndice {
+    class AListagemDaLoja {
 
-        @Test
-        @DisplayName("publicadosDe traz só os ATIVO, e só os da loja pedida")
-        void publicados_de_uma_loja() {
-            Produto ativo = margherita();
-            ativo.publicar();
-            produtos.salvar(ativo);
-
-            produtos.salvar(margherita());          // rascunho, mesma loja
-
-            Produto deOutraLoja = Produto.rascunho(UUID.randomUUID(), CATEGORIA, "Coxinha",
-                    Precos.reais("8.00"), ModoDeControle.SEM_CONTROLE, 0);
-            deOutraLoja.publicar();
-            produtos.salvar(deOutraLoja);
-
-            assertThat(produtos.publicadosDe(LOJA, PageRequest.of(0, 20)).getContent())
-                    .extracting(Produto::getId)
-                    .containsExactly(ativo.getId());
+        private Produto simples(UUID loja, String nome, int ordem) {
+            return Produto.rascunho(loja, CATEGORIA, nome, Precos.reais("8.00"),
+                    ModoDeControle.SEM_CONTROLE, ordem);
         }
 
         @Test
-        void loja_sem_produto_publicado_volta_vazia() {
-            produtos.salvar(margherita());
+        @DisplayName("os três estados vêm juntos, e só os da loja pedida")
+        void os_tres_estados_de_uma_loja() {
+            Produto rascunho = produtos.salvar(simples(LOJA, "Rascunho", 0));
+            Produto ativo = simples(LOJA, "Ativo", 1);
+            ativo.publicar();
+            ativo = produtos.salvar(ativo);
+            Produto inativo = simples(LOJA, "Inativo", 2);
+            inativo.publicar();
+            inativo.inativar();
+            inativo = produtos.salvar(inativo);
 
-            assertThat(produtos.publicadosDe(LOJA, PageRequest.of(0, 20))).isEmpty();
+            Produto daVizinha = simples(UUID.randomUUID(), "Coxinha", 0);
+            daVizinha.publicar();
+            produtos.salvar(daVizinha);
+            produtos.salvar(simples(UUID.randomUUID(), "Rascunho alheio", 0));
+
+            assertThat(produtos.daLoja(LOJA, PageRequest.of(0, 20)).getContent())
+                    .extracting(Produto::getId, Produto::getEstadoDePublicacao)
+                    .containsExactly(
+                            org.assertj.core.groups.Tuple.tuple(rascunho.getId(), EstadoDePublicacao.RASCUNHO),
+                            org.assertj.core.groups.Tuple.tuple(ativo.getId(), EstadoDePublicacao.ATIVO),
+                            org.assertj.core.groups.Tuple.tuple(inativo.getId(), EstadoDePublicacao.INATIVO));
+        }
+
+        @Test
+        @DisplayName("uma loja só com rascunho não volta vazia")
+        void loja_so_com_rascunho() {
+            Produto rascunho = produtos.salvar(margherita());
+
+            assertThat(produtos.daLoja(LOJA, PageRequest.of(0, 20)).getContent())
+                    .extracting(Produto::getId).containsExactly(rascunho.getId());
+        }
+
+        @Test
+        @DisplayName("a ordem manda: 2, 0 e 1 voltam 0, 1, 2")
+        void a_ordem_manda() {
+            produtos.salvar(simples(LOJA, "dois", 2));
+            produtos.salvar(simples(LOJA, "zero", 0));
+            produtos.salvar(simples(LOJA, "um", 1));
+
+            assertThat(produtos.daLoja(LOJA, PageRequest.of(0, 20)).getContent())
+                    .extracting(Produto::getNome).containsExactly("zero", "um", "dois");
+        }
+
+        /**
+         * Com {@code ordem} repetida o desempate é exercitado: a sequência tem de ser a dos
+         * ids, nas duas leituras. Os produtos são gravados na ordem <b>inversa</b> dos ids,
+         * para que a ordem natural da coleção — a de inserção — não coincida com ela por
+         * acaso.
+         */
+        @Test
+        @DisplayName("ordem repetida: o id desempata, e duas leituras dão a mesma sequência")
+        void o_desempate_e_estavel() {
+            // Ids controlados: o Mongo compara UUID por bytes e o Java por long com sinal,
+            // e os dois só concordam com a parte alta zerada e a baixa pequena.
+            List<UUID> ids = new java.util.ArrayList<>();
+            for (int i = 5; i >= 1; i--) {
+                ids.add(new UUID(0L, i));
+            }
+            for (UUID id : ids) {
+                produtos.salvar(Produto.reconstituir(id, LOJA, CATEGORIA, "mesma ordem", null, null,
+                        Precos.reais("8.00"), 7, EstadoDePublicacao.RASCUNHO,
+                        ModoDeControle.SEM_CONTROLE,
+                        com.deliveryplatform.catalog.domain.model.Disponibilidade.inicial(),
+                        List.of(), null));
+            }
+
+            List<UUID> primeira = produtos.daLoja(LOJA, PageRequest.of(0, 20)).getContent()
+                    .stream().map(Produto::getId).toList();
+            List<UUID> segunda = produtos.daLoja(LOJA, PageRequest.of(0, 20)).getContent()
+                    .stream().map(Produto::getId).toList();
+
+            List<UUID> crescente = ids.reversed();
+            assertThat(primeira).isEqualTo(segunda).isEqualTo(crescente);
+        }
+
+        @Test
+        @DisplayName("o total conta todos os estados, com mais itens do que a página")
+        void o_total_conta_tudo() {
+            produtos.salvar(simples(LOJA, "a", 0));
+            Produto ativo = simples(LOJA, "b", 1);
+            ativo.publicar();
+            produtos.salvar(ativo);
+            produtos.salvar(simples(LOJA, "c", 2));
+
+            var pagina = produtos.daLoja(LOJA, PageRequest.of(0, 2));
+
+            assertThat(pagina.getContent()).extracting(Produto::getNome).containsExactly("a", "b");
+            assertThat(pagina.getTotalElements()).isEqualTo(3);
         }
     }
 }

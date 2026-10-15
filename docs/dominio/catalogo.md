@@ -56,6 +56,26 @@ produtos entre categorias sem tocar em nenhum deles. Como parte do produto, a
 ordem das categorias seria um dado replicado em N documentos, e a primeira
 reordenação deixaria metade desatualizada.
 
+**A categoria passa a existir fora do Java** (ADR-064). Até 11/10/2026 havia classe de
+domínio com regras e nenhuma coleção: nenhuma categoria podia ser gravada nem lida, o
+`categoriaId` que o `ProdutoResponse` devolve não tinha onde ser resolvido, e a fixture
+dizia por escrito que a dela era *"solta de propósito"*. A E-3b deu a ela porta,
+documento, coleção e índice, mais **criar** e **listar**.
+
+**Renomear, reordenar, ativar e desativar continuam só no agregado**, e o motivo de
+`reordenar` é de infraestrutura: ele publica `CategoriasReordenadasV1`, e **o `catalog` não
+tem outbox**. Quem publica precisa de um (invariante 7). *Está no `dividas.md`, com
+gatilho.*
+
+**O produto aponta para uma categoria que existe, e da mesma loja** (ADR-066). A regra é do
+**caso de uso que cria produto** — `Categoria` é outra raiz, e agregado não valida agregado,
+como o javadoc do `Produto` escreveu desde a G-B. Ela passou a ser cobrada na **E-3c**, com a
+primeira rota de criação de produto, e **só na escrita**: a leitura não valida referência, para
+que um dado velho não transforme um defeito de ontem em cardápio ilegível hoje.
+
+Não existe, ou é de outra loja: **a mesma recusa, com a frase idêntica** (M7), em **400** com
+motivo — **404 é de identificador que está na URL**, e a categoria vem no corpo.
+
 > **Nota de nomenclatura.** A ADR-018 modela isto em inglês (`Product`,
 > `optionGroups`, `minSelect`), e o código nascerá em português — `Produto`,
 > `gruposDeOpcoes`, `minEscolhas`. A regra está na **ADR-035**: o negócio fala
@@ -163,8 +183,125 @@ responde o caso que faltava: a loja que abre **duas vezes no mesmo dia**.
 ```
 
 O pão que acabou no almoço continua acabado no jantar, que é o comportamento
-certo — o estoque físico também não se repôs. No dia seguinte, `D+1 ≠ D`, e
+certo — o estoque físico também não se repôs. No dia seguinte, `D < D+1`, e
 reativa.
+
+### Quem marca, e de onde vem o carimbo
+
+`PUT /api/v1/merchants/{estabelecimentoId}/catalog/produtos/{produtoId}/disponibilidade`
+— e o par dela para a opção, em
+`…/produtos/{produtoId}/grupos/{grupoId}/opcoes/{opcaoId}/disponibilidade`
+(G-C2, 06/10/2026). Exige `ALTERAR_PRODUTO`.
+
+**O corpo traz um estado, e mais nada.** O `marcadoEm` é o relógio do serviço;
+o `expedienteDeReferencia` é perguntado ao `merchant`, que é o único lugar que
+calcula dia operacional (ADR-046 §6). Data escolhida pelo cliente é data que
+decide, errado, se um produto volta ao cardápio amanhã.
+
+**Loja que não abre por horário:** `ESGOTADO_HOJE` é recusado com 409 — ele
+nunca reativaria —, e os outros três estados são aceitos **sem carimbo**.
+ADR-049, emenda de 06/10/2026.
+
+**A resposta traz o produto inteiro**, recalculado. Marcar uma opção pode
+derrubar o `vendavel` do produto pela terceira cláusula da §4, e o cliente não
+consegue derivar isso: o resumo não carrega os grupos.
+
+**O que esta rota ainda não faz:** publicar `DisponibilidadeAlteradaV1`. A §8 o
+exige em toda mudança de disponibilidade e diz que ele é o mais sensível a
+atraso — e não há outbox neste serviço. É um adiamento, não uma decisão: a §8
+continua valendo. **Gatilho escrito:** o `conversation-service` ganhar código,
+que é quem o consome.
+
+**Estado que o modo do produto não tem é 400.** Marcar como esgotado um produto
+`SEM_CONTROLE` é erro do chamador: o produto não acaba hoje nem amanhã, e não é o
+mundo que mudou — por isso 400 e não 409, seguindo a distinção que a §5 faz para a
+cotação. O mesmo vale para marcar uma opção que não é daquele produto. Até a G-E
+isso era 500, porque a `RegraDoCatalogoViolada` não tinha tratador (ADR-053).
+
+**E o que não é pedido malformado:** documento gravado que não volta a ser `Produto`
+(G-C3b). Isso não é erro de quem pediu — é dado inválido no banco, e responder 400
+mandaria a pessoa corrigir o que ela não escreveu. O `ProdutoMapper` converte essa
+falha em `DocumentoIlegivel`, que não tem tratador e sai como **500** — ninguém de fora
+pode consertar isto. No consumo da reativação, a mesma exceção vai direto para a fila
+morta, sem as quatro tentativas: reler o mesmo documento inválido não o conserta.
+
+### Ler um produto inteiro, e por que a listagem não basta
+
+`GET /api/v1/merchants/{estabelecimentoId}/catalog/produtos/{produtoId}` — exige
+`VER_PRODUTO` (G-F, 07/10/2026).
+
+**Ela existe por um motivo concreto:** a rota de marcar a disponibilidade de uma
+opção precisa de `grupoId` e `opcaoId`, e **o resumo da listagem não carrega os
+grupos**. Até a G-F, a única forma de um cliente descobrir uma opção era marcar o
+produto e ler os grupos da resposta — e por isso a tela da opção não existia.
+
+**A resposta usa a forma da listagem** para o que as duas têm em comum:
+`disponibilidade` é o estado, sem carimbo, e preço e acréscimo são número. O carimbo
+é do servidor.
+
+**Recurso de outra loja é 404, aqui e na marcação** (ADR-056). A autorização é sobre a
+loja da URL; o recurso não estar nela é ausência, não recusa. As duas respostas de
+404 — inexistente e de outra loja — têm **o mesmo corpo**, porque distinguir no corpo
+desfaz o que o status fechou.
+
+E o **403 tem um significado só**: sem acesso a esta loja, ou sem a permissão
+exigida. Era isso que a divergência de 07/10 a 09/10 tirava do cliente — com dois
+sentidos no mesmo código, a tela não conseguia saber se pedia para recarregar o
+painel ou se o identificador estava errado.
+
+**A ordem das etapas é regra, não detalhe:** autoriza, depois busca. Buscar antes
+faria quem não tem vínculo distinguir produto que existe de produto que não existe.
+O `ConsultarProdutoServiceTest` afirma isso contando as buscas.
+
+**As duas leituras devolvem qualquer estado de publicação** (ADR-068). O `GET` por id é a
+tela de agir sobre um item; a listagem é **a do painel**, e o comerciante precisa ver o
+rascunho para publicá-lo — pelo mesmo motivo que a lista mostra o que não está vendável.
+
+**Até a E-3d a listagem filtrava `ATIVO`**, com a razão de ser *"a vitrine do cardápio"*. A
+razão não se sustentava: a rota exige `VER_PRODUTO`, a `PermissaoDoCatalogo` só tem
+permissões de comerciante, e **nenhum cliente a chama**. O cardápio de quem compra é do
+`conversation`, pela porta da ADR-018, que não existe em código — e quando existir, entra por
+ela. *Listar não é oferecer: a C10 é sobre cotação.*
+
+**O resumo carrega `estadoDePublicacao`**, e isso é necessário, não cosmético: com rascunho
+na lista, `vendavel: false` confunde *"nunca foi publicado"* com *"acabou tudo"*, e as duas
+pedem ações opostas do comerciante.
+
+**O que ela não traz:** `precoMinimoPossivel`. A tela da opção mostra o acréscimo de
+cada opção, que já vem nos grupos. **Gatilho escrito:** a primeira tela que mostre
+"a partir de".
+
+### Quem reativa, e o que acontece quando dois escrevem juntos
+
+O ato de reativar é um caso de uso do `catalog` (`ReativarNoExpediente`, G-C3a,
+06/10/2026), e ele **não pergunta nada a ninguém**: o expediente que abriu vem
+dentro do `ExpedienteAlteradoV1`. Por isso a reativação não depende da decisão de
+identidade de serviço (ADR-045). **Quem o chama ainda não existe** — o consumidor
+do evento é a G-C3b; hoje o único chamador é o teste de integração.
+
+**A consulta acha candidatos; o agregado decide.** O filtro do Mongo espelha o
+predicado da reativação — produto **ou** qualquer opção, com `$elemMatch`
+aninhado —, mas a palavra final é do `Disponibilidade.deveReativarNoExpediente`,
+com `isBefore`. Se os dois divergirem, o produto volta sem mudança e **o número de
+candidatos recusados aparece no resultado da varredura**, em vez de a divergência
+ficar invisível. Um lote inteiro sem mudança interrompe a varredura e registra o
+motivo — a alternativa era girar para sempre.
+
+**Reativar apaga o carimbo.** O produto volta a `DISPONIVEL` com `marcadoEm` e
+`expedienteDeReferencia` nulos: o par existe para a comparação da reativação, e
+depois dela não há comparação a fazer. É a mesma regra da ADR-049 — o par nasce
+inteiro ou não nasce.
+
+**A varredura não é atômica.** Um produto por transação, para que o conflito possa
+ser refeito (ADR-052). Falhando no meio, parte do cardápio voltou e parte não — e
+isso é inofensivo porque refazer a varredura não desfaz nada nem reativa o que
+acabou agora. É a mesma propriedade que torna a repetição do evento inofensiva.
+
+**Duas gravações do mesmo produto ao mesmo tempo: a segunda falha, com nome.**
+Até a G-C3a ela falhava como **500** dentro de transação — o MongoDB recusa a
+escrita com `WriteConflict` — e, fora de uma, apagava a primeira em silêncio.
+Com a ADR-052, as duas formas viram o mesmo conflito: a marcação responde **409**
+e o cliente recarrega; a reativação refaz aquele produto até três vezes.
 
 ### Disponibilidade da opção
 
@@ -289,7 +426,7 @@ grupos e opções é uma árvore lida inteira, gravada inteira.
 |---|---|
 | Esquema | Toda estrutura e todo índice nascem em `changeUnit` do Mongock — ADR-007. Nunca comando no shell |
 | Transação | Replica set de nó único — sem ele não há transação multi-documento e portanto não há outbox — ADR-008 |
-| Índices mínimos | `(estabelecimentoId, estadoDePublicacao)` · `(estabelecimentoId, categoriaId, ordem)` |
+| Índices mínimos | `(estabelecimentoId, estadoDePublicacao)` · `(estabelecimentoId, categoriaId, ordem)` — produto · `(estabelecimentoId, ordem)` — categoria |
 | Cache | Cardápio público no Redis, TTL curto, invalidado por evento |
 | Imagem | `imagemRef` aponta para o MinIO. **Binário nunca entra no documento** |
 

@@ -16,6 +16,151 @@
     "description" : "Consumido por outro serviço, com o token de quem pediu encaminhado. Não roteado pelo gateway — ADR-045."
   } ],
   "paths" : {
+    "/api/v1/merchants/{estabelecimentoId}/team/convites" : {
+      "post" : {
+        "tags" : [ "equipe-controller" ],
+        "summary" : "Convida alguém para a equipe",
+        "description" : "Exige GERENCIAR_EQUIPE, e só se oferece o que se tem (A2). O token do convite só aparece nesta resposta; o transporte é humano, pela mão de quem convida (ADR-069).",
+        "operationId" : "convidar",
+        "parameters" : [ {
+          "name" : "estabelecimentoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ConviteRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "O convite emitido, com o token — que não se lê de novo",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ConviteEmitidoResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Corpo malformado, telefone inválido, ou permissão oferecida que quem convida não tem (A2)"
+          },
+          "401" : {
+            "description" : "Sem token, ou token inválido"
+          },
+          "403" : {
+            "description" : "Sem vínculo, sem GERENCIAR_EQUIPE ou loja inexistente — a mesma recusa"
+          }
+        }
+      }
+    },
+    "/api/v1/me/estabelecimentos" : {
+      "get" : {
+        "tags" : [ "eu" ],
+        "summary" : "As lojas de que o portador do token faz parte",
+        "description" : "Só vínculos ATIVOS. Traz papel e permissões de cada uma, para o front montar o seletor de loja e o menu numa chamada só. Lista vazia quando não há vínculo ativo em nenhuma loja.",
+        "operationId" : "minhasLojas",
+        "responses" : {
+          "200" : {
+            "description" : "As lojas em que o portador tem vínculo ativo",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/LojaDoUsuario"
+                  }
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Sem token, ou token inválido"
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "eu" ],
+        "summary" : "Cria uma loja, e o portador do token passa a ser o fundador dela",
+        "description" : "O corpo traz identificação, política de troco, tipo de operação e métodos por modalidade. A loja nasce sem horário e sem área de entrega; pedido mínimo e desconto de retirada nascem em zero.",
+        "operationId" : "criar",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CriarEstabelecimentoRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "A loja criada, e o portador é o fundador dela",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LojaDoUsuario"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Corpo que o agregado recusa"
+          },
+          "401" : {
+            "description" : "Sem token, ou token inválido"
+          }
+        }
+      }
+    },
+    "/api/v1/convites/{token}/aceite" : {
+      "post" : {
+        "tags" : [ "convite-controller" ],
+        "summary" : "Aceita o convite",
+        "description" : "Exige sessão e nenhuma permissão. A A2 é conferida de novo aqui: se quem convidou perdeu o que ofereceu, o aceite é recusado.",
+        "operationId" : "aceitar",
+        "parameters" : [ {
+          "name" : "token",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "O vínculo que nasceu",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AceiteResponse"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Sem sessão"
+          },
+          "404" : {
+            "description" : "Convite inexistente, expirado, já aceito ou cancelado — a mesma resposta"
+          },
+          "409" : {
+            "description" : "Quem convidou não pode mais conceder o que ofereceu (A2), ou quem aceita já é da equipe"
+          }
+        }
+      }
+    },
     "/internal/merchants/{estabelecimentoId}/me/contexto-de-acesso" : {
       "get" : {
         "tags" : [ "interno" ],
@@ -33,7 +178,7 @@
         } ],
         "responses" : {
           "200" : {
-            "description" : "OK",
+            "description" : "O contexto do portador nesta loja",
             "content" : {
               "application/json" : {
                 "schema" : {
@@ -41,6 +186,15 @@
                 }
               }
             }
+          },
+          "400" : {
+            "description" : "Identificador da loja malformado"
+          },
+          "401" : {
+            "description" : "Sem token, ou token inválido"
+          },
+          "403" : {
+            "description" : "Sem vínculo ativo com a loja, ou loja inexistente — a mesma recusa"
           }
         }
       }
@@ -62,7 +216,7 @@
         } ],
         "responses" : {
           "200" : {
-            "description" : "OK",
+            "description" : "O expediente de referência para carimbar",
             "content" : {
               "application/json" : {
                 "schema" : {
@@ -70,6 +224,18 @@
                 }
               }
             }
+          },
+          "400" : {
+            "description" : "Identificador da loja malformado"
+          },
+          "401" : {
+            "description" : "Sem token, ou token inválido"
+          },
+          "403" : {
+            "description" : "Sem vínculo ativo com a loja, ou loja inexistente — a mesma recusa"
+          },
+          "409" : {
+            "description" : "A loja não abre por horário (ADR-049 §5)"
           }
         }
       }
@@ -91,7 +257,7 @@
         } ],
         "responses" : {
           "200" : {
-            "description" : "OK",
+            "description" : "A equipe da loja",
             "content" : {
               "application/json" : {
                 "schema" : {
@@ -99,36 +265,215 @@
                 }
               }
             }
+          },
+          "400" : {
+            "description" : "Identificador da loja malformado"
+          },
+          "401" : {
+            "description" : "Sem token, ou token inválido"
+          },
+          "403" : {
+            "description" : "Sem vínculo, sem GERENCIAR_EQUIPE ou loja inexistente — a mesma recusa"
           }
         }
       }
     },
-    "/api/v1/me/estabelecimentos" : {
+    "/api/v1/convites/{token}" : {
       "get" : {
-        "tags" : [ "eu" ],
-        "summary" : "As lojas de que o portador do token faz parte",
-        "description" : "Só vínculos ATIVOS. Traz papel e permissões de cada uma, para o front montar o seletor de loja e o menu numa chamada só. Lista vazia quando não há vínculo ativo em nenhuma loja.",
-        "operationId" : "minhasLojas",
+        "tags" : [ "convite-controller" ],
+        "summary" : "O convite, para quem recebeu o link",
+        "description" : "Público: quem recebe um convite ainda não tem sessão. Devolve só o nome da loja, o papel e a validade.",
+        "operationId" : "ver",
+        "parameters" : [ {
+          "name" : "token",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
         "responses" : {
           "200" : {
-            "description" : "OK",
+            "description" : "A loja, o papel e a validade do convite",
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "$ref" : "#/components/schemas/LojaDoUsuario"
-                  }
+                  "$ref" : "#/components/schemas/ConvitePublicoResponse"
                 }
               }
             }
+          },
+          "404" : {
+            "description" : "Convite inexistente, expirado, já aceito ou cancelado — a mesma resposta"
           }
-        }
+        },
+        "security" : [ ]
       }
     }
   },
   "components" : {
     "schemas" : {
+      "ConviteRequest" : {
+        "type" : "object",
+        "description" : "O convite: o telefone de quem vai entrar e as permissões oferecidas.",
+        "properties" : {
+          "telefone" : {
+            "type" : "string",
+            "description" : "O telefone da pessoa convidada — o endereço, não a credencial.",
+            "example" : "(81) 98765-4321",
+            "minLength" : 1
+          },
+          "permissoes" : {
+            "type" : "array",
+            "description" : "As permissões oferecidas. Só as que quem convida tem (A2).",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "VER_PRODUTO", "CRIAR_PRODUTO", "ALTERAR_PRODUTO", "DESATIVAR_PRODUTO", "VER_PEDIDO", "ALTERAR_STATUS", "VER_VENDAS", "VER_ENTREGA", "GERENCIAR_EQUIPE", "GERENCIAR_JORNADA" ]
+            },
+            "uniqueItems" : true
+          }
+        },
+        "required" : [ "permissoes", "telefone" ]
+      },
+      "ConviteEmitidoResponse" : {
+        "type" : "object",
+        "description" : "O convite emitido. O token só aparece nesta resposta.",
+        "properties" : {
+          "token" : {
+            "type" : "string",
+            "description" : "A credencial do convite. Mostre para copiar; não há como reler."
+          },
+          "expiraEm" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "Até quando o convite vale."
+          },
+          "permissoes" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "VER_PRODUTO", "CRIAR_PRODUTO", "ALTERAR_PRODUTO", "DESATIVAR_PRODUTO", "VER_PEDIDO", "ALTERAR_STATUS", "VER_VENDAS", "VER_ENTREGA", "GERENCIAR_EQUIPE", "GERENCIAR_JORNADA" ]
+            },
+            "uniqueItems" : true
+          }
+        }
+      },
+      "CriarEstabelecimentoRequest" : {
+        "type" : "object",
+        "properties" : {
+          "identificacao" : {
+            "$ref" : "#/components/schemas/IdentificacaoRequest"
+          },
+          "politicaDeTroco" : {
+            "$ref" : "#/components/schemas/PoliticaDeTrocoRequest"
+          },
+          "tipoDeOperacao" : {
+            "type" : "string",
+            "enum" : [ "PRODUCAO", "SEPARACAO", "MISTA" ]
+          },
+          "metodosPorModalidade" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "array",
+              "items" : {
+                "type" : "string",
+                "enum" : [ "DINHEIRO", "CARTAO", "PIX" ]
+              },
+              "uniqueItems" : true
+            }
+          }
+        },
+        "required" : [ "identificacao", "metodosPorModalidade", "politicaDeTroco", "tipoDeOperacao" ]
+      },
+      "IdentificacaoRequest" : {
+        "type" : "object",
+        "properties" : {
+          "nome" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "documento" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "telefone" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "enderecoTextual" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "bairro" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "fusoHorario" : {
+            "type" : "string",
+            "default" : "America/Sao_Paulo",
+            "description" : "Identificador IANA do conjunto brasileiro (M16, ADR-025). O conjunto é o de FusoHorario.identificadoresAceitos(), e o AllowableValuesDoFusoTest impede as duas listas de divergirem.",
+            "enum" : [ "America/Araguaina", "America/Bahia", "America/Belem", "America/Boa_Vista", "America/Campo_Grande", "America/Cuiaba", "America/Eirunepe", "America/Fortaleza", "America/Maceio", "America/Manaus", "America/Noronha", "America/Porto_Velho", "America/Recife", "America/Rio_Branco", "America/Santarem", "America/Sao_Paulo" ],
+            "minLength" : 1
+          }
+        },
+        "required" : [ "bairro", "documento", "enderecoTextual", "fusoHorario", "nome", "telefone" ]
+      },
+      "PoliticaDeTrocoRequest" : {
+        "type" : "object",
+        "properties" : {
+          "fundoMaximoDeTroco" : {
+            "type" : "number"
+          },
+          "aceitaPedidoSemTrocoDisponivel" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "fundoMaximoDeTroco" ]
+      },
+      "LojaDoUsuario" : {
+        "type" : "object",
+        "properties" : {
+          "estabelecimentoId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "nome" : {
+            "type" : "string"
+          },
+          "papel" : {
+            "type" : "string",
+            "enum" : [ "ADMINISTRADOR", "COLABORADOR" ]
+          },
+          "permissoes" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "VER_PRODUTO", "CRIAR_PRODUTO", "ALTERAR_PRODUTO", "DESATIVAR_PRODUTO", "VER_PEDIDO", "ALTERAR_STATUS", "VER_VENDAS", "VER_ENTREGA", "GERENCIAR_EQUIPE", "GERENCIAR_JORNADA" ]
+            }
+          }
+        }
+      },
+      "AceiteResponse" : {
+        "type" : "object",
+        "properties" : {
+          "estabelecimentoId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "papel" : {
+            "type" : "string",
+            "enum" : [ "ADMINISTRADOR", "COLABORADOR" ]
+          },
+          "permissoes" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "VER_PRODUTO", "CRIAR_PRODUTO", "ALTERAR_PRODUTO", "DESATIVAR_PRODUTO", "VER_PEDIDO", "ALTERAR_STATUS", "VER_VENDAS", "VER_ENTREGA", "GERENCIAR_EQUIPE", "GERENCIAR_JORNADA" ]
+            },
+            "uniqueItems" : true
+          }
+        }
+      },
       "ContextoDeAcesso" : {
         "type" : "object",
         "properties" : {
@@ -221,26 +566,21 @@
         },
         "required" : [ "desde", "estado", "id", "papel", "permissoes", "usuarioId" ]
       },
-      "LojaDoUsuario" : {
+      "ConvitePublicoResponse" : {
         "type" : "object",
+        "description" : "O mínimo que convence: a loja, o papel e até quando vale.",
         "properties" : {
-          "estabelecimentoId" : {
-            "type" : "string",
-            "format" : "uuid"
-          },
-          "nome" : {
+          "nomeDaLoja" : {
             "type" : "string"
           },
           "papel" : {
             "type" : "string",
+            "description" : "Sempre COLABORADOR: convite nunca concede outro papel.",
             "enum" : [ "ADMINISTRADOR", "COLABORADOR" ]
           },
-          "permissoes" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string",
-              "enum" : [ "VER_PRODUTO", "CRIAR_PRODUTO", "ALTERAR_PRODUTO", "DESATIVAR_PRODUTO", "VER_PEDIDO", "ALTERAR_STATUS", "VER_VENDAS", "VER_ENTREGA", "GERENCIAR_EQUIPE", "GERENCIAR_JORNADA" ]
-            }
+          "expiraEm" : {
+            "type" : "string",
+            "format" : "date-time"
           }
         }
       }

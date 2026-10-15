@@ -88,6 +88,12 @@ public class SecurityConfig {
                         // /webhooks/, para que a exceção seja estreita.
                         .requestMatchers("/api/v1/webhooks/**").permitAll()
 
+                        // A leitura do convite (ADR-069 §2): quem recebe o link ainda não
+                        // tem sessão, e pode nem ter conta. Só o GET, e só de UM segmento:
+                        // o POST .../aceite, sob o mesmo prefixo, cai no authenticated()
+                        // abaixo — o token é exigido aqui, antes de chegar ao serviço.
+                        .requestMatchers(HttpMethod.GET, "/api/v1/convites/*").permitAll()
+
                         // Probe de contêiner não carrega credencial, e health
                         // protegido reinicia o serviço em laço.
                         .requestMatchers(HttpMethod.GET, "/actuator/health/**").permitAll()

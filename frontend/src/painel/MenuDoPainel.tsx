@@ -26,14 +26,13 @@ import type { Permissao } from './tipos';
  * A tabela existe justamente para que a ausência fique **visível no código**,
  * em vez de virar uma lista de um item só que ninguém sabe de onde veio.
  *
- * ## Botões, e não rotas
+ * ## A seção mora na URL (W-E, ADR-061)
  *
- * Com uma seção, roteamento seria cerimônia: um `<Outlet>`, uma rota filha e uma
- * URL que nunca muda. O estado mora na `PainelPage`.
- *
- * **Gatilho escrito:** a segunda seção com tela. Aí a URL passa a precisar dizer
- * onde a pessoa está — para recarregar, para voltar e para mandar link a alguém
- * —, e isso é rota, não estado.
+ * Com uma seção, roteamento seria cerimônia, e a W-B deixou a seção em estado com
+ * gatilho escrito aqui: *"a segunda seção com tela. Aí a URL passa a precisar dizer
+ * onde a pessoa está — para recarregar, para voltar e para mandar link a alguém —, e
+ * isso é rota, não estado."* O gatilho venceu na W-C, a W-D o agravou com a terceira
+ * tela, e a W-E o pagou: `atual` vem da URL, e `aoEscolher` navega.
  */
 export function MenuDoPainel({
   permissoes,

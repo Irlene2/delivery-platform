@@ -14,12 +14,12 @@ import java.util.UUID;
  * A mesma divisão que o {@code merchant} faz entre o {@code …SpringDataRepository}
  * e o adaptador da porta.
  *
- * <p>O nome do método derivado precisa casar com o <b>campo do documento</b>,
- * não com o do agregado: {@code estadoDePublicacao} é {@code String} aqui, e é
- * por isso que o parâmetro é {@code String}.
+ * <p>O nome do método derivado precisa casar com o <b>campo do documento</b>, não com o
+ * do agregado. Até a E-3d o método filtrava também por {@code estadoDePublicacao}
+ * (ADR-068); o índice {@code (estabelecimentoId, estadoDePublicacao)} continua servindo
+ * pelo prefixo.
  */
 public interface ProdutoSpringDataRepository extends MongoRepository<ProdutoDocumento, UUID> {
 
-    Page<ProdutoDocumento> findByEstabelecimentoIdAndEstadoDePublicacao(
-            UUID estabelecimentoId, String estadoDePublicacao, Pageable paginacao);
+    Page<ProdutoDocumento> findByEstabelecimentoId(UUID estabelecimentoId, Pageable paginacao);
 }

@@ -25,9 +25,9 @@
 | 021 | Catálogo de serviços do MVP — oito serviços | ✅ aceita · **emendada** (24/09/2026: `merchant` sem Redis; 26/09/2026: `order` e `delivery` sem Redis; 27/09/2026: `catalog` sem o starter, motivo mantido) |
 | 022 | A remuneração do entregador pertence ao vínculo | ✅ aceita |
 | 023 | Fronteira `order` × `payment`: pedido é dono do registro | ✅ aceita |
-| 024 | Desconto de retirada, não preço por modalidade | ✅ aceita |
+| 024 | Desconto de retirada, não preço por modalidade | ✅ aceita · **emendada** (07/10/2026: o `cotar` é marco 3, e o prazo desta decisão vai com ele) |
 | 025 | Fuso horário do estabelecimento e o dia operacional | ✅ aceita · **emendada** (26/09/2026: um evento de abertura por dia operacional — ADR-046) |
-| 026 | Fila morta, retentativa e reprocessamento | ✅ aceita · **emendada** (29/09/2026: consumidor de invalidação não tem retentativa nem fila morta) |
+| 026 | Fila morta, retentativa e reprocessamento | ✅ aceita · **emendada** (29/09/2026: consumidor de invalidação não tem retentativa nem fila morta) · **emendada** (10/10/2026: recusa definitiva vai à fila morta na primeira entrega) |
 | 027 | O que conta como mudança compatível num evento | ✅ aceita |
 | 028 | Pedido mínimo por modalidade, sobre o subtotal dos itens | ✅ aceita |
 | 029 | Recuperação do administrador único | ✅ aceita |
@@ -40,20 +40,39 @@
 | 036 | O telefone é o identificador de login | ✅ aceita |
 | 037 | A emissão do access token: a chave, o tempo, e o que fica público | ✅ aceita · **emendada** (24/09/2026: cinco rotas públicas, lista viva na 044) |
 | 038 | O `sub` vira `UUID` na borda, e o caso de uso não conhece o token | ✅ aceita |
-| 039 | O contrato OpenAPI é gerado do código e congelado | ✅ aceita |
+| 039 | O contrato OpenAPI é gerado do código e congelado | ✅ aceita · **emendada** (06/10/2026: a lista de erros de cada rota é afirmada, e o `ContratoDeErrosIT` a prova) |
 | 040 | Um módulo de tipos de valor, e a regra que impede ele de crescer | ✅ aceita · **emendada** (28/09/2026: a `Permissao` não entra — cada serviço nomeia o seu recorte) |
 | 041 | Observabilidade sai do repositório, e a volta é por condição | ✅ aceita |
 | 042 | O código de verificação do cadastro, e quem o entrega | ✅ aceita |
 | 043 | O outbox e o relay | ✅ aceita · **emenda a 011** · **emendada** (29/09/2026: o relay espera a confirmação, e `mandatory` revela mensagem sem destino) |
 | 044 | A cadeia de filtros do gateway, e o que passa sem token | ✅ aceita · **emenda a 012 e 037** · **emendada** (30/09/2026: `/actuator/gateway` sai da exposição) |
-| 045 | A credencial entre serviços é o token de quem pediu | ✅ aceita · **emenda a 011** · **emendada** (28/09/2026: o primeiro caminho `/internal/`, e 403 contra 5xx no consumidor) |
+| 045 | A credencial entre serviços é o token de quem pediu | ✅ aceita · **emenda a 011** · **emendada** (28/09/2026: o primeiro caminho `/internal/`, e 403 contra 5xx no consumidor) · **emendada** (07/10/2026: o gatilho disparou falso, e a ADR-054 o substitui por dois) |
 | 046 | Quem observa a abertura do expediente | ✅ aceita · **emenda a 025** · **emendada** (26/09/2026: o expediente é o do início da faixa; o evento significa "um expediente começou") · **emendada** (30/09/2026: a `OperacaoDoEstabelecimentoPort` não existia, e o §6 ganhou rota) |
 | 047 | Onde o token do painel mora no navegador | ✅ aceita |
-| 048 | O primeiro consumidor de evento: topologia, idempotência e falha | ✅ aceita · **emenda a 011, 026 e 043** |
-| 049 | O carimbo com a loja fechada | ✅ aceita · **emenda a 046** |
+| 048 | O primeiro consumidor de evento: topologia, idempotência e falha | ✅ aceita · **emenda a 011, 026 e 043** · **emendada** (10/10/2026: o critério não exclui todos os outros consumidores; gatilhos rearmados) |
+| 049 | O carimbo com a loja fechada | ✅ aceita · **emenda a 046** · **emendada** (06/10/2026: o que a marcação faz com o 409) |
 | 050 | A documentação viva, e só no seu computador | ✅ aceita |
+| 051 | A imagem carrega o jar, não o compilador | ✅ aceita |
+| 052 | A versão no documento, e o 409 que ela cria | ✅ aceita |
+| 053 | O contrato declara o que a rota recusa, e um teste prova | ✅ aceita · **emenda a 039** |
+| 054 | O gatilho da identidade de serviço não disparou | ✅ aceita · **emenda a 045** |
+| 055 | O que o cliente mostra quando o servidor recusa | ✅ aceita |
+| 056 | Recurso de outra loja é 404, e o 403 fica com um significado só | ✅ aceita |
+| 057 | A idempotência natural por chave de domínio, e a segunda exceção à invariante 7 | ✅ aceita · **emenda a 048** |
+| 058 | O limite do contêiner dimensiona o JVM, e a pilha sobe em grupos | ✅ aceita |
+| 059 | A semeadura passa pelo agregado, e não pelas tabelas | ✅ aceita |
+| 060 | A primeira rota de escrita, e o que o agregado exige para a loja nascer | ✅ aceita |
+| 061 | A loja escolhida mora na URL | ✅ aceita |
+| 063 | O erro do catálogo diz de quem é a culpa | ✅ aceita |
+| 064 | A categoria ganha persistência, e só criar e listar | ✅ aceita |
+| 065 | O produto nasce por rota, e o cardápio é publicado por quem o monta | ✅ aceita |
+| 066 | A referência do corpo que não resolve é pedido inválido | ✅ aceita |
+| 067 | O cardápio ganha escrita, e a seção passa a significar alguma coisa | ✅ aceita |
+| 068 | A listagem mostra o rascunho, porque quem a chama é o painel | ✅ aceita |
+| 069 | O convite chega pela mão de quem convida, e o token se lê uma vez | ✅ aceita |
+| 070 | A tela do convite, e o segredo que já está no navegador de quem o recebeu | ✅ aceita |
 
-**Quarenta e oito escritas, duas sem objeto — estas com registro próprio desde
+**Sessenta e sete escritas, duas sem objeto — estas com registro próprio desde
 25/08/2026 —, nenhuma a escrever.**
 
 ## Onde mora o quê

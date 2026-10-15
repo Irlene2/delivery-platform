@@ -4,6 +4,66 @@
  */
 
 export interface paths {
+    "/api/v1/merchants/{estabelecimentoId}/catalog/produtos/{produtoId}/publicacao": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Publica o produto no cardápio
+         * @description Exige ALTERAR_PRODUTO. Idempotente: publicar o que já está publicado responde 200. As invariantes C1, C5, C4 e C2 são cobradas aqui.
+         */
+        put: operations["publicar"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/merchants/{estabelecimentoId}/catalog/produtos/{produtoId}/grupos/{grupoId}/opcoes/{opcaoId}/disponibilidade": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Marca a disponibilidade de uma opção do produto
+         * @description Mesmo carimbo e mesmas recusas da marcação do produto. Devolve o produto recalculado, porque marcar uma opção pode derrubar o vendavel.
+         */
+        put: operations["marcarOpcao"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/merchants/{estabelecimentoId}/catalog/produtos/{produtoId}/disponibilidade": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Marca a disponibilidade do produto
+         * @description O carimbo é do servidor: o instante pelo relógio do serviço e o expediente perguntado ao merchant (ADR-049). Exige ALTERAR_PRODUTO. 409 quando a loja não abre por horário e o estado é ESGOTADO_HOJE. Devolve o produto recalculado.
+         */
+        put: operations["marcarProduto"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/merchants/{estabelecimentoId}/catalog/produtos": {
         parameters: {
             query?: never;
@@ -12,10 +72,58 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Lista os produtos publicados do estabelecimento
-         * @description Exige vínculo ativo com VER_PRODUTO, resolvido no merchant-service com o token de quem pediu. Sem vínculo, sem permissão, loja inexistente e merchant indisponível devolvem a mesma recusa.
+         * Lista os produtos do estabelecimento, em qualquer estado de publicação
+         * @description A listagem do painel: rascunho, ativo e inativo, cada um com o estadoDePublicacao. Sem sort, pela ordem e depois pelo id. Exige vínculo ativo com VER_PRODUTO, resolvido no merchant-service com o token de quem pediu. Sem vínculo, sem permissão, loja inexistente e merchant indisponível devolvem a mesma recusa.
          */
         get: operations["listar"];
+        put?: never;
+        /**
+         * Cria um produto, em rascunho
+         * @description Exige CRIAR_PRODUTO. A seção tem de ser desta loja: inexistente e de outra loja recebem a mesma recusa. Location aponta para o GET do produto.
+         */
+        post: operations["criar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/merchants/{estabelecimentoId}/catalog/categorias": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Lista as seções do cardápio
+         * @description Exige VER_PRODUTO. Ativas e inativas, pela ordem e, no empate, pelo nome.
+         */
+        get: operations["listar_1"];
+        put?: never;
+        /**
+         * Cria uma seção do cardápio
+         * @description Exige CRIAR_PRODUTO. A seção nasce ativa. Sem Location: não há rota de uma seção por id, e a tela precisa da lista.
+         */
+        post: operations["criar_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/merchants/{estabelecimentoId}/catalog/produtos/{produtoId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Um produto do estabelecimento, com os grupos e as opções
+         * @description Exige VER_PRODUTO. Devolve o produto em qualquer estado de publicação. 404 para produto inexistente ou de outra loja, com o mesmo corpo.
+         */
+        get: operations["consultar"];
         put?: never;
         post?: never;
         delete?: never;
@@ -28,14 +136,55 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        PaginaResponseProdutoResumoResponse: {
-            conteudo?: components["schemas"]["ProdutoResumoResponse"][];
+        GrupoResponse: {
+            /** Format: uuid */
+            id?: string;
+            nome?: string;
             /** Format: int32 */
-            pagina?: number;
+            minEscolhas?: number;
             /** Format: int32 */
-            tamanho?: number;
-            /** Format: int64 */
-            total?: number;
+            maxEscolhas?: number;
+            /** Format: int32 */
+            ordem?: number;
+            opcoes?: components["schemas"]["OpcaoResponse"][];
+        };
+        OpcaoResponse: {
+            /** Format: uuid */
+            id?: string;
+            nome?: string;
+            acrescimo?: number;
+            /** Format: int32 */
+            ordem?: number;
+            /** @enum {string} */
+            disponibilidade?: "DISPONIVEL" | "ACABANDO" | "ESGOTADO_HOJE" | "ESGOTADO_INDETERMINADO";
+        };
+        ProdutoResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            categoriaId?: string;
+            nome?: string;
+            descricao?: string;
+            precoBase?: number;
+            /** Format: int32 */
+            ordem?: number;
+            /** @enum {string} */
+            modoDeControle?: "SEM_CONTROLE" | "QUALITATIVO";
+            /** @enum {string} */
+            estadoDePublicacao?: "RASCUNHO" | "ATIVO" | "INATIVO";
+            /** @enum {string} */
+            disponibilidade?: "DISPONIVEL" | "ACABANDO" | "ESGOTADO_HOJE" | "ESGOTADO_INDETERMINADO";
+            vendavel?: boolean;
+            gruposDeOpcoes?: components["schemas"]["GrupoResponse"][];
+        };
+        /** @description O novo estado de disponibilidade. O carimbo é do servidor. */
+        MarcacaoRequest: {
+            /**
+             * @description DISPONIVEL, ACABANDO, ESGOTADO_HOJE ou ESGOTADO_INDETERMINADO.
+             * @example ESGOTADO_HOJE
+             * @enum {string}
+             */
+            estado: "DISPONIVEL" | "ACABANDO" | "ESGOTADO_HOJE" | "ESGOTADO_INDETERMINADO";
         };
         ProdutoResumoResponse: {
             /** Format: uuid */
@@ -49,6 +198,74 @@ export interface components {
             /** @enum {string} */
             disponibilidade?: "DISPONIVEL" | "ACABANDO" | "ESGOTADO_HOJE" | "ESGOTADO_INDETERMINADO";
             vendavel?: boolean;
+            /** @enum {string} */
+            estadoDePublicacao?: "RASCUNHO" | "ATIVO" | "INATIVO";
+        };
+        /** @description Um produto novo. Nasce rascunho; vai ao cardápio pela publicação. */
+        ProdutoRequest: {
+            /**
+             * Format: uuid
+             * @description A seção do cardápio, que tem de ser desta loja.
+             */
+            categoriaId: string;
+            /**
+             * @description O nome como o cliente o lê.
+             * @example Coca-Cola lata
+             */
+            nome: string;
+            /**
+             * @description Opcional.
+             * @example 350 ml
+             */
+            descricao?: string;
+            /**
+             * @description Em reais, duas casas. Zero é aceito no rascunho e recusado na publicação (C1); negativo é recusado aqui.
+             * @example 6
+             */
+            precoBase: number;
+            /**
+             * @description SEM_CONTROLE (não acaba) ou QUALITATIVO.
+             * @example SEM_CONTROLE
+             * @enum {string}
+             */
+            modoDeControle: "SEM_CONTROLE" | "QUALITATIVO";
+            /**
+             * Format: int32
+             * @description A posição do produto na seção.
+             * @example 0
+             */
+            ordem: number;
+        };
+        /** @description Uma seção nova do cardápio. Nasce ativa. */
+        CategoriaRequest: {
+            /**
+             * @description O nome da seção.
+             * @example Pizzas salgadas
+             */
+            nome: string;
+            /**
+             * Format: int32
+             * @description A posição da seção no cardápio. Empates se resolvem pelo nome.
+             * @example 0
+             */
+            ordem: number;
+        };
+        CategoriaResponse: {
+            /** Format: uuid */
+            id?: string;
+            nome?: string;
+            /** Format: int32 */
+            ordem?: number;
+            ativa?: boolean;
+        };
+        PaginaResponseProdutoResumoResponse: {
+            conteudo?: components["schemas"]["ProdutoResumoResponse"][];
+            /** Format: int32 */
+            pagina?: number;
+            /** Format: int32 */
+            tamanho?: number;
+            /** Format: int64 */
+            total?: number;
         };
     };
     responses: never;
@@ -59,6 +276,197 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    publicar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                estabelecimentoId: string;
+                produtoId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description O produto, publicado — também quando já estava */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProdutoResponse"];
+                };
+            };
+            /** @description A publicação recusada (C1, C5, C4, C2), com a frase que diz o que corrigir; ou identificador malformado */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sem token, ou token inválido */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sem vínculo, sem ALTERAR_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description O produto não existe nesta loja — inexistente ou de outra loja, a mesma resposta (ADR-056) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    marcarOpcao: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                estabelecimentoId: string;
+                produtoId: string;
+                grupoId: string;
+                opcaoId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MarcacaoRequest"];
+            };
+        };
+        responses: {
+            /** @description O produto recalculado */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProdutoResumoResponse"];
+                };
+            };
+            /** @description Corpo ou identificador malformado */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sem token, ou token inválido */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sem vínculo, sem ALTERAR_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description O produto não existe nesta loja (ADR-056), ou o grupo e a opção não existem neste produto (ADR-063 §4) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description ESGOTADO_HOJE numa loja que não abre por horário (ADR-049), ou o produto mudou durante a marcação (ADR-052) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description O merchant não respondeu sobre o expediente */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    marcarProduto: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                estabelecimentoId: string;
+                produtoId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MarcacaoRequest"];
+            };
+        };
+        responses: {
+            /** @description O produto recalculado */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProdutoResumoResponse"];
+                };
+            };
+            /** @description Corpo inválido, ou estado que o modo do produto não tem (SEM_CONTROLE não acaba) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sem token, ou token inválido */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sem vínculo, sem ALTERAR_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description O produto não existe nesta loja — inexistente ou de outra loja, a mesma resposta (ADR-056) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description ESGOTADO_HOJE numa loja que não abre por horário (ADR-049), ou o produto mudou durante a marcação (ADR-052) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description O merchant não respondeu sobre o expediente */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     listar: {
         parameters: {
             query?: {
@@ -77,7 +485,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description A página de produtos da loja, em qualquer estado de publicação */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -85,6 +493,215 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["PaginaResponseProdutoResumoResponse"];
                 };
+            };
+            /** @description Identificador ou paginação malformados */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sem token, ou token inválido */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sem vínculo, sem VER_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    criar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                estabelecimentoId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProdutoRequest"];
+            };
+        };
+        responses: {
+            /** @description O produto criado, em rascunho */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProdutoResponse"];
+                };
+            };
+            /** @description Corpo malformado, preço negativo (C1), ou seção que não existe nesta loja (ADR-066) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sem token, ou token inválido */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sem vínculo, sem CRIAR_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listar_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                estabelecimentoId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description As seções, pela ordem; vazia é [] */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategoriaResponse"][];
+                };
+            };
+            /** @description Identificador malformado */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sem token, ou token inválido */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sem vínculo, sem VER_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    criar_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                estabelecimentoId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CategoriaRequest"];
+            };
+        };
+        responses: {
+            /** @description A seção criada, ativa */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategoriaResponse"];
+                };
+            };
+            /** @description Corpo malformado — nome em branco, ordem ausente — ou identificador malformado */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sem token, ou token inválido */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sem vínculo, sem CRIAR_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    consultar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                estabelecimentoId: string;
+                produtoId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description O produto, com grupos e opções */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProdutoResponse"];
+                };
+            };
+            /** @description Identificador malformado */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sem token, ou token inválido */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sem vínculo, sem VER_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description O produto não existe nesta loja — inexistente ou de outra loja, a mesma resposta */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

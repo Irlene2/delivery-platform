@@ -74,10 +74,15 @@ Deduplicar por instância consertaria a primeira objeção criando estado que
 cresce e que ninguém lê depois, mais um identificador de instância estável que
 não existe neste sistema.
 
-**O critério exclui todos os outros consumidores previstos.** Os do `order`, do
-`settlement`, do `delivery` e do `conversation` escrevem em banco; para eles a
-invariante vale inteira, e a `processed_messages` continua sem definição — o que
-é dívida, e está anotada abaixo.
+**Emenda de 10/10/2026 (G-C3b).** A frase original dizia que o critério *"exclui todos
+os outros consumidores previstos"* — os do `order`, do `settlement`, do `delivery` e do
+`conversation`, que escrevem em banco. **Não exclui todos.** O consumidor da reativação,
+no `catalog`, escreve em banco e também dispensa o registro, por outro critério: o
+efeito dele é **comparar** uma chave de domínio que vem no próprio evento com o estado
+gravado, e comparar duas vezes dá o mesmo que comparar uma. A ADR-057 escreve esse
+critério e o que ele obriga em troca — um teste que reentrega a mesma mensagem. Para
+quem acrescenta, soma, registra ou publica, a invariante continua valendo inteira, e a
+`processed_messages` continua sem definição — a dívida anotada abaixo.
 
 **Consequência escrita:** as cláusulas 3 e 4 do `contracts/eventos.md` —
 idempotência por `eventId` e descarte de evento velho por `occurredAt` — **ficam
@@ -113,6 +118,22 @@ sete serviços. **Gatilho escrito:** o primeiro consumidor que escreva em banco 
 ele vai precisar da política da ADR-026 de verdade, e é aí que a divergência
 entre o YAML (2 s × 5) e a ADR (1/4/16) tem de ser resolvida, com a armadilha do
 `max-interval` padrão de 10 s no meio.
+
+> **Disparou em 10/10/2026 (G-C3b), e foi resolvido sem tocar no YAML.** A política da
+> ADR-026 foi para uma **segunda fábrica de contêineres**, só do consumidor da
+> reativação, com os números em `delivery.consumo-de-eventos.*`. O bloco do YAML
+> continua governando só a fábrica auto-configurada. E medido no jar nesta rodada: no
+> Boot 4.1.1 a propriedade é `max-retries`, e **`max-attempts` não existe** — o `5`
+> daquele bloco nunca foi lido. O `max-interval` padrão é de fato 10 s.
+>
+> **Removido do `catalog` em 10/10/2026 (I-B).** O bloco saiu do `application.yml` do
+> `catalog`, e o `acknowledge-mode: manual` ficou. Duas razões: a propriedade de
+> contagem que ele declarava não existia no Boot 4.1.1 e nunca foi lida; e a política
+> de retentativa deste serviço mora agora na fábrica do consumo (ADR-026, emenda de
+> 10/10/2026). Corrigir o nome para `max-retries` **ligaria** uma retentativa de 2 s
+> numa fábrica cujo único ouvinte confirma sempre — política que ninguém pediu.
+> **Nos outros seis serviços o bloco continua**, com o mesmo `max-attempts` que não é
+> lido; nenhum deles tem consumidor ainda.
 
 ### 4. A corrida entre a leitura e a invalidação, e o contador que a fecha
 
@@ -241,3 +262,9 @@ provedor"*.
 **Gatilho escrito:** o primeiro consumidor que **escreva em banco** — hoje
 previsto para o `order`, no marco 3. Ele chega precisando dela de verdade, e aí
 o esquema é o assunto da rodada em vez de um detalhe dela.
+
+> **Rearmado em 10/10/2026 (G-C3b).** O primeiro consumidor que escreve em banco chegou
+> antes do `order` — a reativação, no `catalog` — e **não** precisa da
+> `processed_messages` (ADR-057). Como estava, o gatilho teria disparado sem produzir
+> nada. O novo está na ADR-057: **o primeiro consumidor cujo efeito não seja uma
+> comparação** — que acrescente, some, registre ou publique para fora.

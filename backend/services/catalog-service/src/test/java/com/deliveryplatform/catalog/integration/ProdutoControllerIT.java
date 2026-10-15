@@ -97,7 +97,8 @@ class ProdutoControllerIT extends Infraestrutura {
         refrigerante.publicar();
         produtos.salvar(refrigerante);
 
-        // Rascunho: existe no banco e não aparece na lista.
+        // Rascunho: até a E-3d existia no banco e não aparecia na lista; desde a
+        // ADR-068 aparece, com o estado dele.
         produtos.salvar(Produto.rascunho(loja, categoria, "Pizza em teste",
                 Precos.reais("1.00"), ModoDeControle.QUALITATIVO, 2));
 
@@ -125,15 +126,50 @@ class ProdutoControllerIT extends Infraestrutura {
 
     // ── o caminho feliz ─────────────────────────────────────────────────────
 
+    /**
+     * <b>Até a E-3d este teste afirmava o contrário</b> — <i>"a lista traz os publicados
+     * — e não o rascunho"</i>, com total 2. Ele mudou de sentido, não morreu: a cena é a
+     * mesma, e a asserção passa a ser a da ADR-068. A listagem é a do painel.
+     */
     @Test
-    @DisplayName("com VER_PRODUTO, a lista traz os publicados — e não o rascunho")
-    void a_lista_traz_os_publicados() {
+    @DisplayName("com VER_PRODUTO, a lista traz o rascunho junto, cada um com o seu estado")
+    void a_lista_traz_o_rascunho() {
         Map<String, Object> pagina = corpoDe(pedirProdutos(loja, IDENTITY.tokenDe(marli), ""));
 
-        assertThat(pagina.get("total")).isEqualTo(2);
+        assertThat(pagina.get("total")).isEqualTo(3);
         assertThat((List<Map<String, Object>>) pagina.get("conteudo"))
-                .extracting(item -> item.get("nome"))
-                .containsExactlyInAnyOrder("Pizza margherita", "Refrigerante lata");
+                .extracting(item -> item.get("nome"), item -> item.get("estadoDePublicacao"))
+                .containsExactly(
+                        org.assertj.core.groups.Tuple.tuple("Pizza margherita", "ATIVO"),
+                        org.assertj.core.groups.Tuple.tuple("Refrigerante lata", "ATIVO"),
+                        org.assertj.core.groups.Tuple.tuple("Pizza em teste", "RASCUNHO"));
+    }
+
+    /**
+     * O caso que a ADR-068 §2 existe para ter: um {@code ATIVO} sem nada para vender e um
+     * {@code RASCUNHO} trazem os dois {@code vendavel: false} — e pedem ações opostas.
+     * Só o estado os separa, e o {@code vendavel} continua vindo do servidor.
+     */
+    @Test
+    @DisplayName("ATIVO esgotado e RASCUNHO: os dois vendavel false, com estados diferentes")
+    void vendavel_e_estado_dizem_coisas_diferentes() {
+        Produto esgotada = produtos.daLoja(loja, org.springframework.data.domain.PageRequest.of(0, 20))
+                .getContent().stream().filter(p -> p.getNome().equals("Pizza margherita"))
+                .findFirst().orElseThrow();
+        esgotada.marcar(new com.deliveryplatform.catalog.domain.model.Disponibilidade(
+                com.deliveryplatform.catalog.domain.model.EstadoDeDisponibilidade.ESGOTADO_INDETERMINADO,
+                null, null));
+        produtos.salvar(esgotada);
+
+        Map<String, Object> pagina = corpoDe(pedirProdutos(loja, IDENTITY.tokenDe(marli), ""));
+        Map<String, Map<String, Object>> porNome = new java.util.HashMap<>();
+        ((List<Map<String, Object>>) pagina.get("conteudo"))
+                .forEach(item -> porNome.put((String) item.get("nome"), item));
+
+        assertThat(porNome.get("Pizza margherita"))
+                .containsEntry("vendavel", false).containsEntry("estadoDePublicacao", "ATIVO");
+        assertThat(porNome.get("Pizza em teste"))
+                .containsEntry("vendavel", false).containsEntry("estadoDePublicacao", "RASCUNHO");
     }
 
     @Test
@@ -144,21 +180,24 @@ class ProdutoControllerIT extends Infraestrutura {
         assertThat((List<Map<String, Object>>) pagina.get("conteudo"))
                 .allSatisfy(item -> {
                     assertThat(item).containsKeys("id", "nome", "precoBase", "disponibilidade",
-                            "vendavel");
-                    assertThat(item.get("vendavel")).isEqualTo(true);
+                            "vendavel", "estadoDePublicacao");
+                    // O rascunho não é vendável; os publicados desta cena são.
+                    assertThat(item.get("vendavel"))
+                            .isEqualTo("ATIVO".equals(item.get("estadoDePublicacao")));
                 });
     }
 
     @Test
-    @DisplayName("a paginação é de verdade: size=1 traz um item e o total continua dois")
+    @DisplayName("a paginação é de verdade: size=1 traz um item e o total continua três")
     void a_paginacao_funciona() {
         Map<String, Object> pagina = corpoDe(pedirProdutos(loja, IDENTITY.tokenDe(marli),
                 "?page=0&size=1"));
 
         assertThat((List<?>) pagina.get("conteudo")).hasSize(1);
         assertThat(pagina.get("total"))
-                .as("o total é o que permite desenhar a paginação sem uma segunda consulta")
-                .isEqualTo(2);
+                .as("o total é o que permite desenhar a paginação sem uma segunda consulta — "
+                        + "e conta todos os estados")
+                .isEqualTo(3);
         assertThat(pagina.get("pagina")).isEqualTo(0);
         assertThat(pagina.get("tamanho")).isEqualTo(1);
     }

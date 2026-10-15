@@ -39,6 +39,7 @@ Os dois documentos discordam desde o alinhamento da v1.1. Esta ADR decide.
 ```
 /api/v1/auth/**                              → identity      (sem estabelecimento)
 /api/v1/me/**                                → identity      (perfil, meus vínculos)
+/api/v1/convites/**                          → merchant      (GET público; aceite autenticado — ADR-069)
 
 /api/v1/merchants/{merchantId}/settings/**   → merchant
 /api/v1/merchants/{merchantId}/team/**       → merchant

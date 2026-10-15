@@ -1,5 +1,6 @@
 package com.deliveryplatform.catalog.infrastructure.persistence.mapper;
 
+import com.deliveryplatform.catalog.domain.exception.RegraDoCatalogoViolada;
 import com.deliveryplatform.catalog.domain.model.Disponibilidade;
 import com.deliveryplatform.catalog.domain.model.EstadoDeDisponibilidade;
 import com.deliveryplatform.catalog.domain.model.EstadoDePublicacao;
@@ -53,7 +54,8 @@ public final class ProdutoMapper {
                 produto.getEstadoDePublicacao().name(),
                 produto.getModoDeControle().name(),
                 disponibilidade(produto.getDisponibilidade()),
-                produto.getGruposDeOpcoes().stream().map(ProdutoMapper::grupo).toList());
+                produto.getGruposDeOpcoes().stream().map(ProdutoMapper::grupo).toList(),
+                produto.getVersao());
     }
 
     private static GrupoDocumento grupo(GrupoDeOpcoes g) {
@@ -80,7 +82,26 @@ public final class ProdutoMapper {
 
     // ── documento → domínio ─────────────────────────────────────────────────
 
+    /**
+     * Documento → agregado.
+     *
+     * <p><b>Regra do domínio violada aqui não é pedido malformado</b> (G-C3b): é dado
+     * inválido no banco. A {@code RegraDoCatalogoViolada} que escapa do
+     * {@code Produto.reconstituir} — ou dos construtores de grupo e opção — vira
+     * {@link DocumentoIlegivel}, com o id do documento e nada do conteúdo dele. Sem isto
+     * ela saía como 400 na rota, mandando quem pediu corrigir o que não escreveu, e no
+     * consumo da reativação era retentada quatro vezes sobre o mesmo documento.
+     */
     public static Produto paraDominio(ProdutoDocumento doc) {
+        try {
+            return reconstituir(doc);
+        } catch (RegraDoCatalogoViolada invalido) {
+            throw new DocumentoIlegivel(
+                    "o documento do produto " + doc.id() + " não reconstitui um Produto", invalido);
+        }
+    }
+
+    private static Produto reconstituir(ProdutoDocumento doc) {
         return Produto.reconstituir(
                 doc.id(),
                 doc.estabelecimentoId(),
@@ -95,7 +116,8 @@ public final class ProdutoMapper {
                 disponibilidadeDe(doc.disponibilidade()),
                 doc.gruposDeOpcoes() == null
                         ? List.of()
-                        : doc.gruposDeOpcoes().stream().map(ProdutoMapper::grupoDe).toList());
+                        : doc.gruposDeOpcoes().stream().map(ProdutoMapper::grupoDe).toList(),
+                doc.versao());
     }
 
     private static GrupoDeOpcoes grupoDe(GrupoDocumento g) {
@@ -166,6 +188,12 @@ public final class ProdutoMapper {
      * responder 400 para a segunda.
      */
     public static class DocumentoIlegivel extends RuntimeException {
+        private static final long serialVersionUID = 1L;
+
+        public DocumentoIlegivel(String mensagem, Throwable causa) {
+            super(mensagem, causa);
+        }
+
         public DocumentoIlegivel(String mensagem) {
             super(mensagem);
         }

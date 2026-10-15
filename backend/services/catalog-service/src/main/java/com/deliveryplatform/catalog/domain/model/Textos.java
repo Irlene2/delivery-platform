@@ -22,7 +22,8 @@ final class Textos {
 
     static String exigirPreenchido(String valor, String oQue) {
         if (valor == null || valor.isBlank()) {
-            throw new RegraDoCatalogoViolada(oQue + " é obrigatório");
+            throw new RegraDoCatalogoViolada(RegraDoCatalogoViolada.Motivo.TEXTO_OBRIGATORIO,
+                    oQue + " é obrigatório", oQue);
         }
         return valor.trim();
     }
