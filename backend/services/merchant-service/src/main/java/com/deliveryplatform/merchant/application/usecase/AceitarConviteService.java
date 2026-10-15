@@ -1,8 +1,12 @@
 package com.deliveryplatform.merchant.application.usecase;
 
+import com.deliveryplatform.merchant.application.exception.ConviteSemAutoridade;
+import com.deliveryplatform.merchant.application.port.in.AceitarConvite;
 import com.deliveryplatform.merchant.application.port.out.ConviteRepositorio;
 import com.deliveryplatform.merchant.application.port.out.MembroRepositorio;
 import com.deliveryplatform.merchant.domain.exception.ConviteInvalido;
+import com.deliveryplatform.merchant.domain.exception.PermissaoNaoPossuida;
+import com.deliveryplatform.merchant.domain.exception.SemAutoridadeSobreMembro;
 import com.deliveryplatform.merchant.domain.model.Convite;
 import com.deliveryplatform.merchant.domain.model.Equipe;
 import com.deliveryplatform.merchant.domain.model.Membro;
@@ -30,7 +34,7 @@ import java.util.UUID;
  * sido suspenso ou saído.
  */
 @Service
-public class AceitarConviteService {
+public class AceitarConviteService implements AceitarConvite {
 
     private final ConviteRepositorio convites;
     private final MembroRepositorio membros;
@@ -47,6 +51,13 @@ public class AceitarConviteService {
         this.relogio = relogio;
     }
 
+    /**
+     * <b>A A2 no aceite vira {@link ConviteSemAutoridade}</b> (E-2, ADR-069 §5): o domínio
+     * a lança com as exceções da emissão, que aqui querem dizer outra coisa — quem aceita
+     * não tem o que corrigir. A tradução é só em volta do {@code equipe.aceitar}, e só
+     * dos dois tipos da A2.
+     */
+    @Override
     @Transactional
     public Membro aceitar(String token, UUID usuarioId) {
         Instant agora = Instant.now(relogio).truncatedTo(ChronoUnit.MICROS);
@@ -57,7 +68,12 @@ public class AceitarConviteService {
         Convite convite = convites.buscarPorToken(token).orElseThrow(ConviteInvalido::new);
 
         Equipe equipe = membros.equipeParaAlteracao(convite.getEstabelecimentoId());
-        Membro novo = equipe.aceitar(convite, token, usuarioId, agora);
+        Membro novo;
+        try {
+            novo = equipe.aceitar(convite, token, usuarioId, agora);
+        } catch (SemAutoridadeSobreMembro | PermissaoNaoPossuida a2) {
+            throw new ConviteSemAutoridade(a2);
+        }
 
         membros.salvar(novo);
         convites.salvar(convite);

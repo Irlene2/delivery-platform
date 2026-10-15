@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.http.HttpMethod;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -82,6 +83,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(rotas -> {
                     rotas.dispatcherTypeMatchers(DispatcherType.ERROR).permitAll();
                     rotas.requestMatchers("/actuator/health/**").permitAll();
+                    // ADR-069 §2: a leitura do convite é de quem ainda não tem sessão. Só o
+                    // GET de um segmento — o aceite, embaixo do mesmo prefixo, exige sessão.
+                    rotas.requestMatchers(HttpMethod.GET, "/api/v1/convites/*").permitAll();
                     if (docs.abertas()) {
                         // ADR-050: só no computador de quem desenvolve, e o
                         // padrão da propriedade é false — esquecer fecha.

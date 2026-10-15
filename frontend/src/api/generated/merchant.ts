@@ -48,6 +48,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/convites/{token}/aceite": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Aceita o convite
+         * @description Exige sessão e nenhuma permissão. A A2 é conferida de novo aqui: se quem convidou perdeu o que ofereceu, o aceite é recusado.
+         */
+        post: operations["aceitar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/internal/merchants/{estabelecimentoId}/me/contexto-de-acesso": {
         parameters: {
             query?: never;
@@ -100,6 +120,26 @@ export interface paths {
          * @description Exige vínculo ativo com GERENCIAR_EQUIPE. Sem vínculo, sem permissão e loja inexistente devolvem a mesma recusa.
          */
         get: operations["listar"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/convites/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * O convite, para quem recebeu o link
+         * @description Público: quem recebe um convite ainda não tem sessão. Devolve só o nome da loja, o papel e a validade.
+         */
+        get: operations["ver"];
         put?: never;
         post?: never;
         delete?: never;
@@ -167,6 +207,13 @@ export interface components {
             papel?: "ADMINISTRADOR" | "COLABORADOR";
             permissoes?: ("VER_PRODUTO" | "CRIAR_PRODUTO" | "ALTERAR_PRODUTO" | "DESATIVAR_PRODUTO" | "VER_PEDIDO" | "ALTERAR_STATUS" | "VER_VENDAS" | "VER_ENTREGA" | "GERENCIAR_EQUIPE" | "GERENCIAR_JORNADA")[];
         };
+        AceiteResponse: {
+            /** Format: uuid */
+            estabelecimentoId?: string;
+            /** @enum {string} */
+            papel?: "ADMINISTRADOR" | "COLABORADOR";
+            permissoes?: ("VER_PRODUTO" | "CRIAR_PRODUTO" | "ALTERAR_PRODUTO" | "DESATIVAR_PRODUTO" | "VER_PEDIDO" | "ALTERAR_STATUS" | "VER_VENDAS" | "VER_ENTREGA" | "GERENCIAR_EQUIPE" | "GERENCIAR_JORNADA")[];
+        };
         ContextoDeAcesso: {
             /** Format: uuid */
             usuarioId?: string;
@@ -207,6 +254,17 @@ export interface components {
             permissoes: ("VER_PRODUTO" | "CRIAR_PRODUTO" | "ALTERAR_PRODUTO" | "DESATIVAR_PRODUTO" | "VER_PEDIDO" | "ALTERAR_STATUS" | "VER_VENDAS" | "VER_ENTREGA" | "GERENCIAR_EQUIPE" | "GERENCIAR_JORNADA")[];
             /** Format: date-time */
             desde: string;
+        };
+        /** @description O mínimo que convence: a loja, o papel e até quando vale. */
+        ConvitePublicoResponse: {
+            nomeDaLoja?: string;
+            /**
+             * @description Sempre COLABORADOR: convite nunca concede outro papel.
+             * @enum {string}
+             */
+            papel?: "ADMINISTRADOR" | "COLABORADOR";
+            /** Format: date-time */
+            expiraEm?: string;
         };
     };
     responses: never;
@@ -322,6 +380,49 @@ export interface operations {
             };
             /** @description Sem token, ou token inválido */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    aceitar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description O vínculo que nasceu */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AceiteResponse"];
+                };
+            };
+            /** @description Sem sessão */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Convite inexistente, expirado, já aceito ou cancelado — a mesma resposta */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Quem convidou não pode mais conceder o que ofereceu (A2), ou quem aceita já é da equipe */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -458,6 +559,35 @@ export interface operations {
             };
             /** @description Sem vínculo, sem GERENCIAR_EQUIPE ou loja inexistente — a mesma recusa */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ver: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A loja, o papel e a validade do convite */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConvitePublicoResponse"];
+                };
+            };
+            /** @description Convite inexistente, expirado, já aceito ou cancelado — a mesma resposta */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

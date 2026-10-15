@@ -67,6 +67,8 @@ class ContratoDeErrosIT extends Infraestrutura {
     private static final String EQUIPE = "/api/v1/merchants/{estabelecimentoId}/team";
     private static final String MINHAS_LOJAS = "/api/v1/me/estabelecimentos";
     private static final String CONVITES = "/api/v1/merchants/{estabelecimentoId}/team/convites";
+    private static final String CONVITE = "/api/v1/convites/{token}";
+    private static final String ACEITE = "/api/v1/convites/{token}/aceite";
 
     /** O que o contrato declara e nenhum caso provoca. Hoje: nada. */
     private static final Map<String, String> NAO_PROVOCAVEIS = Map.of();
@@ -161,6 +163,22 @@ class ContratoDeErrosIT extends Infraestrutura {
                             String token = IDENTITY.tokenDe(vinculado(loja, Permissao.VER_PRODUTO));
                             return post("/api/v1/merchants/" + loja + "/team/convites",
                                     ConvidarIT.CORPO.formatted("(81) 98765-4321", ""), token);
+                        }),
+
+                // Ver e aceitar (ADR-069 §2 a §5). O GET é público: não tem 401.
+                new Provocacao("GET", CONVITE, 404, "token que não existe",
+                        () -> get("/api/v1/convites/nao-existe", null)),
+                new Provocacao("POST", ACEITE, 401, "sem sessão",
+                        () -> post("/api/v1/convites/nao-existe/aceite", "", null)),
+                new Provocacao("POST", ACEITE, 404, "token que não existe",
+                        () -> post("/api/v1/convites/nao-existe/aceite", "", estranho())),
+                new Provocacao("POST", ACEITE, 409, "quem aceita já é da equipe",
+                        () -> {
+                            UUID loja = loja();
+                            UUID dono = vinculado(loja, Permissao.GERENCIAR_EQUIPE);
+                            String token = conviteDe(loja, dono);
+                            return post("/api/v1/convites/" + token + "/aceite", "",
+                                    IDENTITY.tokenDe(dono));
                         }));
     }
 
@@ -249,6 +267,18 @@ class ContratoDeErrosIT extends Infraestrutura {
         membros.salvar(Membro.reconstituir(UUID.randomUUID(), pessoa, loja,
                 Papel.COLABORADOR, EnumSet.of(permissao), EstadoDoMembro.ATIVO, agora, agora));
         return pessoa;
+    }
+
+    /** Um convite emitido pela rota de verdade, oferecendo uma permissão que o dono tem. */
+    private String conviteDe(UUID loja, UUID dono) {
+        var resposta = RestTestClient.bindToServer().baseUrl("http://localhost:" + porta).build()
+                .post().uri("/api/v1/merchants/" + loja + "/team/convites")
+                .header("Authorization", "Bearer " + IDENTITY.tokenDe(dono))
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(ConvidarIT.CORPO.formatted("(81) 98765-4321", "\"GERENCIAR_EQUIPE\""))
+                .exchange()
+                .expectBody(Map.class).returnResult().getResponseBody();
+        return (String) resposta.get("token");
     }
 
     private int get(String uri, String token) {

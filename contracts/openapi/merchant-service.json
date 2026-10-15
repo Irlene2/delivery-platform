@@ -124,6 +124,43 @@
         }
       }
     },
+    "/api/v1/convites/{token}/aceite" : {
+      "post" : {
+        "tags" : [ "convite-controller" ],
+        "summary" : "Aceita o convite",
+        "description" : "Exige sessão e nenhuma permissão. A A2 é conferida de novo aqui: se quem convidou perdeu o que ofereceu, o aceite é recusado.",
+        "operationId" : "aceitar",
+        "parameters" : [ {
+          "name" : "token",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "O vínculo que nasceu",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AceiteResponse"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Sem sessão"
+          },
+          "404" : {
+            "description" : "Convite inexistente, expirado, já aceito ou cancelado — a mesma resposta"
+          },
+          "409" : {
+            "description" : "Quem convidou não pode mais conceder o que ofereceu (A2), ou quem aceita já é da equipe"
+          }
+        }
+      }
+    },
     "/internal/merchants/{estabelecimentoId}/me/contexto-de-acesso" : {
       "get" : {
         "tags" : [ "interno" ],
@@ -239,6 +276,38 @@
             "description" : "Sem vínculo, sem GERENCIAR_EQUIPE ou loja inexistente — a mesma recusa"
           }
         }
+      }
+    },
+    "/api/v1/convites/{token}" : {
+      "get" : {
+        "tags" : [ "convite-controller" ],
+        "summary" : "O convite, para quem recebeu o link",
+        "description" : "Público: quem recebe um convite ainda não tem sessão. Devolve só o nome da loja, o papel e a validade.",
+        "operationId" : "ver",
+        "parameters" : [ {
+          "name" : "token",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "A loja, o papel e a validade do convite",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ConvitePublicoResponse"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Convite inexistente, expirado, já aceito ou cancelado — a mesma resposta"
+          }
+        },
+        "security" : [ ]
       }
     }
   },
@@ -384,6 +453,27 @@
           }
         }
       },
+      "AceiteResponse" : {
+        "type" : "object",
+        "properties" : {
+          "estabelecimentoId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "papel" : {
+            "type" : "string",
+            "enum" : [ "ADMINISTRADOR", "COLABORADOR" ]
+          },
+          "permissoes" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "VER_PRODUTO", "CRIAR_PRODUTO", "ALTERAR_PRODUTO", "DESATIVAR_PRODUTO", "VER_PEDIDO", "ALTERAR_STATUS", "VER_VENDAS", "VER_ENTREGA", "GERENCIAR_EQUIPE", "GERENCIAR_JORNADA" ]
+            },
+            "uniqueItems" : true
+          }
+        }
+      },
       "ContextoDeAcesso" : {
         "type" : "object",
         "properties" : {
@@ -475,6 +565,24 @@
           }
         },
         "required" : [ "desde", "estado", "id", "papel", "permissoes", "usuarioId" ]
+      },
+      "ConvitePublicoResponse" : {
+        "type" : "object",
+        "description" : "O mínimo que convence: a loja, o papel e até quando vale.",
+        "properties" : {
+          "nomeDaLoja" : {
+            "type" : "string"
+          },
+          "papel" : {
+            "type" : "string",
+            "description" : "Sempre COLABORADOR: convite nunca concede outro papel.",
+            "enum" : [ "ADMINISTRADOR", "COLABORADOR" ]
+          },
+          "expiraEm" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }
       }
     },
     "securitySchemes" : {

@@ -48,6 +48,15 @@ spring:
               predicates:
                 - Path=/api/v1/me/**
 
+            # O convite visto de quem o recebeu (ADR-069): endereçado pelo
+            # token, e não pela loja — quem tem o link ainda não é dela. O GET
+            # de um segmento é público na cadeia; o aceite, sob o mesmo prefixo,
+            # exige token aqui e sessão no merchant.
+            - id: convites
+              uri: ${SERVICE_MERCHANT_URI:http://localhost:8082}
+              predicates:
+                - Path=/api/v1/convites/**
+
             # ── escopo do estabelecimento ───────────────────────────────
             # merchantId sempre na mesma posição: é dele que a invariante 9
             # extrai o identificador a confrontar com o usuário autenticado.

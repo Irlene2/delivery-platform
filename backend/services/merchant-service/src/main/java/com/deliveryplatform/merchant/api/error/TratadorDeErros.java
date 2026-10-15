@@ -3,8 +3,12 @@ package com.deliveryplatform.merchant.api.error;
 import com.deliveryplatform.merchant.application.exception.AcessoNegado;
 import com.deliveryplatform.merchant.application.exception.CadastroDeLojaRecusado;
 import com.deliveryplatform.merchant.application.exception.ConviteRecusado;
+import com.deliveryplatform.merchant.application.exception.ConviteSemAutoridade;
+import com.deliveryplatform.merchant.domain.exception.ConviteInvalido;
+import com.deliveryplatform.merchant.domain.exception.JaPertenceAEquipe;
 import com.deliveryplatform.merchant.application.exception.SemExpedientePorHorario;
 import org.springframework.http.HttpStatus;
+import java.net.URI;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -84,6 +88,44 @@ public class TratadorDeErros {
     @ExceptionHandler(ConviteRecusado.class)
     public ProblemDetail conviteRecusado(ConviteRecusado excecao) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, fraseDe(excecao.motivo()));
+    }
+
+    /**
+     * 404 para o convite que não vale: inexistente, expirado, aceito ou cancelado — a
+     * mesma frase nos quatro (ADR-069 §3). Distinguir contaria a quem tenta tokens no escuro
+     * quais já existiram. A frase diz o que fazer, e não por quê.
+     */
+    @ExceptionHandler(ConviteInvalido.class)
+    public ProblemDetail conviteInvalido(ConviteInvalido excecao) {
+        return semToken(ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND,
+                "este convite não vale mais; peça outro a quem te convidou"));
+    }
+
+    /**
+     * 409: o token conferiu, mas quem convidou não pode mais conceder o que ofereceu (A2 no
+     * aceite, ADR-069 §5). Não conta nada a quem adivinha — só chega aqui quem tem o token.
+     */
+    @ExceptionHandler(ConviteSemAutoridade.class)
+    public ProblemDetail conviteSemAutoridade(ConviteSemAutoridade excecao) {
+        return semToken(ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT,
+                "quem te convidou não pode mais conceder este acesso; peça um novo convite"));
+    }
+
+    /** 409: quem aceita já está na equipe. A única resposta que evita pedir outro convite. */
+    @ExceptionHandler(JaPertenceAEquipe.class)
+    public ProblemDetail jaPertenceAEquipe(JaPertenceAEquipe excecao) {
+        return semToken(ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT,
+                "você já faz parte da equipe desta loja"));
+    }
+
+    /**
+     * O {@code instance} fixo, e não o caminho do pedido. Sem isto o Spring o preenche com a
+     * URI — e a URI do convite <b>contém o token</b>: toda recusa o ecoaria no corpo, um lugar
+     * a mais onde a credencial aparece (ADR-069 §1). Medido na E-2, ao escrever o teste.
+     */
+    private static ProblemDetail semToken(ProblemDetail problema) {
+        problema.setInstance(URI.create("/api/v1/convites"));
+        return problema;
     }
 
     static String fraseDe(ConviteRecusado.Motivo motivo) {

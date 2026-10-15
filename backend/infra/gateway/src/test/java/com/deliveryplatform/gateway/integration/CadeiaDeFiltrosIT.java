@@ -44,6 +44,26 @@ class CadeiaDeFiltrosIT extends GatewayNoAr {
     }
 
     @Test
+    void a_leitura_do_convite_passa_sem_token() {
+        // Quem recebe o link ainda não tem sessão (ADR-069 §2).
+        cliente().get().uri("/api/v1/convites/um-token-qualquer").exchange().expectStatus().isOk();
+    }
+
+    @Test
+    void o_aceite_do_convite_sem_token_e_401() {
+        // Sob o mesmo prefixo, e barrado aqui: o permitAll é do GET de um segmento.
+        cliente().post().uri("/api/v1/convites/um-token-qualquer/aceite")
+                .exchange().expectStatus().isUnauthorized();
+    }
+
+    @Test
+    void o_get_de_dois_segmentos_sob_convites_sem_token_e_401() {
+        // O público é estreito: um segmento, e só GET.
+        cliente().get().uri("/api/v1/convites/um-token-qualquer/aceite")
+                .exchange().expectStatus().isUnauthorized();
+    }
+
+    @Test
     void o_health_passa_sem_token() {
         cliente().get().uri("/actuator/health").exchange().expectStatus().isOk();
     }
