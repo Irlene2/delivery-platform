@@ -1,6 +1,6 @@
 # ADR-059 — A semeadura passa pelo agregado, e não pelas tabelas
 
-- **Status:** aceita
+- **Status:** aceita · **emendada em 10/10/2026 (W-D)**: o terceiro semeador, e o vínculo · **emendada em 16/10/2026**: a condição era uma aproximação
 - **Data:** 10/10/2026
 - **Rodada:** I-C
 - **Relacionada:** ADR-046 (quem observa a abertura), ADR-049 (o carimbo com a loja
@@ -174,3 +174,44 @@ ligada. É mais uma razão para os três semeadores saírem com as rotas de escr
 **Ressemear é receita, não código** (`como-subir-local.md` §2.7): nada no repositório
 sabe apagar dado. Andaime que grava já é dívida; andaime que apaga seria dívida com
 risco.
+
+## Emenda de 16/10/2026 — a condição era uma aproximação
+
+**O corpo diz:** *"a rodada que der ao `merchant` as rotas de escrita troca esta fixture por
+uma sequência de chamadas HTTP, e a semeadura por `ApplicationRunner` sai do repositório nessa
+rodada."*
+
+**As rotas de escrita chegaram em 10/10/2026** — `31a5958`, o `POST /api/v1/me/estabelecimentos`
+— **e não eram as rotas de que a fixture precisa.** O censo da R-5 mediu os três semeadores
+campo por campo: **36 campos semeados, a API escreve 26, e não escreve 10.**
+
+**O que falta, e esta é a condição de agora:**
+
+| onde | o que a API não escreve |
+|---|---|
+| `merchant` | o horário de funcionamento, as áreas de entrega, o desconto de retirada e o pedido mínimo por modalidade — a loja criada por rota nasce sem horário, sem área, e com os dois valores em zero |
+| `catalog` | o grupo de opções e as opções do produto, e o `ESGOTADO_HOJE` do produto e da opção |
+
+*Os ids fixos que os semeadores combinam entre si **não** estão nesta lista: eles existem só para
+os três concordarem sem se falar, e numa sequência de chamadas cada uma usa o id que a anterior
+devolveu.*
+
+**E uma das linhas depende de outra:** o `ESGOTADO_HOJE` exige expediente corrente, e a marcação
+responde **409** (`LojaSemExpediente`) numa loja sem horário. **Então o horário vem antes.** As
+duas marcações já têm rota; o que lhes falta é a loja ter horário.
+
+**Gatilho escrito:** **a lista acima esvaziar.** Não é *"a rodada que der as rotas de escrita"*
+— foi exatamente isso que esta emenda conserta. **Cada campo da lista é uma escrita que falta**,
+e o gatilho se paga quando não faltar nenhuma.
+
+**Por que o corpo fica:** a frase antiga é o registro de uma condição escrita por aproximação —
+ela nomeava a rodada que provavelmente traria o pagamento, e não o que o pagamento precisa.
+**E ela foi conferida no dia em que disparou:** a ADR-060, de 10/10, diz *"esta dá **uma**… O
+gatilho não está pago."* O que ficou errado foi a linha 34 do `docs/dividas.md`, escrita quatro
+horas antes da primeira rota, e que o commit da ADR-060 — o `398d828`, que editou o razão no
+mesmo minuto — não atualizou. Ela passou seis dias dizendo que o `merchant` não tinha rota de
+escrita. *Apagar a frase do corpo tiraria do arquivo a única coisa que ela ainda ensina:
+condição nomeia o que o pagamento precisa, não a rodada que provavelmente o trará.*
+
+**Esta é a única redação da condição** (ADR-071). O `como-subir-local.md` passou a apontar para
+cá.

@@ -471,15 +471,14 @@ credenciais estão no `.env`.
 ## 6. O que este documento não cobre
 
 **Não há dado de partida.** Depois de subir, o banco está vazio: para ver um
-produto na tela é preciso usuário, estabelecimento, categoria e produto — e hoje
-nem o `merchant` tem rota de escrita (só leituras e o expediente corrente) nem o
-`catalog` tem rota de criar produto (só as duas de marcar disponibilidade).
+produto na tela é preciso usuário, estabelecimento, categoria e produto. As rotas de
+escrita que existem — o `merchant` cria a loja desde 10/10/2026 (`31a5958`), e o
+`catalog` cria seção e produto desde 11/10/2026 (`cbd633c`, `40aa4ce`) — não bastam
+para montar uma loja que abra e um produto com opções: o que falta está no fim desta seção.
 
 Um `seed` que escreva direto nas tabelas foi considerado e recusado: ele burlaria
 as invariantes que só existem no agregado, e passaria a ser um segundo lugar onde
-as regras do domínio estão escritas. **Gatilho escrito:** a rodada que der ao
-`merchant` as rotas de escrita. Aí o `seed` é uma sequência de chamadas HTTP, e
-ela passa pelas mesmas regras que um usuário passa.
+as regras do domínio estão escritas.
 
 **O que mudou em 10/10/2026 (I-C), e o que não mudou.** A recusa acima é contra escrever
 **direto nas tabelas**, e ela continua de pé. A I-C semeia por outro caminho: um
@@ -490,6 +489,9 @@ regras estejam escritas.
 
 **A rota de escrita continua devida.** Uma fixture não é uma API: ninguém monta um
 cardápio por `ApplicationRunner`, e a bandeira que a liga é falsa em todo lugar que não
-seja a máquina de quem desenvolve. **O gatilho desta seção segue armado** — a rodada que
-der ao `merchant` as rotas de escrita troca a fixture por chamadas HTTP, e **apaga os
-semeadores do repositório**. Eles são andaime.
+seja a máquina de quem desenvolve. Os semeadores são andaime.
+
+**Quando os semeadores saem, e o que falta para isso:** a condição está na
+[ADR-059](architecture/decisions/ADR-059-a-semeadura-passa-pelo-agregado.md), na emenda de
+16/10/2026, e só lá — ela é a lista do que a fixture grava e a API não escreve. *Este arquivo
+descrevia a mesma condição em dois lugares, e os dois já diziam coisas diferentes.*

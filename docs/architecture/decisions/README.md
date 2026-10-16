@@ -60,7 +60,7 @@
 | 056 | Recurso de outra loja é 404, e o 403 fica com um significado só | ✅ aceita |
 | 057 | A idempotência natural por chave de domínio, e a segunda exceção à invariante 7 | ✅ aceita · **emenda a 048** |
 | 058 | O limite do contêiner dimensiona o JVM, e a pilha sobe em grupos | ✅ aceita |
-| 059 | A semeadura passa pelo agregado, e não pelas tabelas | ✅ aceita |
+| 059 | A semeadura passa pelo agregado, e não pelas tabelas | ✅ aceita · **emendada** (10/10/2026: o terceiro semeador, e o vínculo; 16/10/2026: a condição era uma aproximação) |
 | 060 | A primeira rota de escrita, e o que o agregado exige para a loja nascer | ✅ aceita |
 | 061 | A loja escolhida mora na URL | ✅ aceita |
 | 063 | O erro do catálogo diz de quem é a culpa | ✅ aceita |
