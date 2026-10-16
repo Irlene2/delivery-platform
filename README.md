@@ -278,7 +278,7 @@ A numeração é a de [`docs/PRD.md`](docs/PRD.md) §10, e é a única que vale.
 |---|---|---|
 | 0 | ✅ Esqueleto: build, módulos, Compose, CI | — |
 | 1 | Conta, estabelecimento, equipe e permissões | Cadastrar a loja e o time, com poderes diferentes |
-| 2 | Cardápio com opções e disponibilidade qualitativa | Publicar o cardápio e marcar o que acabou |
+| 2 | ✅ Cardápio com opções e disponibilidade qualitativa | Publicar o cardápio e marcar o que acabou |
 | 3 | Painel de pedidos e ciclo de preparo | Receber e acompanhar pedidos numa tela |
 | 4 | Liquidação presencial, troco e Pix confirmado | Registrar como cada pedido foi pago de verdade |
 | 5 | Entregadores, vínculo, remuneração e despacho | Despachar e saber quem está com cada pedido |

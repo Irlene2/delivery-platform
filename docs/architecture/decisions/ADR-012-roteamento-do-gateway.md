@@ -1,6 +1,6 @@
 # ADR-012 — Roteamento do gateway por recurso, não por serviço
 
-**Status:** Aceita — 23/08/2026 · **emendada em 30/09/2026**: `/api/v1/me` passa a ser prefixo compartilhado, e a ordem dos predicados decide
+**Status:** Aceita — 23/08/2026 · **emendada em 30/09/2026**: `/api/v1/me` passa a ser prefixo compartilhado, e a ordem dos predicados decide · **emendada em 16/10/2026**: a tabela não acompanhou o gateway
 **Relacionada:** ADR-011 (autorização), ADR-015 (JWT), ADR-021 (catálogo de serviços), ADR-023 (fronteira com o PSP)
 **Invariantes do `CLAUDE.md`:** 9 (identificador da URL não é confiável)
 **Muda o esqueleto:** `backend/infra/gateway/src/main/resources/application.yml`
@@ -222,3 +222,26 @@ genérica, ele ficou vermelho, e só ele.
 autoriza. Esta rota não é exceção — ela exige token válido como qualquer outra
 e não exige permissão nenhuma, pelo motivo que o `estabelecimento.md` §2
 explica ("As minhas lojas").
+
+## Emenda de 16/10/2026 — a tabela não acompanhou o gateway
+
+A tabela acima nasceu com **14** rotas, em 23/08/2026, e o `application.yml` do gateway
+passou a ter outras. Medido na R-2: o arquivo roteia **16** entradas, e a tabela lista
+**15**.
+
+**O que a tabela não registrava:** `me-estabelecimentos` —
+`/api/v1/me/estabelecimentos → merchant`, predicado exato acima do `/api/v1/me/**`
+genérico (G-B5). A emenda de 30/09 o descreve em prosa; a tabela não ganhou a linha.
+
+**E a tabela foi reescrita uma vez, contra a regra desta pasta:** a linha
+`/api/v1/convites/** → merchant` entrou **no corpo** em 15/10/2026 (E-2, `5889a4c`), e
+não numa emenda. Fica onde está — tirá-la seria reescrever de novo —, e fica registrado
+aqui: das quinze linhas, catorze são da decisão e uma é de 15/10.
+
+**A decisão não mudou** — rotas por recurso, não por serviço, continua valendo e é o que o
+`application.yml` faz. O que esta emenda conserta é a tabela, que virou inventário e não
+avisou quando envelheceu.
+
+**Gatilho escrito:** a próxima rota que o gateway ganhar. Quem a acrescenta acrescenta a linha
+aqui — ou tira a tabela, e deixa o `application.yml` ser a única lista. *A segunda saída é
+melhor, e exige decisão que esta emenda não toma.*
