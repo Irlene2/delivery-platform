@@ -38,9 +38,10 @@ import org.springframework.stereotype.Component;
  * carimba {@code telefoneVerificadoEm} no instante em que o código foi conferido
  * (ADR-042), e é isso que torna a U4 verdadeira em vez de afirmada. Aqui o
  * carimbo é o instante da semeadura: a U4 é <b>afirmada</b>, para um telefone que
- * ninguém atende. É aceitável num usuário que só existe com a bandeira ligada, e
- * é mais uma razão para a fixture sair do repositório quando as rotas de escrita
- * chegarem.
+ * ninguém atende. É aceitável num usuário que só existe com a bandeira ligada.
+ *
+ * <p>Andaime: a condição da saída está na ADR-059, emenda de 16/10/2026 — a lista do que
+ * esta fixture grava e a API não escreve.
  */
 @Component
 @EnableConfigurationProperties(SemeaduraProperties.class)

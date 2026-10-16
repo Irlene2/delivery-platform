@@ -197,3 +197,8 @@ enganoso, um documento que deveria citar a ADR e não cita. Depois do `grep`, le
 tocam o mesmo dado que a decisão governa. Foi assim que a ADR-013 revelou `Contato.consentimento`
 com nome da base legal que ela rejeitou, e o congelamento do endereço em `pedido.md` sem a
 ressalva que torna a anonimização possível.
+
+**Cópia dentro do dono não é duplicação.** Uma ADR pode dizer a mesma coisa no corpo e em duas
+emendas de datas diferentes: isso é **histórico**, e **a emenda mais nova vence**. A regra da
+ADR-071 — uma redação só — é entre **arquivos**. *Dentro de um, o que não se reescreve é
+justamente o que envelheceu.*

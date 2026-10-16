@@ -124,6 +124,8 @@ Requisitos organizados por épico. Cada história traz critérios de aceite veri
 - Métodos de pagamento aceitos, por modalidade
 - Política de troco: valor máximo de fundo e se aceita pedido sem troco disponível
 - Horário de funcionamento e pausa manual imediata
+- Desconto para quem retira no balcão, quando o comerciante quiser oferecê-lo
+- Pedido mínimo por modalidade, sobre o valor dos itens — sem a taxa de entrega —, com zero valendo como "sem mínimo"
 
 **H1.3** Como comerciante, quero definir minhas áreas de entrega e taxas por bairro.
 - Cadastro de bairros ou faixas de CEP atendidos, com taxa por área

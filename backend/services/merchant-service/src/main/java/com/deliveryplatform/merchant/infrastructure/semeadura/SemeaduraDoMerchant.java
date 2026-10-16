@@ -38,9 +38,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * A loja da fixture de desenvolvimento, e o vínculo de quem entra nela — ADR-059. <b>Andaime, não fundação</b>:
- * sai do repositório na rodada que der ao {@code merchant} as rotas de escrita
- * ({@code como-subir-local.md} §6).
+ * A loja da fixture de desenvolvimento, e o vínculo de quem entra nela — ADR-059. <b>Andaime, não fundação</b>.
+ *
+ * <p>Andaime: a condição da saída está na ADR-059, emenda de 16/10/2026 — a lista do que
+ * esta fixture grava e a API não escreve.
  *
  * <p>Atrás de {@code delivery.semeadura.ligada}, falsa por padrão. Roda em toda
  * subida com a bandeira ligada, e cada metade é idempotente por si: a loja pelo id

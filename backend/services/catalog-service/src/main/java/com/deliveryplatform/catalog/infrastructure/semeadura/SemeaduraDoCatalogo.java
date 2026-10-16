@@ -25,7 +25,10 @@ import org.springframework.stereotype.Component;
 
 /**
  * O produto da fixture de desenvolvimento — ADR-059. <b>Andaime, não
- * fundação</b>: sai do repositório junto com o semeador do {@code merchant}.
+ * fundação</b>.
+ *
+ * <p>Andaime: a condição da saída está na ADR-059, emenda de 16/10/2026 — a lista do que
+ * esta fixture grava e a API não escreve.
  *
  * <p>Atrás de {@code delivery.semeadura.ligada}, falsa por padrão. Grava
  * <b>uma</b> categoria e <b>um</b> produto nela, na loja da {@link Fixture}. A
