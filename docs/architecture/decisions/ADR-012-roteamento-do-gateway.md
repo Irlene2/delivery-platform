@@ -1,6 +1,6 @@
 # ADR-012 — Roteamento do gateway por recurso, não por serviço
 
-**Status:** Aceita — 23/08/2026 · **emendada em 30/09/2026**: `/api/v1/me` passa a ser prefixo compartilhado, e a ordem dos predicados decide · **emendada em 16/10/2026**: a tabela não acompanhou o gateway
+**Status:** Aceita — 23/08/2026 · **emendada em 30/09/2026**: `/api/v1/me` passa a ser prefixo compartilhado, e a ordem dos predicados decide · **emendada em 16/10/2026**: a tabela não acompanhou o gateway · **emendada em 16/10/2026 (2)**: a tabela deixa de ser a lista, e o teste passa a derivar do gateway
 **Relacionada:** ADR-011 (autorização), ADR-015 (JWT), ADR-021 (catálogo de serviços), ADR-023 (fronteira com o PSP)
 **Invariantes do `CLAUDE.md`:** 9 (identificador da URL não é confiável)
 **Muda o esqueleto:** `backend/infra/gateway/src/main/resources/application.yml`
@@ -245,3 +245,33 @@ avisou quando envelheceu.
 **Gatilho escrito:** a próxima rota que o gateway ganhar. Quem a acrescenta acrescenta a linha
 aqui — ou tira a tabela, e deixa o `application.yml` ser a única lista. *A segunda saída é
 melhor, e exige decisão que esta emenda não toma.*
+
+## Emenda de 16/10/2026 (2) — a tabela deixa de ser a lista, e o teste passa a derivar do gateway
+
+**A emenda anterior deu à tabela um gatilho — *"a próxima rota que o gateway ganhar"* — e disse
+que tirá-la era melhor e dependia de decisão. A decisão foi tomada no mesmo dia, na ADR-071, e
+é tirá-la.**
+
+**A tabela acima não é mais normativa.** A lista das rotas do gateway é o
+`backend/infra/gateway/src/main/resources/application.yml`. A tabela fica no corpo porque **o
+corpo de uma ADR não se reescreve**: ela registra as rotas como eram quando esta decisão foi
+tomada.
+
+**E o verificador deixou de ser cópia.** Até esta rodada o `RoteamentoIT` afirmava as rotas uma
+a uma, num `@CsvSource` escrito à mão — **uma terceira lista**, que não lia o `yml`, e sob a
+qual **rota nova sem caso escrito passava em silêncio**. Agora cada caso nomeia o `id` da rota
+que afirma, e o teste compara esses ids com **as rotas que o gateway carregou do
+`application.yml`** — o `GatewayMvcProperties`, pedido ao contexto —, nos dois sentidos: falha
+quando existir entrada `- id:` que nenhum caso afirme, e quando um caso nomear rota que o
+gateway não tem. *Sem isso, tirar a tabela seria trocar de cópia.*
+
+**A decisão não mudou:** rotas por recurso, e não por serviço, continua valendo.
+
+**O que isto resolve, além da contagem:** o identificador da rota aparecia com **duas grafias
+em três lugares** — `{merchantId}` na tabela e nas 9 rotas do `application.yml`,
+`{estabelecimentoId}` no Contexto desta ADR e na emenda de 26/08. *Sem duas listas, não há duas
+grafias — e a emenda de 26/08 continua como está, porque o corpo e as emendas antigas não se
+reescrevem.*
+
+**Gatilho escrito: nenhum.** O gatilho que a emenda anterior escreveu **está cumprido, e não
+volta.**
