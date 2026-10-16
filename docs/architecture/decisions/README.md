@@ -71,8 +71,8 @@
 | 068 | A listagem mostra o rascunho, porque quem a chama é o painel | ✅ aceita |
 | 069 | O convite chega pela mão de quem convida, e o token se lê uma vez | ✅ aceita |
 | 070 | A tela do convite, e o segredo que já está no navegador de quem o recebeu | ✅ aceita |
-| 071 | A lista tem um dono, e a cópia não é lista | ✅ aceita · **emendada** (17/10/2026: o terceiro item do gatilho não era gatilho) |
-| 072 | A seção que o comando colhe, e o item que não era gatilho | ✅ aceita |
+| 071 | A lista tem um dono, e a cópia não é lista | ✅ aceita · **emendada** (16/10/2026: o terceiro item do gatilho não era gatilho; 16/10/2026 (2): os dois itens restantes são regra, e saem do razão) |
+| 072 | A seção que o comando colhe, e o item que não era gatilho | ✅ aceita · **emendada** (16/10/2026: "condição nossa" tem duas espécies) |
 
 **Sessenta e nove escritas, duas sem objeto — estas com registro próprio desde
 25/08/2026 —, nenhuma a escrever.**
@@ -121,9 +121,17 @@ item escrito debaixo dele vira uma linha do razão.**
 **Então cada item é uma condição que o mundo cumpre** — uma rota que nasce, um serviço que
 ganha código, um volume que chega, uma pessoa que pergunta. **Duas coisas não entram ali:**
 
-- **condição que depende de nós decidirmos** — *"o dia em que existir comando que enumere X"*,
-  *"quando decidirmos onde mora Y"*. Isso é **pergunta não feita**, e a entrega é a pergunta,
-  no mesmo pacote (ADR-072 §1);
+- **condição que depende de nós decidirmos.** São **duas espécies**, e só se separaram depois
+  do censo da R-4, que pôs as duas na mesma categoria porque apareceram juntas na mesma ADR:
+  - **pergunta não feita** — *"o dia em que existir comando que enumere X"*, *"quando
+    decidirmos onde mora Y"*. A entrega é **a pergunta**, no mesmo pacote (50º defeito), e
+    não a linha;
+  - **instrução de permanência** — *"quando achar uma duplicação, escreva o ponteiro"*. Ela
+    **nunca se paga**, porque vale para sempre: não é dívida, é regra. **O lugar dela é este
+    arquivo**, e não o razão.
+
+  **O teste que separa as duas:** *existe um dia em que isto deixa de valer?* Se não existe,
+  é instrução, e o razão não é o lugar;
 - **prosa** — ressalva, argumento, frase de efeito. **Vai no corpo.**
 
 **O teste de uma linha:** *alguém que não seja nós pode fazer isso acontecer?* Se não, não é
@@ -135,6 +143,16 @@ apontando a emenda. **O cabeçalho do razão tem de continuar fechando** depois 
 
 *A decisão é a ADR-072, e nasceu da ADR-071, que se contradisse em duas seções suas no dia em
 que foi escrita.*
+
+### Instruções de permanência que já valem
+
+**Regra ou lista achada escrita num segundo lugar:** não se sincroniza. Escreve-se o
+**ponteiro**, ou o **comando que a deriva** do dono (ADR-071). Quem achar, faz na hora — não
+há rodada para isso, e não há linha de razão esperando.
+
+**Lista transcrita num teste:** o teste passa a **comparar-se com o dono**, por igualdade de
+conjunto nos dois sentidos, como o `RoteamentoIT` faz desde `0e545c0`. *Verificar não é
+derivar: a comparação tem de ser total.*
 
 ## Emendas
 

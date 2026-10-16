@@ -1,6 +1,6 @@
 # ADR-071 — A lista tem um dono, e a cópia não é lista
 
-- **Status:** aceita · **emendada em 17/10/2026**: o terceiro item do gatilho não era gatilho
+- **Status:** aceita · **emendada em 16/10/2026**: o terceiro item do gatilho não era gatilho · **emendada em 16/10/2026 (2)**: os dois itens restantes são regra, e saem do razão
 - **Data:** 16/10/2026
 - **Rodada:** R-3
 - **Relacionada:** ADR-012 (rotas por recurso no gateway), ADR-038, ADR-044 §6, ADR-047,
@@ -211,7 +211,7 @@ escreve-se o ponteiro, ou o comando que a deriva.
 **E o dia em que existir comando que enumere regra duplicada.** Aí se sabe se são cinco ou
 cinquenta. **Sem comando não há varredura**, e por isso a §4 não virou linha de razão.
 
-## Emenda de 17/10/2026 — o terceiro item do "Gatilho escrito" não era gatilho
+## Emenda de 16/10/2026 — o terceiro item do "Gatilho escrito" não era gatilho
 
 **Esta ADR se contradizia em duas seções suas, no dia em que foi escrita.** A §4 diz que a
 contagem das duplicações **não vira linha de razão**: *"não existe comando que enumere 'regra
@@ -240,3 +240,20 @@ linhas 94 e 95.
 
 **O razão estorna a linha 96** (R-4). **Gatilho escrito: nenhum** — e esta frase é uma menção
 que nega, da categoria que o cabeçalho do razão já subtrai; ela não cria linha.
+
+## Emenda de 16/10/2026 (2) — os dois itens restantes são regra, e saem do razão
+
+A emenda anterior, do mesmo dia, deixou escrita a pergunta: *"o que se quer de quem achar a
+próxima — um ponteiro na hora, sem linha de razão?"* **Sim.**
+
+**Os itens 1 e 2 da seção de gatilhos desta ADR são instruções de permanência** (ADR-072,
+emenda de 16/10/2026): *"escreva o ponteiro"* e *"faça o teste derivar do dono"* não esperam um
+dia — valem todos os dias, e por isso **nunca se pagariam**. As duas passaram para o
+`README.md` das decisões, que é o dono das regras de escrita.
+
+**O razão estorna as linhas 94 e 95** — *nunca apaga: estorna* —, e com a 96, estornada pela
+emenda anterior, **os três itens desta seção saem da contagem.** *Uma ADR cujo assunto é
+duplicação produziu três linhas de dívida e nenhuma delas era dívida; e o corpo dela fica como
+está, porque corpo de ADR não se reescreve.*
+
+**Gatilho escrito: nenhum.**

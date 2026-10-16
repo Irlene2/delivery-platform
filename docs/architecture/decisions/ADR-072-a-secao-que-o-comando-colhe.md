@@ -1,7 +1,7 @@
 # ADR-072 — A seção que o comando colhe, e o item que não era gatilho
 
-- **Status:** aceita
-- **Data:** 17/10/2026
+- **Status:** aceita · **emendada em 16/10/2026**: "condição nossa" tem duas espécies, e uma delas não é dívida
+- **Data:** 16/10/2026
 - **Rodada:** R-4
 - **Relacionada:** ADR-071 (a lista tem um dono), `docs/dividas.md` e o recorte estreito dele,
   o `README.md` das decisões, o quinquagésimo defeito — *gatilho cuja condição é uma decisão
@@ -125,3 +125,28 @@ esta mesma rodada ter feito dessa regra a única redação do repositório sobre
 **Nenhum.** O item que o rascunho desta ADR tinha aqui não passava no teste da §1 — quem escreve
 ADR somos nós —, e pela regra da própria ADR foi para o corpo antes do commit: está no fim da
 §3.
+
+## Emenda de 16/10/2026 — "condição nossa" tem duas espécies, e uma delas não é dívida
+
+**O censo da R-4 classificou cinco itens como condição nossa, e eles não são a mesma coisa.**
+O terceiro item do gatilho da ADR-071 era **pergunta não feita** — a condição era nós
+decidirmos escrever um comando, e a primeira emenda de 16/10 à ADR-071 o retirou. **Os outros
+dois da mesma ADR são de outra espécie:** *"quando achar uma regra escrita num segundo lugar,
+escreva o ponteiro"* é uma **instrução de permanência** — ela não espera um dia; ela vale todos
+os dias.
+
+**O teste que as separa:** *existe um dia em que isto deixa de valer?*
+
+- **existe** → é condição, e o razão é o lugar;
+- **não existe** → é regra, e o lugar é o `README.md` das decisões.
+
+**Os dois restantes do censo passam no teste, e ficam:** a linha 47 (ADR-059, *"a primeira vez
+que alguém quiser semear algo que o agregado não deixa construir"*) deixa de valer na primeira
+recusa, ou quando os semeadores saírem; a 55 (ADR-063, *"o dia em que alguém for ler o
+`catalog` e se confundir"*) deixa de valer quando a classe se partir. Medido na R-5.
+
+**A §1 desta ADR continua valendo** — item da seção de gatilhos é condição que o mundo cumpre.
+O que esta emenda acrescenta é **para onde vai o que não é**: a pergunta, no pacote; a
+instrução, no README das decisões. *Nenhuma das duas no razão.*
+
+**Gatilho escrito: nenhum.**
