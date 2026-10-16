@@ -71,8 +71,9 @@
 | 068 | A listagem mostra o rascunho, porque quem a chama é o painel | ✅ aceita |
 | 069 | O convite chega pela mão de quem convida, e o token se lê uma vez | ✅ aceita |
 | 070 | A tela do convite, e o segredo que já está no navegador de quem o recebeu | ✅ aceita |
+| 071 | A lista tem um dono, e a cópia não é lista | ✅ aceita |
 
-**Sessenta e sete escritas, duas sem objeto — estas com registro próprio desde
+**Sessenta e oito escritas, duas sem objeto — estas com registro próprio desde
 25/08/2026 —, nenhuma a escrever.**
 
 ## Onde mora o quê
@@ -112,13 +113,27 @@ decoração, não registro de decisão.
 
 ## Emendas
 
-Uma ADR alterada por revisão de escopo mantém o número e ganha um bloco de
-emenda no topo, com data e motivo. O texto abaixo do bloco é sempre o vigente —
-a versão anterior vive no histórico do Git, que é onde histórico deve viver.
+**A ADR não se reescreve.** Quando uma decisão muda, ou quando o texto dela envelhece, a ADR
+antiga ganha uma **emenda datada ao fim** — `## Emenda de dd/mm/aaaa — <o que mudou>` —, e o
+corpo continua registrando a decisão **como ela foi tomada, inclusive quando estava errada**.
 
-Foi assim com 009, 010 e 014 na revisão v1.1. Não foi assim com a 019, que ficou
-marcada como "aceita" por três dias enquanto já estava revogada em outro
-documento — e é essa a falha que este parágrafo existe para não repetir.
+**Por que o corpo fica:** a ADR é registro, não manual. Apagar o erro troca um registro
+verdadeiro por um conveniente, e some com a única coisa que ensina — o que se sabia na hora.
+
+**Esta é a única redação desta regra no repositório** (ADR-071). O `README.md` da raiz aponta
+para cá e não a repete.
+
+**O que havia antes, e por que não é mais regra.** Este parágrafo mandava, até 16/10/2026, pôr
+um **bloco de emenda no topo** e dizia que *"o texto abaixo do bloco é sempre o vigente"* — ou
+seja, **mandava reescrever o corpo**, o contrário do que o `README.md` da raiz mandava. Foi
+assim na **revisão v1.1, de agosto de 2026**, nas ADRs 009, 010 e 014, e **só nelas**. A v1.1
+foi um evento datado; regra escrita para um evento que já passou não é regra. **O bloco no topo
+daquelas três fica onde está** — o corpo não se reescreve, e isso vale também para um corpo que
+carrega uma emenda na forma antiga.
+
+**O status acompanha a emenda.** A 019 ficou marcada como "aceita" por três dias enquanto já
+estava revogada em outro documento. Uma ADR emendada ou revogada diz isso na linha de status e
+neste índice, na mesma alteração.
 
 Quando uma ADR nova **corrige um documento publicado** (um PDF em
 `docs/referencia/`, que não se reescreve), ela registra isso numa seção "Emenda
@@ -129,16 +144,13 @@ arquitetura v2 já incorpora as emendas registradas nas ADRs 011, 013, 023 e
 024 — as seções delas continuam valendo como histórico da correção, e não como
 pendência. Emenda nova a partir daqui é contra o v2.
 
-Emenda é para mudança de decisão, de justificativa ou de custo assumido. Rótulo
-que muda sem que a coisa mude — número de marco, nome de arquivo, nome de
-serviço, número de seção — é troca direta, com o motivo na mensagem do commit. A
-ADR-016 foi o primeiro caso: a decisão continua a mesma, só o marco referenciado
-mudou de nome.
+**Rótulo que muda sem que a coisa mude** — número de marco, nome de arquivo, nome de serviço,
+número de seção — **é troca direta**, com o motivo na mensagem do commit. A ADR-016 foi o
+primeiro caso.
 
-**Emenda não termina no grep.** Varredura por padrão encontra texto que
-contradiz a decisão nova. Não encontra o que está ausente — uma ressalva que
-falta, um campo com nome que virou enganoso, um documento que deveria citar a
-ADR e não cita. Depois do grep, leia as seções que tocam o mesmo dado que a
-decisão governa. Foi assim que a ADR-013 revelou `Contato.consentimento` com nome
-da base legal que ela rejeitou, e o congelamento do endereço em `pedido.md` sem
-a ressalva que torna a anonimização possível.
+**Emenda não termina no `grep`.** Varredura por padrão encontra texto que contradiz a decisão
+nova. Não encontra o que está **ausente** — uma ressalva que falta, um campo com nome que virou
+enganoso, um documento que deveria citar a ADR e não cita. Depois do `grep`, leia as seções que
+tocam o mesmo dado que a decisão governa. Foi assim que a ADR-013 revelou `Contato.consentimento`
+com nome da base legal que ela rejeitou, e o congelamento do endereço em `pedido.md` sem a
+ressalva que torna a anonimização possível.

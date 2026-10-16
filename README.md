@@ -214,10 +214,10 @@ decidiu o identificador de login que a primeira migration precisava indexar.
 
 Três práticas sustentam o resto:
 
-- **ADR não se reescreve.** Quando uma decisão muda, a antiga ganha uma **emenda
-  datada** ao fim; o corpo continua registrando a decisão como foi tomada,
-  inclusive quando estava errada. A ADR-018 tem uma seção inteira descrevendo um
-  fluxo da v1.0 que o produto não tem mais — ela fica, com a emenda explicando.
+- **ADR não se reescreve.** A regra está em
+  [`docs/architecture/decisions/README.md`](docs/architecture/decisions/README.md), e só lá
+  (ADR-071). A ADR-018 tem uma seção inteira descrevendo um fluxo da v1.0 que o produto não tem
+  mais — ela fica, com a emenda explicando.
 - **Nome de evento é único no repositório inteiro** (ADR-031). Quando dois
   serviços colidiram, o desempate foi: quem nomeou um *atributo* em vez de um
   *fato* é quem renomeia.
