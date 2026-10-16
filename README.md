@@ -9,22 +9,38 @@ testes, container, contrato e pipeline próprios.
 > nasce numa conversa de WhatsApp. Se uma decisão parecer estranha, confira as
 > premissas em [`docs/PRD.md`](docs/PRD.md) §5 antes de "corrigir".
 
-> **Estado: marco 1 concluído (26/09/2026).** O `identity-service` cadastra com
-> verificação por telefone e emite o token. O `merchant-service` guarda
-> estabelecimento, disponibilidade, áreas de entrega, equipe e convite, atende a
-> primeira rota autorizada e publica `VinculoAlteradoV1` pelo outbox. O gateway
-> autentica e roteia as catorze rotas da ADR-012, com teste, e o `check` de todo
-> módulo recusa dependência entre serviços (ADR-001). Os outros seis serviços
-> ainda são esqueleto. O que ficou em aberto são decisões com gatilho escrito —
-> nenhuma bloqueia o marco 2.
+**Estado: 15/10/2026, em `540511d`.** O `PRD.md` §10 define cada marco por uma coluna —
+*"o comerciante consegue"* —, e é por ela que este parágrafo se mede.
+
+- **Marco 1, *cadastrar a loja e o time*:** a loja, **sim** — cumprida no navegador em
+  10/10, com os semeadores desligados. O time tem rota e tela, e **espera a passagem de
+  duas pessoas**: quem convida e quem aceita.
+- **Marco 2, *publicar o cardápio e marcar o que acabou*:** **cumprido**, no navegador,
+  em 15/10.
+
+O `identity` cadastra com verificação por telefone e emite o token. O `merchant` guarda
+estabelecimento, disponibilidade, áreas de entrega, equipe e convite, cria a loja e o
+convite por rota, e publica pelo outbox. O `catalog` tem o cardápio — categoria, produto,
+publicação e a marcação do que acabou —, com persistência em MongoDB e o primeiro
+consumidor deste projeto que escreve em banco. O gateway autentica e roteia, com teste
+para cada rota. Os demais serviços são esqueleto.
+
+**Até 15/10 este parágrafo dizia *"marco 1 concluído (26/09/2026)"*, e isso nunca foi
+verdade:** o marco foi declarado medindo o que estava pronto, e não o que a coluna pedia.
+O erro está nomeado na ADR-060 e no registro do marco 1.
+
+**Este parágrafo leva data e commit porque ele envelhece.** Sem eles, ele carregava três
+números vencidos ao mesmo tempo. Para saber o estado de hoje, e não o do último commit que
+tocou este arquivo, a pergunta é a da coluna: *existe caminho da pessoa até o ato, sem
+bandeira ligada e sem semeador?*
 
 ---
 
 ## Requisitos
 
-- JDK 21 (o Gradle Toolchain baixa se não houver)
+- JDK 21 **instalado** — o build declara o toolchain, mas não tem resolvedor que o baixe
 - Docker e Docker Compose
-- ~12 GB de RAM se subir tudo — mas o dia a dia usa só o perfil `core`
+- ~12 GB de RAM se subir tudo — mas o dia a dia usa o perfil `marco2`, ou só o `core`
 
 ## Primeiros passos
 
@@ -53,6 +69,7 @@ docker compose --profile core up -d           # bancos, brokers, storage
 | Perfil do Compose | Sobe |
 |---|---|
 | `core` | PostgreSQL, MongoDB, Redis, RabbitMQ, MinIO |
+| `marco2` | PostgreSQL, MongoDB e RabbitMQ, e os quatro serviços com código: gateway, `identity`, `merchant` e `catalog` — é o que sobe hoje ([`docs/como-subir-local.md`](docs/como-subir-local.md)) |
 | `services` | gateway e os oito microsserviços |
 | `full` | tudo |
 
@@ -82,7 +99,7 @@ delivery-platform/
 │   ├── architecture/decisions/ ADRs
 │   └── referencia/             PDFs publicados
 ├── infra/                      configuração de Postgres e Mongo
-├── frontend/                   entra no marco 3 (ADR-016)
+├── frontend/                   o painel do comerciante — React e Vite (ADR-016)
 └── .github/workflows/          um pipeline por serviço + workflow reutilizável
 ```
 
@@ -162,8 +179,8 @@ ADR-021.
 | Decisão | Onde aparece |
 |---|---|
 | **ADR-014** — sem H2 | Um único profile `dev`; Testcontainers em todo teste de banco; `maximum-pool-size: 5` em cada serviço relacional |
-| **ADR-015** — JWT com `NimbusJwtEncoder` | Todos os serviços são Resource Server; só o `identity-service` emitirá |
-| **ADR-016** — front mínimo antes da PWA | `frontend/` é só um README até o marco 3 |
+| **ADR-015** — JWT com `NimbusJwtEncoder` | Todos os serviços são Resource Server; só o `identity-service` emite |
+| **ADR-016** — front mínimo antes da PWA | `frontend/` é o painel mínimo, desde o marco 2 (emenda de 29/09/2026) |
 | **ADR-017** — MongoDB como aprendizado | Mongock nos serviços documentais; MongoDB sobe como **replica set de nó único**, sem o qual não há transação multi-documento e portanto não há Outbox |
 | **ADR-020** — taxa por área nomeada | Sem PostGIS, sem MQTT, sem motor de rotas |
 | **ADR-021** — oito serviços no MVP | Este `settings.gradle.kts`, este Compose, esta tabela |
@@ -227,9 +244,9 @@ acharam defeitos reais, e **dez minutos lendo o `docker-compose.yml` acharam doi
 bancos sem senha publicados em `0.0.0.0`**. Documento só mente quando alguém lê;
 infraestrutura mente até alguém ligar.
 
-Trinta e nove ADRs escritas, mais duas numeradas que ficaram sem objeto e têm
-registro próprio dizendo por quê. Índice em
-[`docs/architecture/decisions/`](docs/architecture/decisions/README.md).
+O número de ADRs escritas, e das duas numeradas que ficaram sem objeto, mora no
+[índice](docs/architecture/decisions/README.md) — que é onde ele é mantido. Até 15/10
+este parágrafo dizia *"trinta e nove"*, quando já eram sessenta e sete.
 
 ---
 
@@ -237,8 +254,9 @@ registro próprio dizendo por quê. Índice em
 
 - **Migrations, sempre.** `ddl-auto: validate` em todo serviço relacional; toda
   estrutura nasce em Flyway (SQL) ou Mongock (MongoDB).
-- **Publica → Outbox. Consome → `processed_messages`.** Sem exceção. Retrofit de
-  Outbox significa revisitar todo ponto de publicação.
+- **Publica → Outbox. Consome → `processed_messages`.** Salvo as **duas exceções
+  escritas** na invariante 7 do [`CLAUDE.md`](CLAUDE.md), que são critério e não lista
+  de casos. Retrofit de Outbox significa revisitar todo ponto de publicação.
 - **Nenhum segredo no Git.** Só `.env.example`, com nomes. Gitleaks roda em
   **todo push**, no workflow `security` — sem filtro de caminho, porque o
   commit que só mexe em documentação é exatamente onde um `.env` vazaria.
