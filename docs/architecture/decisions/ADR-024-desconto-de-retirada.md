@@ -1,6 +1,6 @@
 # ADR-024 — Desconto de retirada, não preço por modalidade
 
-**Status:** Aceita — 23/08/2026
+**Status:** Aceita — 23/08/2026 · **emendada em 16/10/2026**: o pedido mínimo existe desde a ADR-028
 **Relacionada:** ADR-009 (modelo de valores), ADR-018 (cotação), ADR-020 (taxa por área), ADR-022 (remuneração do entregador)
 **Premissa do PRD:** "Modalidade — entrega ou retirada no balcão"
 **Detalhada em:** `docs/dominio/pedido.md` I12 · `docs/dominio/estabelecimento.md` §2
@@ -231,3 +231,18 @@ um marco a mais de folga. Isso é folga, não dispensa: o custo que esta ADR nom
 de desenho, não de dado, e ele não fica menor por esperar.
 
 Registrado também na ADR-054, que é quem mediu que a cotação não tem chamador.
+
+## Emenda de 16/10/2026 — o pedido mínimo existe desde a ADR-028
+
+As consequências desta decisão dizem que **não existe pedido mínimo no modelo**, que o
+`estabelecimento.md` não tem `pedidoMinimo`, e que essa é uma *"pendência nomeada, sem prazo"*
+para o dia em que um comerciante real reclamar. **Deixou de ser verdade no dia seguinte:** a
+ADR-028, de 24/08/2026, criou o `pedidoMinimoPorModalidade`, validado sobre o
+`subtotalDosItens`. Hoje ele está no `estabelecimento.md` (a M17) e no código do `merchant`
+(`Operacao`, `Estabelecimento.pedidoMinimoDe`).
+
+**A decisão não mudou** — o desconto de retirada continua como está. **E não sobra nada aberto
+deste ponto:** a ADR-028 fechou a consequência pelo lado que esta ADR apontava, e nenhum
+comerciante precisou reclamar. *A frase ficou de pé por quase dois meses porque a ADR que a
+pagou não voltou aqui — é o que a seção "Emenda não termina no grep", no README das decisões,
+existe para evitar.*

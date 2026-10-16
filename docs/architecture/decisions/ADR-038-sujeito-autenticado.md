@@ -1,6 +1,6 @@
 # ADR-038 — O `sub` vira `UUID` na borda, e o caso de uso não conhece o token
 
-**Status:** Aceita — 08/09/2026
+**Status:** Aceita — 08/09/2026 · **emendada em 16/10/2026**: o segundo consumidor existe; o "onde" continua sem decisão
 **Relacionada:** ADR-011 (autorização por requisição), ADR-012 (roteamento do
 gateway), ADR-015 emendada (claims), ADR-037 (emissão do access token)
 **Precisa existir antes do primeiro endpoint autenticado** — o
@@ -126,3 +126,25 @@ quando o segundo consumidor existir. Ele ainda não existe.
 **Como o caso de uso obtém o `estabelecimentoId`.** Vem da URL, e a invariante 9
 diz que não é confiável sozinho — é a ADR-011 que resolve isso, pela porta de
 autorização. Este documento decide o sujeito, não o objeto.
+
+## Emenda de 16/10/2026 — o segundo consumidor existe; o "onde" continua sem decisão
+
+O corpo diz que o "onde mora o validador de `iss` e `aud`" fica **para quando o segundo
+consumidor existir**, e que *"ele ainda não existe"*. **Hoje existem quatro** — os quatro
+`SecurityConfig` com `JwtIssuerValidator`, cada um desde o commit que o criou: o `identity`
+(`e6bc1b7`, 07/09/2026), o `merchant` (`a5994c0`, 15/09/2026), o `gateway` (`c4954b3`,
+24/09/2026) e o `catalog` (`e1e78fa`, 28/09/2026). **O segundo foi o `merchant`, uma semana
+depois desta decisão. A frase envelheceu e não avisou.**
+
+**A pergunta, porém, continua aberta** — e é maior do que era: quatro módulos repetem a mesma
+validação explícita, e **nenhuma decisão diz onde ela mora**. **Esta emenda não a responde**:
+ela só para de afirmar que o segundo consumidor não chegou.
+
+**Gatilho:** já está no razão (`docs/dividas.md`), nas linhas 1 e 6 — a 1, *"Fica registrado
+como duplicação conhecida, com gatilho: o terceiro módulo que precisar do mesmo decoder."*, que
+disparou e não produziu nada; a 6, *"Quando o segundo chegar, a pergunta chega junto, com
+evidência."*, rearmada como a 1. **Não se escreve gatilho novo aqui**, e **não se escreve que
+não há gatilho**: o primeiro duplicaria o razão, e o segundo seria falso.
+
+*A frase ficou de pé porque a R-2 a achou, marcou a condição como vencida no razão, e não tocou
+no texto. **Registrar não é consertar.***

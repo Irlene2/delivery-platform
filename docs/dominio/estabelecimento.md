@@ -438,12 +438,16 @@ vínculo pelo **par** (usuário, loja). Quem não tem vínculo e quem pediu uma 
 inexistente caem na mesma consulta vazia, e recebem o mesmo 403 com o mesmo
 corpo — há um teste que compara os dois corpos.
 
-**A porta pela qual os outros serviços perguntam ainda não existe**, e é
-deliberado: nenhum dos seis tem código, e uma porta sem consumidor é uma peça que
-nunca roda com cara de pronta. Dentro do `merchant`, autorização é consulta ao
-próprio repositório. O cache de 60 s da ADR-011 acompanha a porta — e, antes
-dela, o `VinculoAlteradoV1` que o invalida: cache sem invalidação é permissão
-revogada continuando a valer, em silêncio.
+**A porta pela qual os outros serviços perguntam é
+`GET /internal/merchants/{estabelecimentoId}/me/contexto-de-acesso`**
+(`ContextoDeAcessoController`, `100f71f`, 28/09/2026), com o token de quem pediu
+encaminhado (ADR-045). O primeiro consumidor é o `catalog`: a
+`AutorizacaoComercialPort`, implementada pelo `AutorizacaoComercialHttp` (`e1e78fa`,
+28/09/2026). Dentro do `merchant`, autorização continua sendo consulta ao próprio
+repositório. O cache de 60 s da ADR-011 mora **no consumidor**, em processo — o
+`AutorizacaoComercialEmCache` do `catalog` (`056de17`, 29/09/2026) —, e é
+invalidado pelo `VinculoAlteradoV1` que o `merchant` publica pelo outbox: cache sem
+invalidação é permissão revogada continuando a valer, em silêncio.
 
 ---
 

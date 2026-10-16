@@ -276,8 +276,9 @@ cada opção, que já vem nos grupos. **Gatilho escrito:** a primeira tela que m
 O ato de reativar é um caso de uso do `catalog` (`ReativarNoExpediente`, G-C3a,
 06/10/2026), e ele **não pergunta nada a ninguém**: o expediente que abriu vem
 dentro do `ExpedienteAlteradoV1`. Por isso a reativação não depende da decisão de
-identidade de serviço (ADR-045). **Quem o chama ainda não existe** — o consumidor
-do evento é a G-C3b; hoje o único chamador é o teste de integração.
+identidade de serviço (ADR-045). **Quem o chama é o `OuvinteDeExpedienteAlterado`**,
+o consumidor do evento, desde a G-C3b (`7b1c888`, 10/10/2026); o
+`ConsumoDeExpedienteIT.abertura_reativa` publica o evento e confere o produto reativado.
 
 **A consulta acha candidatos; o agregado decide.** O filtro do Mongo espelha o
 predicado da reativação — produto **ou** qualquer opção, com `$elemMatch`

@@ -1,6 +1,6 @@
 # O razão das dívidas
 
-**Gerado em 10/10/2026 na rodada R-1, sobre o commit `6fb73e6`; refeito na E-1, sobre `d7dbcc4` mais a ADR-060, na W-E, sobre `398d828` mais a ADR-061, na E-3b, sobre `9fbcee1` mais a ADR-064, na E-3c, sobre `cbd633c` mais as ADRs 065 e 066 e o `PublicarProdutoService`, na E-3d, sobre `a3ffe07` mais a ADR-068, na W-F, sobre `ec89666` mais a ADR-067, na E-2, sobre `ef82bc9` mais a ADR-069, na W-G, sobre `92e8099` mais a ADR-070, e na R-2, sobre `e43d227` mais a emenda de 16/10/2026 à ADR-012. Este arquivo é
+**Gerado em 10/10/2026 na rodada R-1, sobre o commit `6fb73e6`; refeito na E-1, sobre `d7dbcc4` mais a ADR-060, na W-E, sobre `398d828` mais a ADR-061, na E-3b, sobre `9fbcee1` mais a ADR-064, na E-3c, sobre `cbd633c` mais as ADRs 065 e 066 e o `PublicarProdutoService`, na E-3d, sobre `a3ffe07` mais a ADR-068, na W-F, sobre `ec89666` mais a ADR-067, na E-2, sobre `ef82bc9` mais a ADR-069, na W-G, sobre `92e8099` mais a ADR-070, na R-2, sobre `e43d227` mais a emenda de 16/10/2026 à ADR-012, e na R-3, sobre `0e545c0` mais as emendas às ADRs 024 e 038 e as frases trocadas no lugar. Este arquivo é
 derivado e envelhece:** toda ADR, documento ou javadoc que escrever um gatilho novo o
 torna incompleto. Refaça-o com os comandos abaixo antes de confiar nele.
 
@@ -29,39 +29,55 @@ cabeçalho que a descreve e as linhas que copiam as fórmulas viram ocorrências
 cresce quando o razão cresce. Medido na W-F — uma das ocorrências novas era a frase escrita
 no cabeçalho na mesma rodada. **Instrumento que se mede a si mesmo não está medindo.**
 
-Medido na E-3b: **32 linhas**; na E-3c, **36** — que já envelheceu na própria rodada: a frase abaixo, escrita depois da medição, levou o número a **37**, e a E-3d mediu 37, com a mesma contagem por arquivo; na W-F, **38**, e a nova é a ADR-067:23 — *"a seção, por enquanto, não significa nada"* —, condição que a própria rodada desfez ao dar tela à seção — e que também envelheceu na própria rodada: a frase desta linha, ao citar *"por enquanto"*, virou ocorrência, e o número real da W-F é **39**; a E-2 mediu **39**, com a mesma contagem por arquivo — mais duas da ADR-063 (que cita a frase vencida), uma da ADR-066 e três deste próprio razão, que cita as fórmulas; menos a da `RegraDoCatalogoViolada`, cuja frase vencida saiu na E-3b. Nenhuma é sobre a publicação. **Até a W-G o comando não excluía este arquivo**, e os números acima o contam. Na R-2, sobre `e43d227`: **39** sem a exclusão, **32** com ela — sete eram este razão. Das 32, três já tinham linha (43, 44 e 63); vinte foram triadas, e **as vinte eram peça, nenhuma estado de dado**: seis venceram, onze não, três não dá para dizer. Doze delas viraram as linhas 79 a 86. **Nove ficaram por triar**, pelo teto de vinte: `estabelecimento.md`:441 e :467, `premissas-do-front.md`:140, `mensagem-na-fila-morta.md`:124, `reconciliacao-de-pagamento.md`:161, `recuperacao-de-acesso.md`:135, `ConfiguracaoDaEscuta.java`:23, `ExpedienteCorrenteResponse.java`:15 e `Equipe.java`:313. O que a segunda passada
+Medido na E-3b: **32 linhas**; na E-3c, **36** — que já envelheceu na própria rodada: a frase abaixo, escrita depois da medição, levou o número a **37**, e a E-3d mediu 37, com a mesma contagem por arquivo; na W-F, **38**, e a nova é a ADR-067:23 — *"a seção, por enquanto, não significa nada"* —, condição que a própria rodada desfez ao dar tela à seção — e que também envelheceu na própria rodada: a frase desta linha, ao citar *"por enquanto"*, virou ocorrência, e o número real da W-F é **39**; a E-2 mediu **39**, com a mesma contagem por arquivo — mais duas da ADR-063 (que cita a frase vencida), uma da ADR-066 e três deste próprio razão, que cita as fórmulas; menos a da `RegraDoCatalogoViolada`, cuja frase vencida saiu na E-3b. Nenhuma é sobre a publicação. **Até a W-G o comando não excluía este arquivo**, e os números acima o contam. Na R-2, sobre `e43d227`: **39** sem a exclusão, **32** com ela — sete eram este razão. Das 32, três já tinham linha (43, 44 e 63); vinte foram triadas, e **as vinte eram peça, nenhuma estado de dado**: seis venceram, onze não, três não dá para dizer. Doze delas viraram as linhas 79 a 86. **Nove ficaram por triar**, pelo teto de vinte: `estabelecimento.md`:441 e :467, `premissas-do-front.md`:140, `mensagem-na-fila-morta.md`:124, `reconciliacao-de-pagamento.md`:161, `recuperacao-de-acesso.md`:135, `ConfiguracaoDaEscuta.java`:23, `ExpedienteCorrenteResponse.java`:15 e `Equipe.java`:313. **Na R-3 as nove foram triadas**, e a segunda passada passou a **31**: saíram `catalogo.md`:279 e `estabelecimento.md`:441, frases falsas trocadas no lugar, e entrou a ADR-038:133, que cita na emenda a frase do corpo. O que a segunda passada
 achar entra na tabela **com a fórmula**, não com a paráfrase.
 
-**O que a segunda passada acha, e o que disso é dívida.** O comando colhe de propósito mais
-do que precisa; a triagem é que corta, e o corte é este:
+**O que a segunda passada acha, e o que disso é dívida.** O comando colhe de propósito mais do
+que precisa, e colhe **duas espécies diferentes**: *condição que espera* e *frase que já está
+errada*. A triagem separa, nesta ordem:
 
-- **o sujeito da frase é uma peça do sistema** — uma rota, uma porta, um consumidor, um
-  índice: **é gatilho**. *"O catálogo ainda não tem rota."*
-- **o sujeito é o estado de um dado:** **não é, e nunca será.** *"Esta loja ainda não tem
-  produto."* A loja pode ficar vazia para sempre, e isso não é débito de ninguém.
-- **não dá para dizer qual dos dois:** fica **fora** do razão, e volta quando alguém souber.
-  Linha que entra sem se saber o que a dispara é ruído dentro do instrumento que existe para
-  não ter ruído.
+1. **A condição já venceu e a frase ainda a afirma?** → **não é dívida: é frase falsa.** Ela
+   não espera nada; está errada agora. **Conserta-se o texto** — no lugar, se for descrição;
+   por emenda datada, se for ADR. *Vem ao razão como linha paga, para a história; mas a entrega
+   é o texto consertado, e a linha sozinha não basta. Aprendido na R-3.*
+2. **O sujeito da frase é uma peça do sistema** — uma rota, uma porta, um consumidor, um
+   índice: **é gatilho.** *"O catálogo ainda não tem rota."*
+3. **O sujeito é o estado de um dado:** **não é dívida, e nunca será.** *"Esta loja ainda não
+   tem produto."* A loja pode ficar vazia para sempre, e isso não é débito de ninguém.
+4. **A frase descreve uma consequência, não uma pendência** — ela explica o efeito de uma
+   decisão e não pede nada: **fica fora.** *Foi o ramo que o uso achou, e o que mais cortou.*
+5. **Não dá para dizer qual dos quatro:** fica **fora**, e volta quando alguém souber. Linha
+   que entra sem se saber o que a dispara é ruído dentro do instrumento que existe para não ter
+   ruído.
 
-Triado na R-2.
+Os ramos 3, 4 e 5 vão à seção *"Da segunda passada, e deliberadamente fora do razão"*, no fim
+deste arquivo, com `arquivo:linha` — não só ao relatório da rodada.
+
+**Os tetos, e o que cada um limita.** A **triagem** para em vinte linhas por rodada: lista
+longa demais vira carimbo. A **correção pelo ramo 1 não tem teto quando a medição já está
+feita** — *deixar de pé uma frase que se sabe falsa, por economia de rodada, é o quadragésimo
+sétimo defeito; e arquivá-la como dívida para depois é o quinquagésimo primeiro.*
+
+Triado na R-2 e na R-3.
 
 **Os comandos produzem candidatos; a tabela é a leitura deles.** Uma menção a
 "gatilho" pode ser a definição de um, a citação de um que já está na tabela, ou o
-relato de um que disparou. A conta, em 16/10/2026, na R-2:
+relato de um que disparou. A conta, em 16/10/2026, na R-3:
 
 | | linhas |
 | --- | --- |
-| o recorte estreito devolve | **73** |
+| o recorte estreito devolve | **75** |
 | — cópias em `frontend/.tsbuild/`, saída de build que o filtro não exclui | −3 |
 | — citação de um gatilho que já tem linha própria (ADR-045:17, ADR-054:15, ADR-055:12, ADR-059:21, `pedido.md`:397; e, na W-E, `PainelPage.tsx`:28 e as linhas 8, 18, 20 e 142 da ADR-061; e, na E-3b, `RegraDoCatalogoViolada`:25, que cita a linha 55; e, na E-3c, ADR-065:138, que relata o disparo da linha 56; e, na E-2, `estabelecimento.md`:234, que cita a linha 71) | −13 |
 | — o mesmo gatilho repetido em outro lugar, ou substituído por outro (ADR-045:123, que a ADR-054 substituiu; ADR-043:210, ADR-057:101, ADR-058:91, `como-subir-local.md`:480, `ProdutoResponse`:30, `MarcarDisponibilidadeService`:64, `ContratoDeErrosIT`:73 e :105, `ReativacaoNoExpedienteIT`:58; e, na E-3d, ADR-068:57, a §1 repetindo o primeiro gatilho da seção; e, na W-F, ADR-067:95, a §4 repetindo o primeiro da seção) | −12 |
-| — menção que nega um gatilho, e não o escreve (ADR-064:26, *"não havia gatilho escrito"*) | −1 |
-| **= linhas da tabela vindas do recorte estreito** | **44** |
-| + entraram por outra redação — *"com gatilho:"* (linhas 1 e 2), *"Gatilho para trazê-lo de volta"* (4), *"Quando o segundo chegar"* (6), *"O gatilho para mudar"* (11), *"O gatilho para reabrir"* (19), *"O gatilho, escrito"* (22), *"Gatilho:"* (40 e 42), *"O gatilho para a função mudar de lugar"* (41), *"volta quando houver"* (43), *"Decidir antes do marco 5"* (44), *"Gatilho novo, e são dois"* (20 e 48) | **+14** |
-| + segundos gatilhos dentro de uma seção "## Gatilho escrito", que o comando conta uma vez só, pela linha do título (ADR-057, ADR-058, ADR-059 — linhas 45 a 47; ADR-060 — linhas 50 e 51; ADR-061 — linha 54; ADR-063 — linha 56; ADR-064 — linhas 58, a outra metade do primeiro, 59 e 60; ADR-065 — linha 62; ADR-066 — linhas 63 e 65; ADR-068 — linhas 68 e 69; ADR-069 — linhas 74 e 75; ADR-070 — linha 77) | **+18** |
+| — menção que nega um gatilho, e não o escreve (ADR-064:26, *"não havia gatilho escrito"*; e, na R-3, a ADR-012, emenda de 16/10 (2), *"Gatilho escrito: nenhum"*) | −2 |
+| **= linhas da tabela vindas do recorte estreito** | **45** |
+| + entraram por outra redação — *"com gatilho:"* (linhas 1 e 2), *"Gatilho para trazê-lo de volta"* (4), *"Quando o segundo chegar"* (6), *"O gatilho para mudar"* (11), *"O gatilho para reabrir"* (19), *"O gatilho, escrito"* (22), *"Gatilho:"* (40 e 42), *"O gatilho para a função mudar de lugar"* (41), *"volta quando houver"* (43), *"Decidir antes do marco 5"* (44), *"Gatilho novo, e são dois"* (20 e 48); e, na R-3, *"Isso é linha de razão, com gatilho:"* (93) | **+15** |
+| + segundos gatilhos dentro de uma seção "## Gatilho escrito", que o comando conta uma vez só, pela linha do título (ADR-057, ADR-058, ADR-059 — linhas 45 a 47; ADR-060 — linhas 50 e 51; ADR-061 — linha 54; ADR-063 — linha 56; ADR-064 — linhas 58, a outra metade do primeiro, 59 e 60; ADR-065 — linha 62; ADR-066 — linhas 63 e 65; ADR-068 — linhas 68 e 69; ADR-069 — linhas 74 e 75; ADR-070 — linha 77; ADR-071 — linhas 95 e 96) | **+20** |
 | + escrito neste razão, porque a condição não tem outro lugar onde morar (linhas 52, 72 e 78) | **+3** |
 | + entraram pela segunda passada, triada na R-2 — doze linhas em oito: ADR-024:140 (79), ADR-063:29 e :30 (80), ADR-067:23 (81), `catalogo.md`:279 (82), ADR-011:114 e ADR-048:247 (83), ADR-013:232 e ADR-031:173 (84), ADR-021:76 e `conversa.md`:291 (85), ADR-045:142 (86) | **+8** |
-| **= linhas da tabela** | **87** |
+| + entraram pela segunda passada, triada na R-3 — `estabelecimento.md`:441 (88), `mensagem-na-fila-morta.md`:124 (89), `reconciliacao-de-pagamento.md`:161 (90), `recuperacao-de-acesso.md`:135 (91), `Equipe.java`:313 (92) | **+5** |
+| **= linhas da tabela** | **96** |
 
 **A coluna "disparou?" tem quatro respostas.** *sim* — disparou e a dívida foi paga;
 *não* — e a coluna seguinte diz o que se procurou; **disparou e não produziu nada** —
@@ -85,7 +101,7 @@ este arquivo existe para achar.**
 | # | Onde | O gatilho, copiado | O que mostra que disparou | O que o fecha |
 | --- | --- | --- | --- | --- |
 | 5 | ADR-048:262 → ADR-057:101 | *"o primeiro consumidor que **escreva em banco** — hoje previsto para o `order`, no marco 3."* Rearmado como: *"**O primeiro consumidor cujo efeito não seja uma comparação** — um que acrescente, some, registre ou publique para fora."* | o `OuvinteDeExpedienteAlterado` (G-C3b, `7b1c888`) escreve em banco e foi coberto pela exceção (b) da invariante 7. `grep -rn "@RabbitListener" backend --include=*.java` devolve dois ouvintes, os dois nas exceções | o `processed_messages`, quando o primeiro consumidor que some ou registre chegar — previsto para o `order` |
-| 6 | ADR-037:210 → ADR-044:97 | *"**Não se decide agora porque só existe um serviço validando de verdade.** Quando o segundo chegar, a pergunta chega junto, com evidência."* | o segundo chegou (o `merchant`, C-A) e a pergunta foi respondida com adiamento e um gatilho novo, o da linha 1 — que disparou sem resposta | a linha 1 |
+| 6 | ADR-037:210 → ADR-044:97 | *"**Não se decide agora porque só existe um serviço validando de verdade.** Quando o segundo chegar, a pergunta chega junto, com evidência."* | o segundo chegou (o `merchant`, C-A) e a pergunta foi respondida com adiamento e um gatilho novo, o da linha 1 — que disparou sem resposta | a linha 1. A ADR-038:124 afirmava o mesmo — *"Ele ainda não existe."* — até a emenda de 16/10/2026 (R-3) |
 
 ## Sim — disparou, e a dívida foi paga
 
@@ -100,10 +116,13 @@ este arquivo existe para achar.**
 | 3 | `frontend/src/painel/MenuDoPainel.tsx:34` (hoje citado na linha 32 do mesmo arquivo) | *"**Gatilho escrito:** a segunda seção com tela. Aí a URL passa a precisar dizer onde a pessoa está — para recarregar, para voltar e para mandar link a alguém —, e isso é rota, não estado."* | venceu na **W-C**; a **W-D** o agravou pondo a terceira tela pelo mesmo precedente, sem o reler; a **R-1** o nomeou; pago na **W-E**: `App.tsx` tem `/painel/lojas/:estabelecimentoId/{produtos,disponibilidade}[/:produtoId]`, e o estado que escolhia a seção saiu do `PainelPage` | ADR-061 — três rodadas entre vencer e ser lido |
 | 13 | ADR-044:157 | *"sai da lista de exposição antes de qualquer ambiente exposto, junto com a decisão do limite de taxa."* | **pago antes de disparar**: o `/actuator/gateway` saiu na G-B5; `include: health,info` no `application.yml` do gateway | emenda de 30/09 à ADR-044 |
 | 56 | ADR-063, seção "Gatilho escrito" | *"**E a primeira rota de escrita do `catalog`** — a E-3c. Ela vai gerar corpos malformados de verdade, e aí se mede quais dos trinta pontos passaram a ser alcançáveis."* | a E-3c: `POST .../catalog/produtos` monta o `Produto` a partir de um corpo. Medido: `categoriaId`, `precoBase` e `modoDeControle` ausentes chegavam ao construtor como nulo (`INTEGRIDADE`, 500), e `ordem` ausente estourava no desempacotamento | os quatro `@NotNull` do `ProdutoRequest`, com o `CriacaoDeProdutoIT` afirmando 400 para cada campo ausente (E-3c) |
-| 79 | ADR-024:140 | *"**Pendência nomeada, sem prazo** — vale quando houver comerciante real reclamando, não antes."* (o pedido mínimo) | **pago antes de disparar**: a ADR-028 fecha a consequência que a ADR-024 nomeou, e a `Operacao` do `merchant` tem `pedidoMinimoPorModalidade` | ADR-028 |
+| 79 | ADR-024:140 | *"**Pendência nomeada, sem prazo** — vale quando houver comerciante real reclamando, não antes."* (o pedido mínimo) | **pago antes de disparar**: a ADR-028 fecha a consequência que a ADR-024 nomeou, e a `Operacao` do `merchant` tem `pedidoMinimoPorModalidade` | ADR-028; a ADR-024 ganhou emenda datada na R-3, porque o corpo continuava afirmando a pendência |
 | 80 | ADR-063:29 e :30, citando o javadoc antigo da `RegraDoCatalogoViolada` | *"Uma exceção só para toda a rodada, de propósito: **nesta altura o catálogo não tem rota**, e quem traduz regra violada em código HTTP é a camada que ainda não existe."* | o tradutor existe desde a G-E; a frase saiu do javadoc na E-3b. É o gatilho em prosa que fez nascer a segunda passada | ADR-063 (E-3b, `9fbcee1`) |
 | 81 | ADR-067:23 | *"**A seção, por enquanto, não significa nada para quem olha.**"* | a W-F deu tela à seção: `CardapioPorSecao` (`ec89666`) | ADR-067 (W-F) |
-| 82 | `catalogo.md`:279 | *"**Quem o chama ainda não existe** — o consumidor do evento é a G-C3b; hoje o único chamador é o teste de integração."* | o `OuvinteDeExpedienteAlterado` chama `ReativarNoExpediente` desde a G-C3b (`7b1c888`). **A frase de origem continua dizendo o contrário**, e fica como está | a G-C3b |
+| 82 | `catalogo.md`:279 | *"**Quem o chama ainda não existe** — o consumidor do evento é a G-C3b; hoje o único chamador é o teste de integração."* | o `OuvinteDeExpedienteAlterado` chama `ReativarNoExpediente` desde a G-C3b (`7b1c888`). A frase de origem dizia o contrário até a R-3, que a trocou no lugar | a G-C3b; a frase, na R-3 |
+| 87 | ADR-012, emenda de 16/10/2026 | *"**Gatilho escrito:** a próxima rota que o gateway ganhar. Quem a acrescenta acrescenta a linha aqui — ou tira a tabela, e deixa o `application.yml` ser a única lista."* | **pago antes de disparar**, no mesmo dia: a tabela saiu de normativa, e o `RoteamentoIT` compara os ids dos casos com as rotas que o gateway carregou (R-3, `0e545c0`) | ADR-071; ADR-012, emenda de 16/10 (2) |
+| 88 | `estabelecimento.md`:441 | *"**A porta pela qual os outros serviços perguntam ainda não existe**, e é deliberado: nenhum dos seis tem código"* | `GET /internal/merchants/{estabelecimentoId}/me/contexto-de-acesso` (`100f71f`, 28/09/2026), consumida pelo `AutorizacaoComercialHttp` do `catalog` (`e1e78fa`, 28/09/2026). **Frase falsa, ramo 1** | `100f71f` e `e1e78fa`; a frase trocada no lugar na R-3 |
+| 89 | `mensagem-na-fila-morta.md`:124 (a segunda frase do item) | *"o `prometheus.yml` só aponta para o `/actuator` dos serviços"* | o `prometheus.yml` não está na árvore: saiu com o stack de observabilidade (ADR-041). **Frase falsa, ramo 1.** A primeira frase do mesmo item — a métrica de profundidade — é a condição da linha 43 | a ADR-041; a frase trocada no lugar na R-3 |
 
 ## Não
 
@@ -172,11 +191,17 @@ este arquivo existe para achar.**
 | 77 | ADR-070, seção "Gatilho escrito" | *"**O dia em que existir a rota do usuário do token.** Aí a lista de membros tem o que escrever"* — **não há lista de membros na tela de equipe**, porque não há nome a mostrar. A outra metade do mesmo gatilho é a linha 71, a página do convite que não diz quem convidou | o `GET .../team` existe desde a C-A e devolve `usuarioId`; a rota do nome não existe | a lista de membros, com nome |
 | 78 | este razão (W-G; achado na E-2) | *"o primeiro log de acesso, no gateway ou no `merchant`"* — **o token do convite vai na URL** do `GET` público e do aceite, como a ADR-069 desenhou; hoje nenhum dos dois serviços grava log de acesso, e se um dia gravar, grava o token. No front ele fica também no `state.de` do roteador, na mesma entrada do histórico que já tem a URL | nenhuma configuração de log de acesso no `merchant` nem no `gateway` (E-2) | o caminho mascarado no log, ou o token fora do caminho |
 | 54 | ADR-061, seção "Gatilho escrito" | *"**O dia em que o seletor tiver mais de uma dúzia de lojas.**"* | não há medida de quantas lojas alguém tem; a fixture e a prova da W-E têm uma cada | busca no servidor, e paginação no `GET /api/v1/me/estabelecimentos` |
+| 90 | `reconciliacao-de-pagamento.md`:161 | *"**Se a reconciliação vira automática** quando houver volume. Hoje é console e leitura"* | o `payment-service` tem 1 arquivo Java; não há pagamento a reconciliar | a reconciliação automática |
+| 91 | `recuperacao-de-acesso.md`:135 | *"Fluxo no painel, quando houver volume. Hoje é console e julgamento"* | nenhuma rota nem tela de recuperação de acesso no `merchant` ou em `frontend/src` | o fluxo no painel |
+| 92 | `Equipe.java`:313 | *"O outro lugar que a quebrará é a automação da ADR-029, que cria ou promove membro sem passar por A1 — e que ainda não existe."* (a A3) | nenhum código de recuperação de estabelecimento no `merchant` | a A3 verificada também na automação |
+| 93 | ADR-071 §2 (e o javadoc do `RoteamentoIT`) | *"**um caso pode afirmar o `id` errado e passar.** Isso **é** linha de razão, com gatilho: *o dia em que o teste resolver o caminho pelo próprio roteador em vez de pelo `id` declarado.*"* | o `RoteamentoIT` liga cada caso à rota por um `id` escrito à mão (R-3) | o caso resolvido pelo roteador |
+| 94 | ADR-071, seção "Gatilho escrito" | *"**A próxima regra que alguém quiser escrever num segundo lugar.** Ela não se escreve: escreve-se o ponteiro, ou o comando que a deriva."* | não há comando que ache regra escrita em dois lugares (ADR-071 §4) | o ponteiro, ou o comando |
+| 95 | ADR-071, seção "Gatilho escrito" | *"**A próxima lista que aparecer transcrita num teste.**"* | ninguém procurou depois do `RoteamentoIT`, e não há comando que as ache | a lista derivada do dono |
+| 96 | ADR-071, seção "Gatilho escrito" | *"**E o dia em que existir comando que enumere regra duplicada.**"* | não existe | saber se são cinco ou cinquenta |
 | 83 | ADR-011:114 (e ADR-048:247, que o cita) | *"No MVP há uma instância por serviço e isso é invisível. Está escrito aqui porque é a primeira coisa a quebrar quando houver duas, e a falha é silenciosa."* | o compose sobe uma instância de cada serviço; a fila exclusiva por instância já existe no `catalog` (`AnonymousQueue`, `ConfiguracaoDaEscuta`), e nunca rodou com duas | a primeira execução com duas instâncias, medida |
 | 84 | ADR-013:232 (e ADR-031:173, o evento da mesma saga) | *"é o desenho certo, e entra quando houver titular para exercer o direito."* (a saga de exclusão; o `TitularSolicitouExclusaoV1` é *"um nome já escolhido para um evento que ainda não existe, e quando existir passa por esta regra"*) | a exclusão é manual (`docs/operacao/exclusao-de-titular.md`); nada no repositório registra pedido de titular | a saga de exclusão, e o evento |
 | 85 | ADR-021:76 (e `conversa.md`:291) | *"Volta a ser serviço quando houver aplicativo nativo e push, não antes."* (a notificação) | aplicativo nativo de consumidor está fora do escopo (`CLAUDE.md`); o painel avisa por consulta periódica | o serviço de notificação |
 | 86 | ADR-045:142 | *"Continua sendo a resposta certa quando houver malha de serviço."* (mTLS) | nenhuma malha de serviço no compose nem em workflow | mTLS entre serviços |
-| 87 | ADR-012, emenda de 16/10/2026 | *"**Gatilho escrito:** a próxima rota que o gateway ganhar. Quem a acrescenta acrescenta a linha aqui — ou tira a tabela, e deixa o `application.yml` ser a única lista."* | o gateway roteia 16 entradas e a tabela lista 15 (R-2); nenhuma rota nova depois da emenda | a linha na tabela, ou a tabela fora — a segunda exige decisão |
 
 **Fora da tabela, de propósito:** a ADR-037:203 adia o refresh token *"para ADR
 própria"* e não escreve condição — o motivo dado, *"um marco que ainda não tem
@@ -223,3 +248,34 @@ precede o código do marco 3.**
 **Gatilho escrito:** o primeiro pacote do marco 3. Medido na R-1. *(Fora da tabela de
 cima porque não é dívida de código — e fora da conta do cabeçalho, porque este arquivo
 se exclui dos próprios comandos.)*
+
+---
+
+## Da segunda passada, e deliberadamente fora do razão
+
+**Isto não é dívida: é o resto da varredura, nomeado para não ser triado outra vez.** Sem esta
+lista a varredura seguinte reencontra cada uma destas linhas e refaz o trabalho — foi o que
+custou a R-3, e o que as quatro da R-2 custaram, que só existiam no relatório e na mensagem do
+commit.
+
+| arquivo:linha | ramo | por quê |
+|---|---|---|
+| ADR-027:142 | 5 | *"A verificação de build ainda não existe."* Registra uma ausência sem condição que a dispare (R-2) |
+| ADR-038:133 | 4 | a emenda de 16/10 cita a frase do corpo para dizer que ela envelheceu; a condição é a das linhas 1 e 6 |
+| ADR-047:78 | 4 | *"o que vai importar quando houver troca de loja"* — descreve um benefício da decisão, que vale desde o seletor da W-E (R-2) |
+| ADR-056:91 | 5 | *"uma regra para as rotas que ainda não existem"* — é regra, não condição (R-2) |
+| `estabelecimento.md`:292 | 4 | por que a disponibilidade não responde se a loja está aberta. A R-2 a pôs no ramo 5, que era o que havia; com o ramo 4 escrito, é ele, como a `ExpedienteCorrenteResponse.java`:15 |
+| `estabelecimento.md`:471 | **3** | *"as M9 e M10 passam a valer quando houver duas"* — duas áreas de entrega de uma loja é estado de dado. **A primeira vez que o ramo 3 separou alguma coisa**, na vigésima nona linha triada |
+| `ConfiguracaoDaEscuta.java`:23 | 4 | explica por que o consumidor declara a exchange de novo: ligar fila a uma exchange inexistente falha |
+| `ExpedienteCorrenteResponse.java`:15 | 4 | explica por que a resposta não tem `aberto` |
+
+**O marco da varredura.** As ocorrências da segunda passada no commit que acrescentou esta
+seção (R-3) foram **todas** triadas: **31** no total — 23 com a condição no razão, 8 nesta
+tabela. O commit sai de `git log --format=%h -S"O marco da varredura" -- docs/dividas.md | tail -1`,
+e não está escrito aqui porque o arquivo não sabe o hash do commit que o grava. A varredura
+seguinte **compara o número com este e olha só a diferença**.
+
+**A comparação é pela condição, não pelo endereço.** O razão cita a frase, e a mesma condição
+aparece em `arquivo:linha` diferentes conforme o arquivo cresce — comparar por endereço deu
+**17** falsos "sem linha" na R-3, contra **9** reais. *E se o número tiver caído sem rodada que
+o explique, alguém apagou uma frase sem triá-la: isso é para se dizer, não para se somar.*
