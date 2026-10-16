@@ -71,9 +71,10 @@
 | 068 | A listagem mostra o rascunho, porque quem a chama é o painel | ✅ aceita |
 | 069 | O convite chega pela mão de quem convida, e o token se lê uma vez | ✅ aceita |
 | 070 | A tela do convite, e o segredo que já está no navegador de quem o recebeu | ✅ aceita |
-| 071 | A lista tem um dono, e a cópia não é lista | ✅ aceita |
+| 071 | A lista tem um dono, e a cópia não é lista | ✅ aceita · **emendada** (17/10/2026: o terceiro item do gatilho não era gatilho) |
+| 072 | A seção que o comando colhe, e o item que não era gatilho | ✅ aceita |
 
-**Sessenta e oito escritas, duas sem objeto — estas com registro próprio desde
+**Sessenta e nove escritas, duas sem objeto — estas com registro próprio desde
 25/08/2026 —, nenhuma a escrever.**
 
 ## Onde mora o quê
@@ -110,6 +111,30 @@ Alternativas consideradas.
 
 Uma ADR sem "alternativas consideradas" e sem consequências negativas é
 decoração, não registro de decisão.
+
+## A seção "Gatilho escrito" é colhida por comando
+
+**O `docs/dividas.md` é derivado, e um dos dois comandos dele é
+`grep -rn "Gatilho escrito"`.** Isso faz deste título **uma entrada de instrumento**: **cada
+item escrito debaixo dele vira uma linha do razão.**
+
+**Então cada item é uma condição que o mundo cumpre** — uma rota que nasce, um serviço que
+ganha código, um volume que chega, uma pessoa que pergunta. **Duas coisas não entram ali:**
+
+- **condição que depende de nós decidirmos** — *"o dia em que existir comando que enumere X"*,
+  *"quando decidirmos onde mora Y"*. Isso é **pergunta não feita**, e a entrega é a pergunta,
+  no mesmo pacote (ADR-072 §1);
+- **prosa** — ressalva, argumento, frase de efeito. **Vai no corpo.**
+
+**O teste de uma linha:** *alguém que não seja nós pode fazer isso acontecer?* Se não, não é
+gatilho.
+
+**E item colhido não se apaga**, porque o corpo da ADR não se reescreve: a retirada é por
+**emenda datada**, e o razão **estorna** a linha — ela fica, dizendo que não era gatilho e
+apontando a emenda. **O cabeçalho do razão tem de continuar fechando** depois do estorno.
+
+*A decisão é a ADR-072, e nasceu da ADR-071, que se contradisse em duas seções suas no dia em
+que foi escrita.*
 
 ## Emendas
 

@@ -1,6 +1,6 @@
 # O razão das dívidas
 
-**Gerado em 10/10/2026 na rodada R-1, sobre o commit `6fb73e6`; refeito na E-1, sobre `d7dbcc4` mais a ADR-060, na W-E, sobre `398d828` mais a ADR-061, na E-3b, sobre `9fbcee1` mais a ADR-064, na E-3c, sobre `cbd633c` mais as ADRs 065 e 066 e o `PublicarProdutoService`, na E-3d, sobre `a3ffe07` mais a ADR-068, na W-F, sobre `ec89666` mais a ADR-067, na E-2, sobre `ef82bc9` mais a ADR-069, na W-G, sobre `92e8099` mais a ADR-070, na R-2, sobre `e43d227` mais a emenda de 16/10/2026 à ADR-012, e na R-3, sobre `0e545c0` mais as emendas às ADRs 024 e 038 e as frases trocadas no lugar. Este arquivo é
+**Gerado em 10/10/2026 na rodada R-1, sobre o commit `6fb73e6`; refeito na E-1, sobre `d7dbcc4` mais a ADR-060, na W-E, sobre `398d828` mais a ADR-061, na E-3b, sobre `9fbcee1` mais a ADR-064, na E-3c, sobre `cbd633c` mais as ADRs 065 e 066 e o `PublicarProdutoService`, na E-3d, sobre `a3ffe07` mais a ADR-068, na W-F, sobre `ec89666` mais a ADR-067, na E-2, sobre `ef82bc9` mais a ADR-069, na W-G, sobre `92e8099` mais a ADR-070, na R-2, sobre `e43d227` mais a emenda de 16/10/2026 à ADR-012, na R-3, sobre `0e545c0` mais as emendas às ADRs 024 e 038 e as frases trocadas no lugar, e na R-4, sobre `4904159` mais a ADR-072 e a emenda de 17/10/2026 à ADR-071. Este arquivo é
 derivado e envelhece:** toda ADR, documento ou javadoc que escrever um gatilho novo o
 torna incompleto. Refaça-o com os comandos abaixo antes de confiar nele.
 
@@ -62,22 +62,27 @@ Triado na R-2 e na R-3.
 
 **Os comandos produzem candidatos; a tabela é a leitura deles.** Uma menção a
 "gatilho" pode ser a definição de um, a citação de um que já está na tabela, ou o
-relato de um que disparou. A conta, em 16/10/2026, na R-3:
+relato de um que disparou. A conta, em 17/10/2026, na R-4:
 
 | | linhas |
 | --- | --- |
-| o recorte estreito devolve | **75** |
+| o recorte estreito devolve | **87** |
 | — cópias em `frontend/.tsbuild/`, saída de build que o filtro não exclui | −3 |
 | — citação de um gatilho que já tem linha própria (ADR-045:17, ADR-054:15, ADR-055:12, ADR-059:21, `pedido.md`:397; e, na W-E, `PainelPage.tsx`:28 e as linhas 8, 18, 20 e 142 da ADR-061; e, na E-3b, `RegraDoCatalogoViolada`:25, que cita a linha 55; e, na E-3c, ADR-065:138, que relata o disparo da linha 56; e, na E-2, `estabelecimento.md`:234, que cita a linha 71) | −13 |
 | — o mesmo gatilho repetido em outro lugar, ou substituído por outro (ADR-045:123, que a ADR-054 substituiu; ADR-043:210, ADR-057:101, ADR-058:91, `como-subir-local.md`:480, `ProdutoResponse`:30, `MarcarDisponibilidadeService`:64, `ContratoDeErrosIT`:73 e :105, `ReativacaoNoExpedienteIT`:58; e, na E-3d, ADR-068:57, a §1 repetindo o primeiro gatilho da seção; e, na W-F, ADR-067:95, a §4 repetindo o primeiro da seção) | −12 |
-| — menção que nega um gatilho, e não o escreve (ADR-064:26, *"não havia gatilho escrito"*; e, na R-3, a ADR-012, emenda de 16/10 (2), *"Gatilho escrito: nenhum"*) | −2 |
+| — menção que nega um gatilho, e não o escreve (ADR-064:26, *"não havia gatilho escrito"*; e, na R-3, a ADR-012, emenda de 16/10 (2), *"Gatilho escrito: nenhum"*; e, na R-4, a ADR-071, emenda de 17/10, e a ADR-072, seção de gatilhos, *"Nenhum."*) | −4 |
+| — menção ao título da seção, que fala dela e não escreve gatilho (R-4: ADR-072:13, :16, :27, :42, :65, :81 e :86; ADR-071:214, o título da emenda de 17/10; e o `README.md` das decisões :115 e :118). *A decisão sobre o título acrescentou dez linhas ao comando que lê o título* | −10 |
 | **= linhas da tabela vindas do recorte estreito** | **45** |
 | + entraram por outra redação — *"com gatilho:"* (linhas 1 e 2), *"Gatilho para trazê-lo de volta"* (4), *"Quando o segundo chegar"* (6), *"O gatilho para mudar"* (11), *"O gatilho para reabrir"* (19), *"O gatilho, escrito"* (22), *"Gatilho:"* (40 e 42), *"O gatilho para a função mudar de lugar"* (41), *"volta quando houver"* (43), *"Decidir antes do marco 5"* (44), *"Gatilho novo, e são dois"* (20 e 48); e, na R-3, *"Isso é linha de razão, com gatilho:"* (93) | **+15** |
 | + segundos gatilhos dentro de uma seção "## Gatilho escrito", que o comando conta uma vez só, pela linha do título (ADR-057, ADR-058, ADR-059 — linhas 45 a 47; ADR-060 — linhas 50 e 51; ADR-061 — linha 54; ADR-063 — linha 56; ADR-064 — linhas 58, a outra metade do primeiro, 59 e 60; ADR-065 — linha 62; ADR-066 — linhas 63 e 65; ADR-068 — linhas 68 e 69; ADR-069 — linhas 74 e 75; ADR-070 — linha 77; ADR-071 — linhas 95 e 96) | **+20** |
 | + escrito neste razão, porque a condição não tem outro lugar onde morar (linhas 52, 72 e 78) | **+3** |
 | + entraram pela segunda passada, triada na R-2 — doze linhas em oito: ADR-024:140 (79), ADR-063:29 e :30 (80), ADR-067:23 (81), `catalogo.md`:279 (82), ADR-011:114 e ADR-048:247 (83), ADR-013:232 e ADR-031:173 (84), ADR-021:76 e `conversa.md`:291 (85), ADR-045:142 (86) | **+8** |
 | + entraram pela segunda passada, triada na R-3 — `estabelecimento.md`:441 (88), `mensagem-na-fila-morta.md`:124 (89), `reconciliacao-de-pagamento.md`:161 (90), `recuperacao-de-acesso.md`:135 (91), `Equipe.java`:313 (92) | **+5** |
-| **= linhas da tabela** | **96** |
+| + entrou pela segunda passada, reclassificada na R-4 — `mensagem-na-fila-morta.md`:124, que a R-3 tinha dado como a condição da 43 (97) | **+1** |
+| − item que uma emenda declarou não ser gatilho — a 96, estornada pela emenda de 17/10/2026 à ADR-071 | **−1** |
+| **= linhas da tabela que contam** | **96** |
+
+**A tabela tem 97 linhas numeradas:** as 96 que contam e a 96, que fica estornada e não conta. O razão não apaga linha (ADR-072 §3).
 
 **A coluna "disparou?" tem quatro respostas.** *sim* — disparou e a dívida foi paga;
 *não* — e a coluna seguinte diz o que se procurou; **disparou e não produziu nada** —
@@ -95,13 +100,14 @@ este arquivo existe para achar.**
 | 2 | `gateway/src/test/.../IdentityDeMentira.java`:36 | *"Fica registrado na ADR-044 como duplicação conhecida, com gatilho: o terceiro módulo que precisar do mesmo dublê."* | há três cópias: `gateway`, `merchant` e `catalog` têm `support/IdentityDeMentira.java`. A ADR-044 **não** registra esta duplicação — `grep -n "dublê\|IdentityDeMentira" docs/architecture/decisions/ADR-044-*.md` volta vazio | a mesma decisão da linha 1, para teste |
 | 4 | `frontend/README.md`:32 | *"**Gatilho para trazê-lo de volta:** a primeira escrita que precise invalidar leitura de **outra** tela."* | **leitura, não medida:** na W-D, marcar uma opção na tela do produto muda o `vendavel` que a lista mostra; a lista é relida por remontagem ao voltar (`ListaDeProdutos.tsx`, `aoVoltar`). Se isso é "invalidar leitura de outra tela", disparou e foi resolvido sem o TanStack Query nem decisão escrita | decidir se a remontagem é a resposta, e escrevê-lo |
 | 52 | este razão (W-E) | *"a primeira tela que mostre um desses três ao comerciante"* — o `TratadorDeErros` do `catalog` repassava `excecao.getMessage()` no `detail` em três tratadores: `ProdutoNaoEncontrado` (404), `LojaSemExpediente` (409), `RegraDoCatalogoViolada` (400), contra a regra do `CLAUDE.md` escrita na W-E | **nasceu disparado** (W-C) e **pago em um terço na E-3b**: o `RegraDoCatalogoViolada` passou a carregar motivo com dados, o tratador escreve a frase, e os pontos de integridade saem **500** (ADR-063). **Continuam** o `ProdutoNaoEncontrado` (404) e o `LojaSemExpediente` (409). O censo, em 11/10/2026: `grep -rn "getMessage()" backend/services/*/src/main/java/com/deliveryplatform/*/api/error/TratadorDeErros.java` devolve as linhas 91 e 101 do `catalog` fora de `log.warn` | a frase escrita por tratador nos dois que faltam |
+| 97 | `mensagem-na-fila-morta.md`:124 (e ADR-026 §7) | *"**A métrica de profundidade ainda não existe.** … Requisito do marco 3, junto do primeiro consumidor"* | o primeiro consumidor com fila morta chegou em 10/10/2026, no marco 2: `ConfiguracaoDoConsumoDeExpediente` (`7b1c888`), *"a primeira fila durável e a primeira fila morta deste repositório"*. A métrica não veio, e não pode vir como a ADR-026 §7 a decidiu — profundidade exposta ao Prometheus, alerta em zero —, porque a ADR-041 tirou o Prometheus por decisão e aceitou *"o actuator fica sem métrica nenhuma"*, sem citar a ADR-026. Hoje a fila morta só se vê pela interface de management, à mão | uma decisão: quem olha a fila morta enquanto a ADR-041 vale, e a ADR-026 §7 emendada com ela. **Não é a linha 43:** aquela espera o stack voltar; esta já disparou |
 
 ## Rearmado
 
 | # | Onde | O gatilho, copiado | O que mostra que disparou | O que o fecha |
 | --- | --- | --- | --- | --- |
 | 5 | ADR-048:262 → ADR-057:101 | *"o primeiro consumidor que **escreva em banco** — hoje previsto para o `order`, no marco 3."* Rearmado como: *"**O primeiro consumidor cujo efeito não seja uma comparação** — um que acrescente, some, registre ou publique para fora."* | o `OuvinteDeExpedienteAlterado` (G-C3b, `7b1c888`) escreve em banco e foi coberto pela exceção (b) da invariante 7. `grep -rn "@RabbitListener" backend --include=*.java` devolve dois ouvintes, os dois nas exceções | o `processed_messages`, quando o primeiro consumidor que some ou registre chegar — previsto para o `order` |
-| 6 | ADR-037:210 → ADR-044:97 | *"**Não se decide agora porque só existe um serviço validando de verdade.** Quando o segundo chegar, a pergunta chega junto, com evidência."* | o segundo chegou (o `merchant`, C-A) e a pergunta foi respondida com adiamento e um gatilho novo, o da linha 1 — que disparou sem resposta | a linha 1. A ADR-038:124 afirmava o mesmo — *"Ele ainda não existe."* — até a emenda de 16/10/2026 (R-3) |
+| 6 | ADR-037:210 → ADR-044:97 | *"**Não se decide agora porque só existe um serviço validando de verdade.** Quando o segundo chegar, a pergunta chega junto, com evidência."* | o segundo chegou (o `merchant`, `a5994c0`, 15/09/2026) e a pergunta foi respondida com adiamento e um gatilho novo, o da linha 1 — que disparou sem resposta | a linha 1. A ADR-038:124 afirmava o mesmo — *"Ele ainda não existe."* — até a emenda de 16/10/2026 (R-3) |
 
 ## Sim — disparou, e a dívida foi paga
 
@@ -122,7 +128,7 @@ este arquivo existe para achar.**
 | 82 | `catalogo.md`:279 | *"**Quem o chama ainda não existe** — o consumidor do evento é a G-C3b; hoje o único chamador é o teste de integração."* | o `OuvinteDeExpedienteAlterado` chama `ReativarNoExpediente` desde a G-C3b (`7b1c888`). A frase de origem dizia o contrário até a R-3, que a trocou no lugar | a G-C3b; a frase, na R-3 |
 | 87 | ADR-012, emenda de 16/10/2026 | *"**Gatilho escrito:** a próxima rota que o gateway ganhar. Quem a acrescenta acrescenta a linha aqui — ou tira a tabela, e deixa o `application.yml` ser a única lista."* | **pago antes de disparar**, no mesmo dia: a tabela saiu de normativa, e o `RoteamentoIT` compara os ids dos casos com as rotas que o gateway carregou (R-3, `0e545c0`) | ADR-071; ADR-012, emenda de 16/10 (2) |
 | 88 | `estabelecimento.md`:441 | *"**A porta pela qual os outros serviços perguntam ainda não existe**, e é deliberado: nenhum dos seis tem código"* | `GET /internal/merchants/{estabelecimentoId}/me/contexto-de-acesso` (`100f71f`, 28/09/2026), consumida pelo `AutorizacaoComercialHttp` do `catalog` (`e1e78fa`, 28/09/2026). **Frase falsa, ramo 1** | `100f71f` e `e1e78fa`; a frase trocada no lugar na R-3 |
-| 89 | `mensagem-na-fila-morta.md`:124 (a segunda frase do item) | *"o `prometheus.yml` só aponta para o `/actuator` dos serviços"* | o `prometheus.yml` não está na árvore: saiu com o stack de observabilidade (ADR-041). **Frase falsa, ramo 1.** A primeira frase do mesmo item — a métrica de profundidade — é a condição da linha 43 | a ADR-041; a frase trocada no lugar na R-3 |
+| 89 | `mensagem-na-fila-morta.md`:124 (a segunda frase do item) | *"o `prometheus.yml` só aponta para o `/actuator` dos serviços"* | o `prometheus.yml` não está na árvore: saiu com o stack de observabilidade (ADR-041). **Frase falsa, ramo 1.** A primeira frase do mesmo item — a métrica de profundidade — tem linha própria desde a R-4, a 97 | a ADR-041; a frase trocada no lugar na R-3 |
 
 ## Não
 
@@ -197,7 +203,7 @@ este arquivo existe para achar.**
 | 93 | ADR-071 §2 (e o javadoc do `RoteamentoIT`) | *"**um caso pode afirmar o `id` errado e passar.** Isso **é** linha de razão, com gatilho: *o dia em que o teste resolver o caminho pelo próprio roteador em vez de pelo `id` declarado.*"* | o `RoteamentoIT` liga cada caso à rota por um `id` escrito à mão (R-3) | o caso resolvido pelo roteador |
 | 94 | ADR-071, seção "Gatilho escrito" | *"**A próxima regra que alguém quiser escrever num segundo lugar.** Ela não se escreve: escreve-se o ponteiro, ou o comando que a deriva."* | não há comando que ache regra escrita em dois lugares (ADR-071 §4) | o ponteiro, ou o comando |
 | 95 | ADR-071, seção "Gatilho escrito" | *"**A próxima lista que aparecer transcrita num teste.**"* | ninguém procurou depois do `RoteamentoIT`, e não há comando que as ache | a lista derivada do dono |
-| 96 | ADR-071, seção "Gatilho escrito" | *"**E o dia em que existir comando que enumere regra duplicada.**"* | não existe | saber se são cinco ou cinquenta |
+| 96 | ADR-071, seção "Gatilho escrito" | *"**E o dia em que existir comando que enumere regra duplicada.**"* | **não era gatilho.** A condição dependia de nós decidirmos escrever o comando, e a §4 da própria ADR-071 recusa esta linha. **Estornada pela emenda de 17/10/2026 à ADR-071** (R-4) | — |
 | 83 | ADR-011:114 (e ADR-048:247, que o cita) | *"No MVP há uma instância por serviço e isso é invisível. Está escrito aqui porque é a primeira coisa a quebrar quando houver duas, e a falha é silenciosa."* | o compose sobe uma instância de cada serviço; a fila exclusiva por instância já existe no `catalog` (`AnonymousQueue`, `ConfiguracaoDaEscuta`), e nunca rodou com duas | a primeira execução com duas instâncias, medida |
 | 84 | ADR-013:232 (e ADR-031:173, o evento da mesma saga) | *"é o desenho certo, e entra quando houver titular para exercer o direito."* (a saga de exclusão; o `TitularSolicitouExclusaoV1` é *"um nome já escolhido para um evento que ainda não existe, e quando existir passa por esta regra"*) | a exclusão é manual (`docs/operacao/exclusao-de-titular.md`); nada no repositório registra pedido de titular | a saga de exclusão, e o evento |
 | 85 | ADR-021:76 (e `conversa.md`:291) | *"Volta a ser serviço quando houver aplicativo nativo e push, não antes."* (a notificação) | aplicativo nativo de consumidor está fora do escopo (`CLAUDE.md`); o painel avisa por consulta periódica | o serviço de notificação |

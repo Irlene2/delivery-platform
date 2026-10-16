@@ -1,6 +1,6 @@
 # ADR-071 — A lista tem um dono, e a cópia não é lista
 
-- **Status:** aceita
+- **Status:** aceita · **emendada em 17/10/2026**: o terceiro item do gatilho não era gatilho
 - **Data:** 16/10/2026
 - **Rodada:** R-3
 - **Relacionada:** ADR-012 (rotas por recurso no gateway), ADR-038, ADR-044 §6, ADR-047,
@@ -210,3 +210,33 @@ escreve-se o ponteiro, ou o comando que a deriva.
 
 **E o dia em que existir comando que enumere regra duplicada.** Aí se sabe se são cinco ou
 cinquenta. **Sem comando não há varredura**, e por isso a §4 não virou linha de razão.
+
+## Emenda de 17/10/2026 — o terceiro item do "Gatilho escrito" não era gatilho
+
+**Esta ADR se contradizia em duas seções suas, no dia em que foi escrita.** A §4 diz que a
+contagem das duplicações **não vira linha de razão**: *"não existe comando que enumere 'regra
+escrita em dois lugares', então não existe gatilho"*. E o terceiro item da seção de gatilhos diz
+*"o dia em que existir comando que enumere regra duplicada"*.
+
+**A seção é colhida por comando** — o recorte estreito do `docs/dividas.md` procura o título
+dela —, então aquele item virou a linha **96** do razão: exatamente a linha que a §4 recusa.
+
+**O item não é gatilho**, e o motivo é o do quinquagésimo defeito: a condição dele é *o dia em
+que alguém decidir escrever o comando*. **Condição que depende de nós decidirmos é pergunta não
+feita**, e a pergunta é: *vale escrever um comando que ache regra duplicada?* **Esta emenda não
+a responde** — ela para de fingir que a resposta tem data.
+
+**A §4 continua valendo**, e é ela que fica: as cinco duplicações estão registradas no corpo
+desta ADR, **e não no razão.**
+
+**Os outros dois itens ficam onde estão, e não são mais certos do que este.** O censo da R-4
+mediu todas as seções de gatilho das ADRs com o teste da ADR-072 — *alguém que não seja nós pode
+fazer isso acontecer?* — e os classificou como **condição nossa**: a próxima regra escrita num
+segundo lugar e a próxima lista transcrita num teste só acontecem se quem escreve este
+repositório as escrever. **A pergunta, e esta emenda não a responde:** *o que se quer de quem
+achar a próxima — um ponteiro na hora, sem linha de razão?* A retirada deles, se for a
+resposta, é da rodada que tratar as outras seções medidas (ADR-072 §4). O razão continua com as
+linhas 94 e 95.
+
+**O razão estorna a linha 96** (R-4). **Gatilho escrito: nenhum** — e esta frase é uma menção
+que nega, da categoria que o cabeçalho do razão já subtrai; ela não cria linha.
