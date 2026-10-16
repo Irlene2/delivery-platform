@@ -1,6 +1,6 @@
 # O razão das dívidas
 
-**Gerado em 10/10/2026 na rodada R-1, sobre o commit `6fb73e6`; refeito na E-1, sobre `d7dbcc4` mais a ADR-060, na W-E, sobre `398d828` mais a ADR-061, na E-3b, sobre `9fbcee1` mais a ADR-064, na E-3c, sobre `cbd633c` mais as ADRs 065 e 066 e o `PublicarProdutoService`, na E-3d, sobre `a3ffe07` mais a ADR-068, na W-F, sobre `ec89666` mais a ADR-067, na E-2, sobre `ef82bc9` mais a ADR-069, na W-G, sobre `92e8099` mais a ADR-070, na R-2, sobre `e43d227` mais a emenda de 16/10/2026 à ADR-012, na R-3, sobre `0e545c0` mais as emendas às ADRs 024 e 038 e as frases trocadas no lugar, na R-4, sobre `4904159` mais a ADR-072 e a emenda de 16/10/2026 à ADR-071, na R-5, sobre `ab18956` mais as emendas de 16/10/2026 às ADRs 071 e 072, e na R-6, sobre `2b57cc9` mais a emenda de 16/10/2026 à ADR-059. Este arquivo é
+**Gerado em 10/10/2026 na rodada R-1, sobre o commit `6fb73e6`; refeito na E-1, sobre `d7dbcc4` mais a ADR-060, na W-E, sobre `398d828` mais a ADR-061, na E-3b, sobre `9fbcee1` mais a ADR-064, na E-3c, sobre `cbd633c` mais as ADRs 065 e 066 e o `PublicarProdutoService`, na E-3d, sobre `a3ffe07` mais a ADR-068, na W-F, sobre `ec89666` mais a ADR-067, na E-2, sobre `ef82bc9` mais a ADR-069, na W-G, sobre `92e8099` mais a ADR-070, na R-2, sobre `e43d227` mais a emenda de 16/10/2026 à ADR-012, na R-3, sobre `0e545c0` mais as emendas às ADRs 024 e 038 e as frases trocadas no lugar, na R-4, sobre `4904159` mais a ADR-072 e a emenda de 16/10/2026 à ADR-071, na R-5, sobre `ab18956` mais as emendas de 16/10/2026 às ADRs 071 e 072, na R-6, sobre `2b57cc9` mais a emenda de 16/10/2026 à ADR-059, e na R-7, sobre `60eb66b`, com a terceira passada. Este arquivo é
 derivado e envelhece:** toda ADR, documento ou javadoc que escrever um gatilho novo o
 torna incompleto. Refaça-o com os comandos abaixo antes de confiar nele.
 
@@ -62,7 +62,7 @@ Triado na R-2 e na R-3.
 
 **Os comandos produzem candidatos; a tabela é a leitura deles.** Uma menção a
 "gatilho" pode ser a definição de um, a citação de um que já está na tabela, ou o
-relato de um que disparou. A conta, em 16/10/2026, na R-6:
+relato de um que disparou. A conta, em 16/10/2026, na R-7:
 
 | | linhas |
 | --- | --- |
@@ -96,12 +96,12 @@ este arquivo existe para achar.**
 
 | # | Onde | O gatilho, copiado | O que mostra que disparou | O que o fecha |
 | --- | --- | --- | --- | --- |
-| 1 | ADR-044:97 (e `gateway/config/JwtProperties.java`:12) | *"Fica registrado como duplicação conhecida, com gatilho: o terceiro módulo que precisar do mesmo decoder."* | o `catalog` montou o terceiro decoder com validador de `iss`/`aud` em 28/09 (`e1e78fa`); hoje são quatro: `grep -rln "JwtIssuerValidator\|audience" backend --include=SecurityConfig.java` devolve `gateway`, `catalog`, `identity`, `merchant`. Nenhuma ADR posterior volta ao assunto | uma decisão: módulo comum de segurança (emenda à ADR-001) ou a duplicação assumida sem gatilho |
-| 2 | `gateway/src/test/.../IdentityDeMentira.java`:36 | *"Fica registrado na ADR-044 como duplicação conhecida, com gatilho: o terceiro módulo que precisar do mesmo dublê."* | há três cópias: `gateway`, `merchant` e `catalog` têm `support/IdentityDeMentira.java`. A ADR-044 **não** registra esta duplicação — `grep -n "dublê\|IdentityDeMentira" docs/architecture/decisions/ADR-044-*.md` volta vazio | a mesma decisão da linha 1, para teste |
+| 1 | ADR-044:97 (e `gateway/config/JwtProperties.java`:12) | *"Fica registrado como duplicação conhecida, com gatilho: o terceiro módulo que precisar do mesmo decoder."* | o `catalog` montou o terceiro decoder com validador de `iss`/`aud` em 28/09 (`e1e78fa`); hoje são quatro — `gateway`, `catalog`, `identity`, `merchant`. Nenhuma ADR decidiu: a ADR-071 §4 e a emenda de 16/10/2026 à ADR-038 voltam ao assunto só para dizer que ele continua aberto. **Reverifica com:** `grep -rln "JwtIssuerValidator\|audience" backend/*/*/src/main --include=SecurityConfig.java` e `grep -ln "validador de .iss" docs/architecture/decisions/ADR-0[4-7][0-9]-*.md` — medido em 16/10/2026, `60eb66b`. | uma decisão: módulo comum de segurança (emenda à ADR-001) ou a duplicação assumida sem gatilho |
+| 2 | `gateway/src/test/.../IdentityDeMentira.java`:36 | *"Fica registrado na ADR-044 como duplicação conhecida, com gatilho: o terceiro módulo que precisar do mesmo dublê."* | há três cópias: `gateway`, `merchant` e `catalog` têm `support/IdentityDeMentira.java`. A ADR-044 **não** registra esta duplicação — `grep -n "dublê\|IdentityDeMentira" docs/architecture/decisions/ADR-044-*.md` volta vazio. **Reverifica com:** `ls backend/*/*/src/test/java/com/deliveryplatform/*/support/IdentityDeMentira.java` e `grep -c "dublê\|IdentityDeMentira" docs/architecture/decisions/ADR-044-a-cadeia-de-filtros-do-gateway.md` — medido em 16/10/2026, `60eb66b`. | a mesma decisão da linha 1, para teste |
 | 4 | `frontend/README.md`:32 | *"**Gatilho para trazê-lo de volta:** a primeira escrita que precise invalidar leitura de **outra** tela."* | **leitura, não medida:** na W-D, marcar uma opção na tela do produto muda o `vendavel` que a lista mostra; a lista é relida por remontagem ao voltar (`ListaDeProdutos.tsx`, `aoVoltar`). Se isso é "invalidar leitura de outra tela", disparou e foi resolvido sem o TanStack Query nem decisão escrita | decidir se a remontagem é a resposta, e escrevê-lo |
 | 52 | este razão (W-E) | *"a primeira tela que mostre um desses três ao comerciante"* — o `TratadorDeErros` do `catalog` repassava `excecao.getMessage()` no `detail` em três tratadores: `ProdutoNaoEncontrado` (404), `LojaSemExpediente` (409), `RegraDoCatalogoViolada` (400), contra a regra do `CLAUDE.md` escrita na W-E | **nasceu disparado** (W-C) e **pago em um terço na E-3b**: o `RegraDoCatalogoViolada` passou a carregar motivo com dados, o tratador escreve a frase, e os pontos de integridade saem **500** (ADR-063). **Continuam** o `ProdutoNaoEncontrado` (404) e o `LojaSemExpediente` (409). O censo, em 11/10/2026: `grep -rn "getMessage()" backend/services/*/src/main/java/com/deliveryplatform/*/api/error/TratadorDeErros.java` devolve as linhas 91 e 101 do `catalog` fora de `log.warn` | a frase escrita por tratador nos dois que faltam |
 | 97 | `mensagem-na-fila-morta.md`:124 (e ADR-026 §7) | *"**A métrica de profundidade ainda não existe.** … Requisito do marco 3, junto do primeiro consumidor"* | o primeiro consumidor com fila morta chegou em 10/10/2026, no marco 2: `ConfiguracaoDoConsumoDeExpediente` (`7b1c888`), *"a primeira fila durável e a primeira fila morta deste repositório"*. A métrica não veio, e não pode vir como a ADR-026 §7 a decidiu — profundidade exposta ao Prometheus, alerta em zero —, porque a ADR-041 tirou o Prometheus por decisão e aceitou *"o actuator fica sem métrica nenhuma"*, sem citar a ADR-026. Hoje a fila morta só se vê pela interface de management, à mão | uma decisão: quem olha a fila morta enquanto a ADR-041 vale, e a ADR-026 §7 emendada com ela. **Não é a linha 43:** aquela espera o stack voltar; esta já disparou |
-| 34 | ADR-059, emenda de 16/10/2026 (a condição antiga: ADR-059:138; as cópias do `como-subir-local.md`, :480 e :494, viraram ponteiro na R-6) | *"a rodada que der ao `merchant` as rotas de escrita troca esta fixture por uma sequência de chamadas HTTP, e **a semeadura por `ApplicationRunner` sai do repositório nessa rodada**."* | **até a R-5 esta coluna dizia *"o `merchant` não tem `@PostMapping`, `@PutMapping` nem `@PatchMapping`"*.** A condição disparou em 10/10/2026 com o `POST /api/v1/me/estabelecimentos` (`31a5958`), e o `merchant` ganhou mais dois em 15/10 — `POST .../team/convites` (`ef82bc9`) e `POST /api/v1/convites/{token}/aceite` (`5889a4c`). Os três semeadores continuam na árvore — `SemeaduraDoIdentity`, `SemeaduraDoMerchant`, `SemeaduraDoCatalogo` —, todos atrás de `DELIVERY_SEMEADURA`, falsa por padrão. **Medido na R-5:** 36 campos, 26 que a API escreve, 10 que não. *O corpo do commit `2b57cc9` traz três totais diferentes destes — 23, 14 e 9 —, escritos antes da contagem, e a mensagem de commit é o único texto que não se emenda. A tabela do relatório da R-5 é a certa, e é esta.* E a condição foi conferida no dia em que disparou: a ADR-060 (`398d828`, 10/10) diz *"o gatilho não está pago"*; o que ficou falso foi esta coluna, escrita às 09:22 do mesmo dia (`d7dbcc4`), quatro horas antes da primeira rota | **a lista da emenda de 16/10/2026 à ADR-059**, que é o que o semeador faz e a API não (R-5): no `merchant`, o **horário de funcionamento**, as **áreas de entrega**, o **desconto de retirada** e o **pedido mínimo por modalidade** — a loja criada por rota nasce sem horário, sem área, e com os dois valores em zero —; no `catalog`, os **grupos e as opções** do produto, e o **`ESGOTADO_HOJE`**, que exige loja que abra por horário, e por isso não se alcança numa loja criada por rota; e os **ids fixos** que os semeadores combinam entre si, que uma sequência de chamadas não precisa — cada chamada usa o id que a anterior devolveu |
+| 34 | ADR-059, emenda de 16/10/2026 (a condição antiga: ADR-059:138; as cópias do `como-subir-local.md`, :480 e :494, viraram ponteiro na R-6) | *"a rodada que der ao `merchant` as rotas de escrita troca esta fixture por uma sequência de chamadas HTTP, e **a semeadura por `ApplicationRunner` sai do repositório nessa rodada**."* | **até a R-5 esta coluna dizia *"o `merchant` não tem `@PostMapping`, `@PutMapping` nem `@PatchMapping`"*.** A condição disparou em 10/10/2026 com o `POST /api/v1/me/estabelecimentos` (`31a5958`), e o `merchant` ganhou mais dois em 15/10 — `POST .../team/convites` (`ef82bc9`) e `POST /api/v1/convites/{token}/aceite` (`5889a4c`). Os três semeadores continuam na árvore — `SemeaduraDoIdentity`, `SemeaduraDoMerchant`, `SemeaduraDoCatalogo` —, todos atrás de `DELIVERY_SEMEADURA`, falsa por padrão. **Medido na R-5:** 36 campos, 26 que a API escreve, 10 que não. *O corpo do commit `2b57cc9` traz três totais diferentes destes — 23, 14 e 9 —, escritos antes da contagem, e a mensagem de commit é o único texto que não se emenda. A tabela do relatório da R-5 é a certa, e é esta.* E a condição foi conferida no dia em que disparou: a ADR-060 (`398d828`, 10/10) diz *"o gatilho não está pago"*; o que ficou falso foi esta coluna, escrita às 09:22 do mesmo dia (`d7dbcc4`), quatro horas antes da primeira rota. **Reverifica com:** `grep -rln "@PostMapping" backend/services/merchant-service/src/main/java` e `git ls-files "*Semeadura*.java"` — medido em 16/10/2026, `60eb66b`. | **a lista da emenda de 16/10/2026 à ADR-059**, que é o que o semeador faz e a API não (R-5): no `merchant`, o **horário de funcionamento**, as **áreas de entrega**, o **desconto de retirada** e o **pedido mínimo por modalidade** — a loja criada por rota nasce sem horário, sem área, e com os dois valores em zero —; no `catalog`, os **grupos e as opções** do produto, e o **`ESGOTADO_HOJE`**, que exige loja que abra por horário, e por isso não se alcança numa loja criada por rota; e os **ids fixos** que os semeadores combinam entre si, que uma sequência de chamadas não precisa — cada chamada usa o id que a anterior devolveu |
 
 ## Rearmado
 
@@ -130,37 +130,37 @@ este arquivo existe para achar.**
 | 87 | ADR-012, emenda de 16/10/2026 | *"**Gatilho escrito:** a próxima rota que o gateway ganhar. Quem a acrescenta acrescenta a linha aqui — ou tira a tabela, e deixa o `application.yml` ser a única lista."* | **pago antes de disparar**, no mesmo dia: a tabela saiu de normativa, e o `RoteamentoIT` compara os ids dos casos com as rotas que o gateway carregou (R-3, `0e545c0`) | ADR-071; ADR-012, emenda de 16/10 (2) |
 | 88 | `estabelecimento.md`:441 | *"**A porta pela qual os outros serviços perguntam ainda não existe**, e é deliberado: nenhum dos seis tem código"* | `GET /internal/merchants/{estabelecimentoId}/me/contexto-de-acesso` (`100f71f`, 28/09/2026), consumida pelo `AutorizacaoComercialHttp` do `catalog` (`e1e78fa`, 28/09/2026). **Frase falsa, ramo 1** | `100f71f` e `e1e78fa`; a frase trocada no lugar na R-3 |
 | 89 | `mensagem-na-fila-morta.md`:124 (a segunda frase do item) | *"o `prometheus.yml` só aponta para o `/actuator` dos serviços"* | o `prometheus.yml` não está na árvore: saiu com o stack de observabilidade (ADR-041). **Frase falsa, ramo 1.** A primeira frase do mesmo item — a métrica de profundidade — tem linha própria desde a R-4, a 97 | a ADR-041; a frase trocada no lugar na R-3 |
+| 27 | ADR-052:101 | *"a segunda coleção com mais de um escritor concorrente."* | **pago antes de disparar.** A segunda coleção existe — o `CategoriaDocumento` (`cbd633c`, 11/10/2026) — e nasceu com `@Version`, pela ADR-064 §4: *"a rodada de reordenar vai precisar, e acrescentar depois é migração"*. Hoje só a rota de criar escreve nela. **Reverifica com:** `grep -rln "^@Document" backend/services/*/src/main/java` e `grep -n "@Version" backend/services/catalog-service/src/main/java/com/deliveryplatform/catalog/infrastructure/persistence/entity/CategoriaDocumento.java` — medido em 16/10/2026, `60eb66b`. | ADR-064 §4 (`cbd633c`) |
 
 ## Não
 
 | # | Onde | O gatilho, copiado | O que se procurou | O que o fecha |
 | --- | --- | --- | --- | --- |
-| 14 | ADR-001:227 | *"o dia em que houver uma segunda regra de build."* | `grep -rn "tasks.register" backend/build-logic` — uma só, `verificarDependenciaEntreModulos` | suíte própria do `build-logic` |
-| 15 | ADR-009:299 | *"quando alguém precisar ordenar o cardápio por preço no banco"* | nenhuma ordenação por `precoBase` no `catalog` | `changeUnit` para `Decimal128` |
-| 16 | ADR-012:95 | *"**Gatilho escrito, para os dois:** o primeiro ambiente exposto à internet."* (limite de taxa e `correlationId`) | nenhum workflow implanta: `grep -lni "deploy\|environment:" .github/workflows/*` vazio | as duas peças, com ADR |
+| 14 | ADR-001:227 | *"o dia em que houver uma segunda regra de build."* | `grep -rn "tasks.register" backend/build-logic` — uma só, `verificarDependenciaEntreModulos`. **Reverifica com:** `grep -rn "tasks.register" backend/build-logic/src` — medido em 16/10/2026, `60eb66b`. | suíte própria do `build-logic` |
+| 15 | ADR-009:299 | *"quando alguém precisar ordenar o cardápio por preço no banco"* | nenhuma ordenação por `precoBase` no `catalog`. **Reverifica com:** `grep -rni "sort.*precoBase\|order.*precoBase\|direction.*precoBase\|precoBase.*sort\|precoBase.*order\|precoBase.*direction" backend/services/catalog-service/src/main/java` — medido em 16/10/2026, `60eb66b`. | `changeUnit` para `Decimal128` |
+| 16 | ADR-012:95 | *"**Gatilho escrito, para os dois:** o primeiro ambiente exposto à internet."* (limite de taxa e `correlationId`) | nenhum workflow implanta: `grep -lni "deploy\|environment:" .github/workflows/*` vazio. **Reverifica com:** `grep -lni "deploy\|environment:" .github/workflows/*` — medido em 16/10/2026, `60eb66b`. | as duas peças, com ADR |
 | 17 | ADR-044:139 | *"o primeiro ambiente exposto à internet."* (limite de taxa) | o mesmo da 16 | a mesma |
 | 18 | ADR-047:123 | *"o primeiro ambiente alcançável de fora da máquina de desenvolvimento. Aí a CSP entra com ADR própria"* | o mesmo da 16 | CSP |
-| 19 | ADR-044:226 | *"**O gatilho para reabrir:** no dia em que houver rota demais para conferir de cabeça."* (o `/actuator/gateway`) | é julgamento, não fato; a contagem de rotas do gateway não foi medida | — |
+| 19 | ADR-044:226 | *"**O gatilho para reabrir:** no dia em que houver rota demais para conferir de cabeça."* (o `/actuator/gateway`) | é julgamento, não fato. A contagem existe: o `application.yml` do gateway tem 16 rotas, e o `RoteamentoIT` compara as rotas que o gateway carrega com os casos dele desde `0e545c0` — a conferência deixou de ser de cabeça, e o `/actuator/gateway` continua fora da exposição. **Reverifica com:** `grep -c "^            - id:" backend/infra/gateway/src/main/resources/application.yml` e `grep -n "void toda_rota_do_gateway" backend/infra/gateway/src/test/java/com/deliveryplatform/gateway/integration/RoteamentoIT.java` — medido em 16/10/2026, `60eb66b`. | — |
 | 20 | ADR-054:48 (substitui o da ADR-045:123) | *"**a primeira chamada de serviço para serviço em que o serviço chamado precise saber quem chamou** para decidir o que responder."* | as duas chamadas que existem (`catalog` → `merchant`, `AutorizacaoComercialHttp` e `ExpedienteCorrenteHttp`) mandam o token do portador, e o `merchant` responde sobre ele | identidade de serviço |
-| 21 | ADR-046:179 | *"o dia em que uma passada da varredura levar mais que o intervalo entre passadas."* | **não há medida** da duração de uma passada; o log só conta aberturas publicadas. Não disparou até onde se vê, e não se vê muito | uma consulta restrita, já desenhada |
-| 22 | ADR-046:284 (e `pedido.md`:397) | *"**O gatilho, escrito:** quando o `order` ganhar código — marco 3 —"* (emitir fechamento, pausa e retomada) | `order-service` tem 1 arquivo Java, a `*Application` | decisão (a) ou (b) da ADR-046 |
+| 21 | ADR-046:179 | *"o dia em que uma passada da varredura levar mais que o intervalo entre passadas."* | **não há medida** da duração de uma passada; o log só conta aberturas publicadas. Não disparou até onde se vê, e não se vê muito. **Reverifica com:** `grep -n "log\." backend/services/merchant-service/src/main/java/com/deliveryplatform/merchant/infrastructure/agenda/VarreduraDeAbertura.java` — medido em 16/10/2026, `60eb66b`. | uma consulta restrita, já desenhada |
+| 22 | ADR-046:284 (e `pedido.md`:397) | *"**O gatilho, escrito:** quando o `order` ganhar código — marco 3 —"* (emitir fechamento, pausa e retomada) | `order-service` tem 1 arquivo Java, a `*Application`. **Reverifica com:** `find backend/services/order-service/src/main -name "*.java"` — medido em 16/10/2026, `60eb66b`. | decisão (a) ou (b) da ADR-046 |
 | 23 | ADR-049:150 | *"se algum dia o horário deixar de ser semanal (feriado, exceção por data), esta busca muda junto."* | `Disponibilidade` continua `Map<DayOfWeek, List<Faixa>>` | a busca da próxima abertura |
-| 24 | ADR-050:42 | *"quem abrir o `SecurityConfig` do `identity` para qualquer outra coisa acrescenta a propriedade na mesma passada."* | nenhum commit no `SecurityConfig` do `identity` desde a ADR-050 (30/09) | a documentação aberta no `identity` |
+| 24 | ADR-050:42 | *"quem abrir o `SecurityConfig` do `identity` para qualquer outra coisa acrescenta a propriedade na mesma passada."* | nenhum commit no `SecurityConfig` do `identity` desde a ADR-050 (30/09). **Reverifica com:** `git log --oneline --since=2026-09-30 -- backend/services/identity-service/src/main/java/com/deliveryplatform/identity/config/SecurityConfig.java` — medido em 16/10/2026, `60eb66b`. | a documentação aberta no `identity` |
 | 25 | ADR-050:128 | *"o dia em que a cadeia de filtros virar módulo comum"* | não virou | — |
-| 26 | ADR-051:128 | *"O dia em que as imagens tiverem de ser construídas num lugar que **não tem o build do Gradle disponível**"* | nenhum workflow constrói imagem | a imagem construtora |
-| 27 | ADR-052:101 | *"a segunda coleção com mais de um escritor concorrente."* | um `@Document` só, `ProdutoDocumento` | `@Version` na segunda |
+| 26 | ADR-051:128 | *"O dia em que as imagens tiverem de ser construídas num lugar que **não tem o build do Gradle disponível**"* | nenhum workflow constrói imagem. **Reverifica com:** `grep -lni "docker build\|docker/build-push\|bootBuildImage\|compose build" .github/workflows/*` — medido em 16/10/2026, `60eb66b`. | a imagem construtora |
 | 28 | ADR-052:104 (e `ContratoDeErrosIT`:105, `ReativacaoNoExpedienteIT`:58) | *"o primeiro relato de 409 que ninguém consegue explicar."* | nada no repositório registra relato de uso | teste HTTP → 409 |
-| 29 | ADR-053:151 | *"O primeiro serviço **sem** rota autenticada, ou com um esquema de erro diferente — o `conversation`"* | `conversation-service` tem 1 arquivo Java | o contrato de erro do webhook |
-| 30 | ADR-055:56 | *"a primeira tela que precise de **outro** campo do `ProblemDetail` além do `detail`"* | nenhum `.type` lido em `frontend/src` | o esquema de erro no contrato |
+| 29 | ADR-053:151 | *"O primeiro serviço **sem** rota autenticada, ou com um esquema de erro diferente — o `conversation`"* | `conversation-service` tem 1 arquivo Java. **Reverifica com:** `find backend/services/conversation-service/src/main -name "*.java"` — medido em 16/10/2026, `60eb66b`. | o contrato de erro do webhook |
+| 30 | ADR-055:56 | *"a primeira tela que precise de **outro** campo do `ProblemDetail` além do `detail`"* | nenhum `.type` lido em `frontend/src`. **Reverifica com:** `grep -rn "\.type\b" frontend/src --include=*.ts --include=*.tsx --exclude=*.test.ts --exclude=*.test.tsx` — medido em 16/10/2026, `60eb66b`. | o esquema de erro no contrato |
 | 31 | ADR-055:72 | *"a primeira que precisar — e aí o servidor ganha um discriminador legível por máquina, que é o campo `type`"* | o mesmo da 30 | o `type` nos tratadores |
 | 32 | ADR-056:119 | *"A primeira rota cujo identificador na URL **não** pertença a uma loja"* | todas as rotas com id estão sob `/merchants/{estabelecimentoId}` | a regra para recurso global |
-| 33 | ADR-058:114 (e :91) | *"**A primeira rodada que precise de um dos cinco esqueletos de pé.**"* | as rodadas I-B a W-D subiram só o `marco2` | `mem_limit` e `on-failure:3` nos cinco |
-| 35 | `catalogo.md`:192 (e `MarcarDisponibilidadeService`:64) | *"o `conversation-service` ganhar código, que é quem o consome."* (o `DisponibilidadeAlteradaV1`) | 1 arquivo Java no `conversation` | outbox no `catalog` e o evento |
-| 36 | `catalogo.md`:243 (e `ProdutoResponse`:30) | *"a primeira tela que mostre "a partir de"."* | nenhum "a partir de" em `frontend/src` | `precoMinimoPossivel` na resposta |
+| 33 | ADR-058:114 (e :91) | *"**A primeira rodada que precise de um dos cinco esqueletos de pé.**"* | as rodadas I-B a W-D subiram só o `marco2`. **Reverifica com:** `grep -n "PERFIL=" scripts/subir-local.sh` e `find backend/services/order-service/src/main backend/services/payment-service/src/main backend/services/delivery-service/src/main backend/services/settlement-service/src/main backend/services/conversation-service/src/main -name "*.java"` — medido em 16/10/2026, `60eb66b`. | `mem_limit` e `on-failure:3` nos cinco |
+| 35 | `catalogo.md`:192 (e `MarcarDisponibilidadeService`:64) | *"o `conversation-service` ganhar código, que é quem o consome."* (o `DisponibilidadeAlteradaV1`) | 1 arquivo Java no `conversation`. **Reverifica com:** `find backend/services/conversation-service/src/main -name "*.java"` — medido em 16/10/2026, `60eb66b`. | outbox no `catalog` e o evento |
+| 36 | `catalogo.md`:243 (e `ProdutoResponse`:30) | *"a primeira tela que mostre "a partir de"."* | nenhum "a partir de" em `frontend/src`. **Reverifica com:** `grep -rni "a partir de" frontend/src --include=*.ts --include=*.tsx` — medido em 16/10/2026, `60eb66b`. | `precoMinimoPossivel` na resposta |
 | 37 | `catalogo.md`:44 (e `ModoDeControle`:32) | *"o valor nasce junto com a primeira baixa de estoque, no marco 10."* | o enum tem `SEM_CONTROLE` e `QUALITATIVO` | marco 10 |
-| 38 | `ProdutoDocumento`:40 | *"quando alguém precisar consultar `marcadoEm` por intervalo"* | nenhuma consulta por `marcadoEm` no repositório Mongo | `Date` com truncamento explícito |
-| 39 | `ProdutoRepositorioMongo`:129 | *"a primeira loja com mais de mil produtos, ou a primeira varredura que apareça em log de consulta lenta"* | a única loja tem um produto | o índice `002` |
-| 40 | ADR-021:221 | *"**Gatilho:** o starter volta com o primeiro leitor do cardápio em cache, no marco 7"* | o build do `catalog` cita Redis só em comentário | marco 7 |
+| 38 | `ProdutoDocumento`:40 | *"quando alguém precisar consultar `marcadoEm` por intervalo"* | nenhuma consulta por `marcadoEm` no repositório Mongo. **Reverifica com:** `grep -rni "criteria.*marcadoEm\|query.*marcadoEm\|where.*marcadoEm\|between.*marcadoEm\|find.*marcadoEm\|marcadoEm.*between\|marcadoEm.*gte\|marcadoEm.*lte" backend/services/catalog-service/src/main/java/com/deliveryplatform/catalog/infrastructure/persistence` — medido em 16/10/2026, `60eb66b`. | `Date` com truncamento explícito |
+| 39 | `ProdutoRepositorioMongo`:129 | *"a primeira loja com mais de mil produtos, ou a primeira varredura que apareça em log de consulta lenta"* | nenhuma loja com mais de mil produtos: no banco de desenvolvimento são duas lojas, com um produto cada — a da fixture e outra, de id sorteado, criada por rota. Nenhum log de consulta lenta medido. **Reverifica com:** `docker exec delivery-platform-mongodb-1 mongosh catalog_db --quiet --eval 'db.produtos.aggregate([{$group:{_id:"$estabelecimentoId",n:{$sum:1}}},{$sort:{n:-1}}]).toArray()'`, de dentro do WSL — medido em 16/10/2026, `60eb66b`. | o índice `002` |
+| 40 | ADR-021:221 | *"**Gatilho:** o starter volta com o primeiro leitor do cardápio em cache, no marco 7"* | o build do `catalog` cita Redis só em comentário. **Reverifica com:** `grep -n -i "redis" backend/services/catalog-service/build.gradle.kts` — medido em 16/10/2026, `60eb66b`. | marco 7 |
 | 41 | `DiaOperacional.java`:34 | *"O gatilho para a função mudar de lugar continua sendo o segundo serviço que precise **calcular**"* | `DiaOperacional` não aparece fora do `merchant` | o `settlement` ou o `order` |
 | 42 | `CLAUDE.md`:413 | *"**Gatilho:** o primeiro `bootRun` de `catalog` ou `conversation` que alguém precise fazer"* | nada registra um; as rodadas I-B a W-D usaram contêiner | medir o `bootRun` sem `?replicaSet` |
 | 43 | ADR-041:300 | *"Observabilidade volta quando houver **um comerciante real usando o sistema**"* | não há | o stack de observabilidade |
@@ -285,3 +285,70 @@ seguinte **compara o número com este e olha só a diferença**.
 aparece em `arquivo:linha` diferentes conforme o arquivo cresce — comparar por endereço deu
 **17** falsos "sem linha" na R-3, contra **9** reais. *E se o número tiver caído sem rodada que
 o explique, alguém apagou uma frase sem triá-la: isso é para se dizer, não para se somar.*
+
+---
+
+## A terceira passada — as colunas que afirmam uma ausência
+
+**As duas primeiras passadas olham para fora: os arquivos do projeto.** Esta olha **para
+dentro**, para as colunas deste arquivo — e existe porque a **linha 34** passou seis dias
+afirmando que o `merchant` não tinha `@PostMapping`, quando ele tinha desde 13:24 do dia em que
+a linha foi escrita.
+
+**O cabeçalho deste arquivo é derivado; as colunas das linhas não são derivadas de nada.** A
+coluna da evidência é um comando congelado em prosa, com a data de quem o rodou, e **nada o
+re-roda.**
+
+O comando, em Node — da raiz do repositório, `node terceira.js ausencias`. A tabela tem cinco
+células por linha, a evidência é a quarta, e 57 linhas têm `|` dentro de código, por isso a
+divisão respeita as crases; e o `\b` do JavaScript não reconhece letra acentuada, por isso a
+fronteira das palavras é escrita por Unicode:
+
+```js
+// A terceira passada: as colunas da evidência do razão que afirmam uma ausência no presente.
+// Uso, da raiz do repositório: node terceira.js [forma|ausencias]
+const fs=require('fs');
+const s=fs.readFileSync('docs/dividas.md','utf8').split('\n');
+function celulas(l){ // parte em "|" fora de `código`
+  const out=[];let cur='',cod=false;
+  for(const ch of l){ if(ch==='`')cod=!cod; if(ch==='|'&&!cod){out.push(cur.trim());cur='';} else cur+=ch; }
+  out.push(cur.trim()); return out.slice(1,-1);
+}
+let secao='',cab=null;const linhas=[];
+s.forEach((l,i)=>{
+  if(/^## /.test(l)){secao=l.slice(3);cab=null;}
+  else if(/^\| # \|/.test(l)) cab=celulas(l);
+  else if(/^\| \d+ \|/.test(l)) linhas.push({n:+celulas(l)[0],arq:i+1,secao,cab,c:celulas(l)});
+});
+const modo=process.argv[2]||'forma';
+if(modo==='forma'){
+  const formas={};for(const x of linhas){const k=x.secao+' :: '+x.c.length+' células :: '+(x.cab||[]).join(' | ');formas[k]=(formas[k]||0)+1;}
+  console.log(formas);
+  console.log('linhas com | dentro de código:',s.filter(l=>/^\| \d+ \|/.test(l)&&/`[^`]*\|[^`]*`/.test(l)).length);
+} else {
+  // "\b" do JavaScript não vê letra acentuada: a fronteira é escrita por Unicode.
+  const B='(?<![\\p{L}\\p{N}_])', E='(?![\\p{L}\\p{N}_])';
+  const formas=['não tem','não existe','não há','nenhum','nenhuma','sem rota','ainda não','nunca',
+    'não é lido','não lê','não declara','não constrói','não implanta','continua sem','não aparece',
+    'não registra','vazio','não emite','não foi medid\\p{L}*','só','1 arquivo','únic[ao]'];
+  const re=new RegExp(formas.map(x=>B+x+E).join('|'),'iu');
+  const alvo=linhas.filter(x=>x.c.length===5&&!/[Ee]stornada/.test(x.c[3])&&re.test(x.c[3]));
+  alvo.sort((a,b)=>a.n-b.n);
+  console.log('linhas de 5 células:',linhas.filter(x=>x.c.length===5).length,'| estornadas:',linhas.filter(x=>/[Ee]stornada/.test(x.c[3])).length,'| afirmam ausência:',alvo.length);
+  for(const x of alvo)console.log(`\n#${x.n} [${x.secao}] (arquivo:${x.arq})\n  ${x.c[3]}`);
+}
+```
+
+**Medido em `60eb66b`:** **50** das 94 linhas que contam afirmam uma ausência no presente. **20**
+foram verificadas nesta rodada, as mais antigas primeiro; **4** estavam **falsas** e foram
+consertadas — a 1, a 19, a 27 e a 39 —, e uma delas, a 27, mudou de seção: a condição inteira
+estava paga. **Faltam 30.**
+
+**E a correção não é só a frase.** Cada linha que esta passada toca passa a **carregar o comando
+que a reverifica**, do lado da evidência. **20 das 50 linhas já o carregam** — e esse número é
+para crescer até a terceira passada deixar de precisar de olhos.
+
+**Isto não é o instrumento se medindo a si mesmo.** Nas duas primeiras passadas o
+`--exclude=dividas.md` existe porque o arquivo era contado como **fonte** de dívida, e aí ele
+inflava o próprio número. Aqui o arquivo é o **objeto auditado**, e o número que sai não entra na
+contagem de linhas. *São coisas diferentes, e a confusão entre as duas é fácil.*
