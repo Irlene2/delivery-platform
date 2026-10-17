@@ -4,6 +4,26 @@
  */
 
 export interface paths {
+    "/api/v1/merchants/{estabelecimentoId}/settings/horario": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Define o horário semanal da loja
+         * @description Exige CONFIGURAR_LOJA. Substitui o horário inteiro; mapa vazio volta a loja a "nunca abre por horário".
+         */
+        put: operations["definirHorario"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/merchants/{estabelecimentoId}/team/convites": {
         parameters: {
             query?: never;
@@ -152,6 +172,33 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        FaixaDeHorarioRequest: {
+            /**
+             * @description Hora de abrir, no fuso da loja.
+             * @example 18:00
+             */
+            inicio: string;
+            /**
+             * @description Hora de fechar. Antes do início, a faixa cruza a meia-noite.
+             * @example 02:00
+             */
+            fim: string;
+        };
+        HorarioRequest: {
+            /** @description Por dia da semana, as faixas daquele dia. Mapa vazio volta a loja ao estado sem horário — "nunca abre por horário". Faixas que se sobrepõem são aceitas; fim antes do início é a faixa que cruza a meia-noite. */
+            horarioDeFuncionamento: {
+                [key: string]: components["schemas"]["FaixaDeHorarioRequest"][];
+            };
+        };
+        FaixaDeHorarioResponse: {
+            inicio?: string;
+            fim?: string;
+        };
+        HorarioResponse: {
+            horarioDeFuncionamento?: {
+                [key: string]: components["schemas"]["FaixaDeHorarioResponse"][];
+            };
+        };
         /** @description O convite: o telefone de quem vai entrar e as permissões oferecidas. */
         ConviteRequest: {
             /**
@@ -160,7 +207,7 @@ export interface components {
              */
             telefone: string;
             /** @description As permissões oferecidas. Só as que quem convida tem (A2). */
-            permissoes: ("VER_PRODUTO" | "CRIAR_PRODUTO" | "ALTERAR_PRODUTO" | "DESATIVAR_PRODUTO" | "VER_PEDIDO" | "ALTERAR_STATUS" | "VER_VENDAS" | "VER_ENTREGA" | "GERENCIAR_EQUIPE" | "GERENCIAR_JORNADA")[];
+            permissoes: ("VER_PRODUTO" | "CRIAR_PRODUTO" | "ALTERAR_PRODUTO" | "DESATIVAR_PRODUTO" | "VER_PEDIDO" | "ALTERAR_STATUS" | "VER_VENDAS" | "VER_ENTREGA" | "GERENCIAR_EQUIPE" | "GERENCIAR_JORNADA" | "CONFIGURAR_LOJA")[];
         };
         /** @description O convite emitido. O token só aparece nesta resposta. */
         ConviteEmitidoResponse: {
@@ -171,7 +218,7 @@ export interface components {
              * @description Até quando o convite vale.
              */
             expiraEm?: string;
-            permissoes?: ("VER_PRODUTO" | "CRIAR_PRODUTO" | "ALTERAR_PRODUTO" | "DESATIVAR_PRODUTO" | "VER_PEDIDO" | "ALTERAR_STATUS" | "VER_VENDAS" | "VER_ENTREGA" | "GERENCIAR_EQUIPE" | "GERENCIAR_JORNADA")[];
+            permissoes?: ("VER_PRODUTO" | "CRIAR_PRODUTO" | "ALTERAR_PRODUTO" | "DESATIVAR_PRODUTO" | "VER_PEDIDO" | "ALTERAR_STATUS" | "VER_VENDAS" | "VER_ENTREGA" | "GERENCIAR_EQUIPE" | "GERENCIAR_JORNADA" | "CONFIGURAR_LOJA")[];
         };
         CriarEstabelecimentoRequest: {
             identificacao: components["schemas"]["IdentificacaoRequest"];
@@ -205,14 +252,14 @@ export interface components {
             nome?: string;
             /** @enum {string} */
             papel?: "ADMINISTRADOR" | "COLABORADOR";
-            permissoes?: ("VER_PRODUTO" | "CRIAR_PRODUTO" | "ALTERAR_PRODUTO" | "DESATIVAR_PRODUTO" | "VER_PEDIDO" | "ALTERAR_STATUS" | "VER_VENDAS" | "VER_ENTREGA" | "GERENCIAR_EQUIPE" | "GERENCIAR_JORNADA")[];
+            permissoes?: ("VER_PRODUTO" | "CRIAR_PRODUTO" | "ALTERAR_PRODUTO" | "DESATIVAR_PRODUTO" | "VER_PEDIDO" | "ALTERAR_STATUS" | "VER_VENDAS" | "VER_ENTREGA" | "GERENCIAR_EQUIPE" | "GERENCIAR_JORNADA" | "CONFIGURAR_LOJA")[];
         };
         AceiteResponse: {
             /** Format: uuid */
             estabelecimentoId?: string;
             /** @enum {string} */
             papel?: "ADMINISTRADOR" | "COLABORADOR";
-            permissoes?: ("VER_PRODUTO" | "CRIAR_PRODUTO" | "ALTERAR_PRODUTO" | "DESATIVAR_PRODUTO" | "VER_PEDIDO" | "ALTERAR_STATUS" | "VER_VENDAS" | "VER_ENTREGA" | "GERENCIAR_EQUIPE" | "GERENCIAR_JORNADA")[];
+            permissoes?: ("VER_PRODUTO" | "CRIAR_PRODUTO" | "ALTERAR_PRODUTO" | "DESATIVAR_PRODUTO" | "VER_PEDIDO" | "ALTERAR_STATUS" | "VER_VENDAS" | "VER_ENTREGA" | "GERENCIAR_EQUIPE" | "GERENCIAR_JORNADA" | "CONFIGURAR_LOJA")[];
         };
         ContextoDeAcesso: {
             /** Format: uuid */
@@ -221,7 +268,7 @@ export interface components {
             estabelecimentoId?: string;
             /** @enum {string} */
             papel?: "ADMINISTRADOR" | "COLABORADOR";
-            permissoes?: ("VER_PRODUTO" | "CRIAR_PRODUTO" | "ALTERAR_PRODUTO" | "DESATIVAR_PRODUTO" | "VER_PEDIDO" | "ALTERAR_STATUS" | "VER_VENDAS" | "VER_ENTREGA" | "GERENCIAR_EQUIPE" | "GERENCIAR_JORNADA")[];
+            permissoes?: ("VER_PRODUTO" | "CRIAR_PRODUTO" | "ALTERAR_PRODUTO" | "DESATIVAR_PRODUTO" | "VER_PEDIDO" | "ALTERAR_STATUS" | "VER_VENDAS" | "VER_ENTREGA" | "GERENCIAR_EQUIPE" | "GERENCIAR_JORNADA" | "CONFIGURAR_LOJA")[];
         };
         /** @description O expediente a carimbar numa marcação de disponibilidade. */
         ExpedienteCorrenteResponse: {
@@ -251,7 +298,7 @@ export interface components {
             papel: "ADMINISTRADOR" | "COLABORADOR";
             /** @enum {string} */
             estado: "ATIVO" | "SUSPENSO" | "REMOVIDO";
-            permissoes: ("VER_PRODUTO" | "CRIAR_PRODUTO" | "ALTERAR_PRODUTO" | "DESATIVAR_PRODUTO" | "VER_PEDIDO" | "ALTERAR_STATUS" | "VER_VENDAS" | "VER_ENTREGA" | "GERENCIAR_EQUIPE" | "GERENCIAR_JORNADA")[];
+            permissoes: ("VER_PRODUTO" | "CRIAR_PRODUTO" | "ALTERAR_PRODUTO" | "DESATIVAR_PRODUTO" | "VER_PEDIDO" | "ALTERAR_STATUS" | "VER_VENDAS" | "VER_ENTREGA" | "GERENCIAR_EQUIPE" | "GERENCIAR_JORNADA" | "CONFIGURAR_LOJA")[];
             /** Format: date-time */
             desde: string;
         };
@@ -275,6 +322,53 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    definirHorario: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                estabelecimentoId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HorarioRequest"];
+            };
+        };
+        responses: {
+            /** @description O horário como ficou gravado */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HorarioResponse"];
+                };
+            };
+            /** @description Corpo malformado, dia que não é dia da semana, identificador da loja malformado, ou faixa que o domínio recusa — início igual ao fim, ou a mesma faixa duas vezes no mesmo dia */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sem token, ou token inválido */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sem vínculo, sem CONFIGURAR_LOJA ou loja inexistente — a mesma recusa */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     convidar: {
         parameters: {
             query?: never;

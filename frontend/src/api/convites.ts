@@ -13,7 +13,7 @@ export type NovoConvite = components['schemas']['ConviteRequest'];
 export type ConviteEmitido = components['schemas']['ConviteEmitidoResponse'];
 export type ConvitePublico = components['schemas']['ConvitePublicoResponse'];
 export type Aceite = components['schemas']['AceiteResponse'];
-export type PermissaoDoConvite = NovoConvite['permissoes'][number];
+export type PermissaoDoConvite = Exclude<NovoConvite['permissoes'][number], 'CONFIGURAR_LOJA'>;
 
 export function convidar(
   estabelecimentoId: string,

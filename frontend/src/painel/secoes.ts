@@ -19,6 +19,7 @@ const ITENS: Record<Permissao, { rotulo: string; secao: Secao | null }> = {
   VER_ENTREGA: { rotulo: 'Entregas', secao: null },
   GERENCIAR_EQUIPE: { rotulo: 'Equipe', secao: 'equipe' },
   GERENCIAR_JORNADA: { rotulo: 'Jornada', secao: null },
+  CONFIGURAR_LOJA: { rotulo: 'Configuração da loja', secao: null },
 };
 
 export function secoesDe(permissoes: Permissao[]): { rotulo: string; secao: Secao }[] {

@@ -4,6 +4,7 @@ import com.deliveryplatform.merchant.application.exception.AcessoNegado;
 import com.deliveryplatform.merchant.application.exception.CadastroDeLojaRecusado;
 import com.deliveryplatform.merchant.application.exception.ConviteRecusado;
 import com.deliveryplatform.merchant.application.exception.ConviteSemAutoridade;
+import com.deliveryplatform.merchant.application.exception.HorarioRecusado;
 import com.deliveryplatform.merchant.domain.exception.ConviteInvalido;
 import com.deliveryplatform.merchant.domain.exception.JaPertenceAEquipe;
 import com.deliveryplatform.merchant.application.exception.SemExpedientePorHorario;
@@ -91,6 +92,16 @@ public class TratadorDeErros {
     }
 
     /**
+     * 400 para o horário que o domínio recusa (ADR-073 §4) — as duas recusas que existem,
+     * e só elas. A frase é daqui, por motivo; a mensagem do domínio, com a faixa como ela
+     * chegou, fica na causa.
+     */
+    @ExceptionHandler(HorarioRecusado.class)
+    public ProblemDetail horarioRecusado(HorarioRecusado excecao) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, fraseDe(excecao.motivo()));
+    }
+
+    /**
      * 404 para o convite que não vale: inexistente, expirado, aceito ou cancelado — a
      * mesma frase nos quatro (ADR-069 §3). Distinguir contaria a quem tenta tokens no escuro
      * quais já existiram. A frase diz o que fazer, e não por quê.
@@ -144,6 +155,13 @@ public class TratadorDeErros {
             case MODALIDADE_SEM_FORMA_DE_PAGAR ->
                     "escolha ao menos uma modalidade, e uma forma de pagar para cada uma";
             case FUNDO_DE_TROCO_NEGATIVO -> "o fundo máximo de troco não pode ser negativo";
+        };
+    }
+
+    static String fraseDe(HorarioRecusado.Motivo motivo) {
+        return switch (motivo) {
+            case INICIO_IGUAL_AO_FIM -> "uma faixa de horário não pode terminar na mesma hora em que começa";
+            case FAIXA_REPETIDA -> "a mesma faixa de horário aparece duas vezes no mesmo dia";
         };
     }
 }

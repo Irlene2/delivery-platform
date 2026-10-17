@@ -69,6 +69,7 @@ class ContratoDeErrosIT extends Infraestrutura {
     private static final String CONVITES = "/api/v1/merchants/{estabelecimentoId}/team/convites";
     private static final String CONVITE = "/api/v1/convites/{token}";
     private static final String ACEITE = "/api/v1/convites/{token}/aceite";
+    private static final String HORARIO = "/api/v1/merchants/{estabelecimentoId}/settings/horario";
 
     /** O que o contrato declara e nenhum caso provoca. Hoje: nada. */
     private static final Map<String, String> NAO_PROVOCAVEIS = Map.of();
@@ -179,6 +180,26 @@ class ContratoDeErrosIT extends Infraestrutura {
                             String token = conviteDe(loja, dono);
                             return post("/api/v1/convites/" + token + "/aceite", "",
                                     IDENTITY.tokenDe(dono));
+                        }),
+
+                // O horário (ADR-073): 200, 400, 401, 403.
+                new Provocacao("PUT", HORARIO, 400, "faixa com início igual ao fim",
+                        () -> {
+                            UUID loja = loja();
+                            String token = IDENTITY.tokenDe(vinculado(loja, Permissao.CONFIGURAR_LOJA));
+                            return put("/api/v1/merchants/" + loja + "/settings/horario",
+                                    "{\"horarioDeFuncionamento\":{\"MONDAY\":[{\"inicio\":\"10:00\",\"fim\":\"10:00\"}]}}",
+                                    token);
+                        }),
+                new Provocacao("PUT", HORARIO, 401, "sem token",
+                        () -> put("/api/v1/merchants/" + UUID.randomUUID() + "/settings/horario",
+                                DefinirHorarioIT.SEXTA_A_NOITE, null)),
+                new Provocacao("PUT", HORARIO, 403, "vínculo sem CONFIGURAR_LOJA",
+                        () -> {
+                            UUID loja = loja();
+                            String token = IDENTITY.tokenDe(vinculado(loja, Permissao.GERENCIAR_EQUIPE));
+                            return put("/api/v1/merchants/" + loja + "/settings/horario",
+                                    DefinirHorarioIT.SEXTA_A_NOITE, token);
                         }));
     }
 
@@ -293,6 +314,17 @@ class ContratoDeErrosIT extends Infraestrutura {
     private int post(String uri, String corpo, String token) {
         var requisicao = RestTestClient.bindToServer().baseUrl("http://localhost:" + porta).build()
                 .post().uri(uri)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(corpo);
+        if (token != null) {
+            requisicao = requisicao.header("Authorization", "Bearer " + token);
+        }
+        return requisicao.exchange().returnResult(String.class).getStatus().value();
+    }
+
+    private int put(String uri, String corpo, String token) {
+        var requisicao = RestTestClient.bindToServer().baseUrl("http://localhost:" + porta).build()
+                .put().uri(uri)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(corpo);
         if (token != null) {

@@ -16,6 +16,54 @@
     "description" : "Consumido por outro serviço, com o token de quem pediu encaminhado. Não roteado pelo gateway — ADR-045."
   } ],
   "paths" : {
+    "/api/v1/merchants/{estabelecimentoId}/settings/horario" : {
+      "put" : {
+        "tags" : [ "configuracao-da-loja-controller" ],
+        "summary" : "Define o horário semanal da loja",
+        "description" : "Exige CONFIGURAR_LOJA. Substitui o horário inteiro; mapa vazio volta a loja a \"nunca abre por horário\".",
+        "operationId" : "definirHorario",
+        "parameters" : [ {
+          "name" : "estabelecimentoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/HorarioRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "O horário como ficou gravado",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/HorarioResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Corpo malformado, dia que não é dia da semana, identificador da loja malformado, ou faixa que o domínio recusa — início igual ao fim, ou a mesma faixa duas vezes no mesmo dia"
+          },
+          "401" : {
+            "description" : "Sem token, ou token inválido"
+          },
+          "403" : {
+            "description" : "Sem vínculo, sem CONFIGURAR_LOJA ou loja inexistente — a mesma recusa"
+          }
+        }
+      }
+    },
     "/api/v1/merchants/{estabelecimentoId}/team/convites" : {
       "post" : {
         "tags" : [ "equipe-controller" ],
@@ -313,6 +361,63 @@
   },
   "components" : {
     "schemas" : {
+      "FaixaDeHorarioRequest" : {
+        "type" : "object",
+        "properties" : {
+          "inicio" : {
+            "type" : "string",
+            "description" : "Hora de abrir, no fuso da loja.",
+            "example" : "18:00"
+          },
+          "fim" : {
+            "type" : "string",
+            "description" : "Hora de fechar. Antes do início, a faixa cruza a meia-noite.",
+            "example" : "02:00"
+          }
+        },
+        "required" : [ "fim", "inicio" ]
+      },
+      "HorarioRequest" : {
+        "type" : "object",
+        "properties" : {
+          "horarioDeFuncionamento" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/FaixaDeHorarioRequest"
+              }
+            },
+            "description" : "Por dia da semana, as faixas daquele dia. Mapa vazio volta a loja ao estado sem horário — \"nunca abre por horário\". Faixas que se sobrepõem são aceitas; fim antes do início é a faixa que cruza a meia-noite."
+          }
+        },
+        "required" : [ "horarioDeFuncionamento" ]
+      },
+      "FaixaDeHorarioResponse" : {
+        "type" : "object",
+        "properties" : {
+          "inicio" : {
+            "type" : "string"
+          },
+          "fim" : {
+            "type" : "string"
+          }
+        }
+      },
+      "HorarioResponse" : {
+        "type" : "object",
+        "properties" : {
+          "horarioDeFuncionamento" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/FaixaDeHorarioResponse"
+              }
+            }
+          }
+        }
+      },
       "ConviteRequest" : {
         "type" : "object",
         "description" : "O convite: o telefone de quem vai entrar e as permissões oferecidas.",
@@ -328,7 +433,7 @@
             "description" : "As permissões oferecidas. Só as que quem convida tem (A2).",
             "items" : {
               "type" : "string",
-              "enum" : [ "VER_PRODUTO", "CRIAR_PRODUTO", "ALTERAR_PRODUTO", "DESATIVAR_PRODUTO", "VER_PEDIDO", "ALTERAR_STATUS", "VER_VENDAS", "VER_ENTREGA", "GERENCIAR_EQUIPE", "GERENCIAR_JORNADA" ]
+              "enum" : [ "VER_PRODUTO", "CRIAR_PRODUTO", "ALTERAR_PRODUTO", "DESATIVAR_PRODUTO", "VER_PEDIDO", "ALTERAR_STATUS", "VER_VENDAS", "VER_ENTREGA", "GERENCIAR_EQUIPE", "GERENCIAR_JORNADA", "CONFIGURAR_LOJA" ]
             },
             "uniqueItems" : true
           }
@@ -352,7 +457,7 @@
             "type" : "array",
             "items" : {
               "type" : "string",
-              "enum" : [ "VER_PRODUTO", "CRIAR_PRODUTO", "ALTERAR_PRODUTO", "DESATIVAR_PRODUTO", "VER_PEDIDO", "ALTERAR_STATUS", "VER_VENDAS", "VER_ENTREGA", "GERENCIAR_EQUIPE", "GERENCIAR_JORNADA" ]
+              "enum" : [ "VER_PRODUTO", "CRIAR_PRODUTO", "ALTERAR_PRODUTO", "DESATIVAR_PRODUTO", "VER_PEDIDO", "ALTERAR_STATUS", "VER_VENDAS", "VER_ENTREGA", "GERENCIAR_EQUIPE", "GERENCIAR_JORNADA", "CONFIGURAR_LOJA" ]
             },
             "uniqueItems" : true
           }
@@ -448,7 +553,7 @@
             "type" : "array",
             "items" : {
               "type" : "string",
-              "enum" : [ "VER_PRODUTO", "CRIAR_PRODUTO", "ALTERAR_PRODUTO", "DESATIVAR_PRODUTO", "VER_PEDIDO", "ALTERAR_STATUS", "VER_VENDAS", "VER_ENTREGA", "GERENCIAR_EQUIPE", "GERENCIAR_JORNADA" ]
+              "enum" : [ "VER_PRODUTO", "CRIAR_PRODUTO", "ALTERAR_PRODUTO", "DESATIVAR_PRODUTO", "VER_PEDIDO", "ALTERAR_STATUS", "VER_VENDAS", "VER_ENTREGA", "GERENCIAR_EQUIPE", "GERENCIAR_JORNADA", "CONFIGURAR_LOJA" ]
             }
           }
         }
@@ -468,7 +573,7 @@
             "type" : "array",
             "items" : {
               "type" : "string",
-              "enum" : [ "VER_PRODUTO", "CRIAR_PRODUTO", "ALTERAR_PRODUTO", "DESATIVAR_PRODUTO", "VER_PEDIDO", "ALTERAR_STATUS", "VER_VENDAS", "VER_ENTREGA", "GERENCIAR_EQUIPE", "GERENCIAR_JORNADA" ]
+              "enum" : [ "VER_PRODUTO", "CRIAR_PRODUTO", "ALTERAR_PRODUTO", "DESATIVAR_PRODUTO", "VER_PEDIDO", "ALTERAR_STATUS", "VER_VENDAS", "VER_ENTREGA", "GERENCIAR_EQUIPE", "GERENCIAR_JORNADA", "CONFIGURAR_LOJA" ]
             },
             "uniqueItems" : true
           }
@@ -493,7 +598,7 @@
             "type" : "array",
             "items" : {
               "type" : "string",
-              "enum" : [ "VER_PRODUTO", "CRIAR_PRODUTO", "ALTERAR_PRODUTO", "DESATIVAR_PRODUTO", "VER_PEDIDO", "ALTERAR_STATUS", "VER_VENDAS", "VER_ENTREGA", "GERENCIAR_EQUIPE", "GERENCIAR_JORNADA" ]
+              "enum" : [ "VER_PRODUTO", "CRIAR_PRODUTO", "ALTERAR_PRODUTO", "DESATIVAR_PRODUTO", "VER_PEDIDO", "ALTERAR_STATUS", "VER_VENDAS", "VER_ENTREGA", "GERENCIAR_EQUIPE", "GERENCIAR_JORNADA", "CONFIGURAR_LOJA" ]
             },
             "uniqueItems" : true
           }
@@ -555,7 +660,7 @@
             "type" : "array",
             "items" : {
               "type" : "string",
-              "enum" : [ "VER_PRODUTO", "CRIAR_PRODUTO", "ALTERAR_PRODUTO", "DESATIVAR_PRODUTO", "VER_PEDIDO", "ALTERAR_STATUS", "VER_VENDAS", "VER_ENTREGA", "GERENCIAR_EQUIPE", "GERENCIAR_JORNADA" ]
+              "enum" : [ "VER_PRODUTO", "CRIAR_PRODUTO", "ALTERAR_PRODUTO", "DESATIVAR_PRODUTO", "VER_PEDIDO", "ALTERAR_STATUS", "VER_VENDAS", "VER_ENTREGA", "GERENCIAR_EQUIPE", "GERENCIAR_JORNADA", "CONFIGURAR_LOJA" ]
             },
             "uniqueItems" : true
           },

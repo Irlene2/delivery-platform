@@ -2,11 +2,13 @@ package com.deliveryplatform.merchant.domain.model;
 
 import com.deliveryplatform.valuetypes.Money;
 
+import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -30,10 +32,12 @@ import java.util.UUID;
  * {@code politicas.responsabilizaEntregadorPorNaoLiquidado} continua de fora
  * porque quem lê esse campo é o {@code settlement}, que não tem código.
  *
- * <p><b>Não há mutador.</b> Nenhum caso de uso altera a loja ainda, e método
- * disponível é método que um dia é usado. Quando o primeiro existir, os campos
- * deixam de ser {@code final} e o mutador nasce com o evento que o
- * {@code contracts/eventos.md} já declara.
+ * <p><b>Imutável, e a alteração devolve outra loja.</b> O primeiro ato que altera a
+ * loja é {@link #comHorario} (E-4, ADR-073), e ele segue o
+ * {@code Disponibilidade.com(Pausa)}: os campos continuam {@code final}, e a loja nova
+ * passa pelo mesmo construtor e pelas mesmas verificações. O horário não tem evento
+ * próprio — o que ele muda é {@code aberto}, e quem publica isso é a varredura da
+ * ADR-046, pelo {@code ExpedienteAlteradoV1}.
  */
 public final class Estabelecimento {
 
@@ -191,6 +195,26 @@ public final class Estabelecimento {
         return disponibilidade.inicioDaFaixaEm(agora, fuso)
                 .or(() -> disponibilidade.proximaAberturaApos(agora, fuso))
                 .map(inicio -> DiaOperacional.de(inicio, fuso));
+    }
+
+    /**
+     * A mesma loja com outro horário semanal — <b>substituído inteiro</b>, e a pausa
+     * preservada (ADR-073 §1). O mapa vazio é o {@code semHorario()}: não é caso
+     * especial, é o estado nomeado que a {@code Disponibilidade} já tem.
+     *
+     * <p>Recusa o que a {@code Disponibilidade} recusa — a mesma faixa repetida no mesmo
+     * dia —, com {@code IllegalArgumentException}; quem traduz é o caso de uso. A
+     * verificação das áreas roda de novo pelo construtor, sobre as mesmas áreas que já
+     * passaram por ela quando a loja foi construída.
+     */
+    public Estabelecimento comHorario(Map<DayOfWeek, List<Faixa>> horarioDeFuncionamento) {
+        return new Estabelecimento(
+                id,
+                identificacao,
+                operacao,
+                politicaDeTroco,
+                new Disponibilidade(horarioDeFuncionamento, disponibilidade.pausa()),
+                areasDeEntrega);
     }
 
     public boolean aceita(Modalidade modalidade) {

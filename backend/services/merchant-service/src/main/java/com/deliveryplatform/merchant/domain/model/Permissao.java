@@ -40,5 +40,13 @@ public enum Permissao {
      * nenhuma permissão de H2.1: {@code VER_VENDAS} é leitura e
      * {@code VER_ENTREGA} é outra coisa.
      */
-    GERENCIAR_JORNADA
+    GERENCIAR_JORNADA,
+
+    /**
+     * A configuração da loja inteira — o horário de funcionamento desde a E-4, e o que
+     * mais da H1.2 ganhar rota (ADR-073 §2). Ampla de propósito: ninguém pediu "pode
+     * mexer no horário mas não nas taxas". O {@code ADMINISTRADOR} a recebe por
+     * {@code EnumSet.allOf}, e o convite não a oferece na tela.
+     */
+    CONFIGURAR_LOJA
 }
