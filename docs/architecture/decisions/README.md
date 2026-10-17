@@ -12,7 +12,7 @@
 | 008 | MongoDB como replica set de nó único | ✅ aceita · **emendada** (27/09/2026: `withReplicaSet()` na Testcontainers 2; `spring.mongodb.uri` no Boot 4) |
 | 009 | Modelo de valores do pedido | ✅ aceita · **emendada pela v1.1** · **emendada** (27/09/2026: `Money` em documento é texto) |
 | 010 | Saga do pedido: pivô em `PRONTO`, pagamento fora da transação | ✅ aceita · **reescrita pela v1.1** |
-| 011 | Autorização comercial: cache em processo, invalidação por evento, fail-closed | ✅ aceita · **emendada** (26/09/2026: a porta não recebe `usuarioId` — ADR-045; 28/09/2026: primeiro consumidor, sem cache até a G-B4; 29/09/2026: `topic` com fila exclusiva, e o cache existe) |
+| 011 | Autorização comercial: cache em processo, invalidação por evento, fail-closed | ✅ aceita · **emendada** (26/09/2026: a porta não recebe `usuarioId` — ADR-045; 28/09/2026: primeiro consumidor, sem cache até a G-B4; 29/09/2026: `topic` com fila exclusiva, e o cache existe; 17/10/2026: `CONFIGURAR_LOJA`, e por que ela é ampla) |
 | 012 | Roteamento do gateway por recurso, não por serviço | ✅ aceita · **emendada** (24/09/2026: limite de taxa e `correlationId` fora do marco 1; 30/09/2026: `/api/v1/me` compartilhado, a ordem decide; 16/10/2026: a tabela não acompanhou o gateway; 16/10/2026 (2): a tabela deixa de ser a lista, e o teste deriva do gateway) |
 | 013 | Retenção, anonimização e exclusão de dados pessoais | ✅ aceita |
 | 014 | Não adotar H2; Testcontainers como fonte de verdade | ✅ aceita · **emendada pela v1.1** · **emendada** (27/09/2026: todo contêiner prova que é o usado — `ConteinerDeVerdadeIT`) |
@@ -28,7 +28,7 @@
 | 024 | Desconto de retirada, não preço por modalidade | ✅ aceita · **emendada** (07/10/2026: o `cotar` é marco 3, e o prazo desta decisão vai com ele) |
 | 025 | Fuso horário do estabelecimento e o dia operacional | ✅ aceita · **emendada** (26/09/2026: um evento de abertura por dia operacional — ADR-046) |
 | 026 | Fila morta, retentativa e reprocessamento | ✅ aceita · **emendada** (29/09/2026: consumidor de invalidação não tem retentativa nem fila morta) · **emendada** (10/10/2026: recusa definitiva vai à fila morta na primeira entrega) |
-| 027 | O que conta como mudança compatível num evento | ✅ aceita |
+| 027 | O que conta como mudança compatível num evento | ✅ aceita · **emendada** (17/10/2026: a exceção do §2, medida no primeiro valor novo num enum publicado) |
 | 028 | Pedido mínimo por modalidade, sobre o subtotal dos itens | ✅ aceita |
 | 029 | Recuperação do administrador único | ✅ aceita |
 | 030 | Devolução não é estorno | ✅ aceita |
@@ -60,7 +60,7 @@
 | 056 | Recurso de outra loja é 404, e o 403 fica com um significado só | ✅ aceita |
 | 057 | A idempotência natural por chave de domínio, e a segunda exceção à invariante 7 | ✅ aceita · **emenda a 048** |
 | 058 | O limite do contêiner dimensiona o JVM, e a pilha sobe em grupos | ✅ aceita |
-| 059 | A semeadura passa pelo agregado, e não pelas tabelas | ✅ aceita · **emendada** (10/10/2026: o terceiro semeador, e o vínculo; 16/10/2026: a condição era uma aproximação) |
+| 059 | A semeadura passa pelo agregado, e não pelas tabelas | ✅ aceita · **emendada** (10/10/2026: o terceiro semeador, e o vínculo; 16/10/2026: a condição era uma aproximação; 17/10/2026: a lista é estado, e estado não mora em ADR) |
 | 060 | A primeira rota de escrita, e o que o agregado exige para a loja nascer | ✅ aceita |
 | 061 | A loja escolhida mora na URL | ✅ aceita |
 | 063 | O erro do catálogo diz de quem é a culpa | ✅ aceita |
@@ -73,8 +73,9 @@
 | 070 | A tela do convite, e o segredo que já está no navegador de quem o recebeu | ✅ aceita |
 | 071 | A lista tem um dono, e a cópia não é lista | ✅ aceita · **emendada** (16/10/2026: o terceiro item do gatilho não era gatilho; 16/10/2026 (2): os dois itens restantes são regra, e saem do razão) |
 | 072 | A seção que o comando colhe, e o item que não era gatilho | ✅ aceita · **emendada** (16/10/2026: "condição nossa" tem duas espécies) |
+| 073 | O horário ganha rota, sob uma permissão que não existia | ✅ aceita |
 
-**Sessenta e nove escritas, duas sem objeto — estas com registro próprio desde
+**Setenta escritas, duas sem objeto — estas com registro próprio desde
 25/08/2026 —, nenhuma a escrever.**
 
 ## Onde mora o quê

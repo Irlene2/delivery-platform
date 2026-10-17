@@ -108,7 +108,7 @@ cache curto.
 
 ### Permissões
 
-Exatamente as de H2.1, mais uma:
+Exatamente as de H2.1, mais duas:
 
 ```
 VER_PRODUTO · CRIAR_PRODUTO · ALTERAR_PRODUTO · DESATIVAR_PRODUTO
@@ -116,7 +116,13 @@ VER_PEDIDO  · ALTERAR_STATUS
 VER_VENDAS  · VER_ENTREGA
 GERENCIAR_EQUIPE
 GERENCIAR_JORNADA
+CONFIGURAR_LOJA
 ```
+
+> **`CONFIGURAR_LOJA` é acréscimo ao PRD**, da E-4 (ADR-011, emenda de 17/10/2026; ADR-073).
+> Governa a configuração da loja inteira — o horário desde a E-4, e o resto da H1.2 quando
+> ganhar rota. O `ADMINISTRADOR` a recebe com todas as outras, e **a tela de convite não a
+> oferece**: a rota de convite a aceita, sob a A2, e a tela não a mostra.
 
 > **`GERENCIAR_JORNADA` é acréscimo ao PRD**, e está marcado como tal. Abrir
 > turno, registrar adiantamento e fechar jornada mexem em dinheiro e não cabem
@@ -470,6 +476,11 @@ A loja nasce **sem horário e sem área de entrega**. Não é cadastro incomplet
 horário"* — o estado de quem ainda não preencheu a tela. As áreas entram pela H1.3, e as
 M9 e M10 passam a valer quando houver duas.
 
+**E a loja sai desse estado por rota:** `PUT /api/v1/merchants/{estabelecimentoId}/settings/horario`
+(E-4, ADR-073), sob `CONFIGURAR_LOJA`. `Estabelecimento.comHorario` substitui o horário semanal
+inteiro e preserva a pausa; o mapa vazio devolve a loja ao `semHorario()`, que é o mesmo estado
+nomeado, e não um caso especial.
+
 **E a assimetria é deliberada:** horário vazio **fecha** a loja, operação padrão a
 **abriria** — prometendo uma forma de pagar que o comerciante não escolheu, com dinheiro
 chegando à porta (P1).
@@ -636,6 +647,19 @@ acontece *dentro* de um expediente e não abre outro. Se a abertura dependesse
 de `estaAberta`, a loja que estivesse pausada às 18h nunca publicaria a abertura
 daquele dia — quando a pausa vencesse já estaria aberta, sem transição para
 observar — e os produtos ficariam esgotados o dia inteiro.
+
+**Marcar o que acabou depende do horário.** O `ESGOTADO_HOJE` do `catalog` exige **expediente
+corrente**, e a marcação recusa com **409** (`LojaSemExpediente`) numa loja que nunca abre por
+horário. Desde a E-4 o horário tem rota (ADR-073), e a cadeia — *definir horário → a varredura
+publica a abertura → marcar o que acabou* — é alcançável sem semeador. *Alcançável não é
+alcançada: ninguém a percorreu num navegador.*
+
+**Entre escrever o horário e a próxima passada da varredura, a loja pode estar aberta sem que o
+`catalog` o saiba.** A rota não publica nada (ADR-073 §3), e o que espera a passada é a
+reativação de marcações de **expedientes anteriores** — e nada mais: **a marcação feita nessa
+janela não é desfeita**, porque `expedienteParaCarimbo` e a abertura calculam **o mesmo** dia
+operacional, e a reativação exige carimbo **anterior** (`isBefore`). *Medido na E-4, depois de a
+primeira versão daquele pacote afirmar o contrário.*
 
 ### O dia operacional
 

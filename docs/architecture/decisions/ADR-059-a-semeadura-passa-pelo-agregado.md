@@ -1,6 +1,6 @@
 # ADR-059 — A semeadura passa pelo agregado, e não pelas tabelas
 
-- **Status:** aceita · **emendada em 10/10/2026 (W-D)**: o terceiro semeador, e o vínculo · **emendada em 16/10/2026**: a condição era uma aproximação
+- **Status:** aceita · **emendada em 10/10/2026 (W-D)**: o terceiro semeador, e o vínculo · **emendada em 16/10/2026**: a condição era uma aproximação · **emendada em 17/10/2026**: a lista é estado, e estado não mora em ADR
 - **Data:** 10/10/2026
 - **Rodada:** I-C
 - **Relacionada:** ADR-046 (quem observa a abertura), ADR-049 (o carimbo com a loja
@@ -215,3 +215,20 @@ condição nomeia o que o pagamento precisa, não a rodada que provavelmente o t
 
 **Esta é a única redação da condição** (ADR-071). O `como-subir-local.md` passou a apontar para
 cá.
+
+## Emenda de 17/10/2026 — a lista é estado, e estado não mora em ADR
+
+A emenda de 16/10/2026 pôs **a lista do que a API não escreve dentro desta ADR**. A lista **muda
+a cada rodada que escreve um dos campos**, e o corpo e as emendas de uma ADR **não se
+reescrevem** — então a lista aqui obrigaria uma emenda por campo.
+
+**A decisão fica; a lista vai para o razão.** A condição continua sendo **a lista esvaziar**, e a
+lista mora **na linha 34 do `docs/dividas.md`**, que é arquivo derivado e feito para mudar
+(ADR-071 §3: o dono de uma lista que muda é quem a deriva).
+
+**O que a tabela da emenda anterior passa a ser:** o **registro do censo da R-5**, com a data
+dele. *Ela não envelhece porque não é mais a lista: é a medição de 16/10.*
+
+**E o primeiro campo saiu nesta rodada:** o horário de funcionamento ganhou rota (ADR-073).
+
+**Gatilho escrito: nenhum** — o da emenda de 16/10 continua armado.

@@ -1,6 +1,6 @@
 # ADR-027 — O que conta como mudança compatível num evento
 
-**Status:** Aceita — 24/08/2026
+**Status:** Aceita — 24/08/2026 · **emendada em 17/10/2026**: a exceção do §2, medida no primeiro valor novo num enum publicado
 **Relacionada:** ADR-001 (monorepo), ADR-002 (banco por serviço), ADR-026 (fila morta)
 **Detalhada em:** `contracts/README.md`
 **Precisa existir antes do marco 3** — é quando nasce o primeiro par produtor–consumidor de verdade
@@ -184,3 +184,30 @@ O documento de arquitetura v2 (`docs/referencia/`), §13.3 e §18.2, diz que fal
 definir o que conta como mudança compatível e como se sabe que nenhum consumidor
 depende da versão anterior. As duas passam a estar respondidas aqui. O que
 permanece pendente é a **verificação no build**, requisito do marco 3.
+
+## Emenda de 17/10/2026 — a exceção do §2, medida no primeiro valor novo num enum publicado
+
+A §2 diz que **valor novo em enum exige versão nova**, *"salvo se todos os consumidores tratarem
+valor desconhecido como 'ignorar'"*. A regra e a exceção ficam como estão. **Esta emenda
+registra a primeira vez que a exceção foi usada, e o que se mediu para usá-la.**
+
+Na E-4 o `Permissao` do `merchant` ganhou `CONFIGURAR_LOJA` (ADR-073), e ele viaja no
+`VinculoAlteradoV1` como `List<Permissao> permissoes`. O que foi medido:
+
+- **o consumidor do evento:** um só, o `OuvinteDeVinculoAlterado` do `catalog` — ele lê o
+  envelope com `readTree` e **invalida o cache de autorização**, sem ler `permissoes`; o
+  `contracts/eventos.md` já o descrevia assim (*"não lê `papel`, `estado` nem `permissoes`"*);
+- **o esquema:** nenhum arquivo de `contracts/events/` declara o enum;
+- **e um consumidor que não é de evento, mas recebe a mesma lista:** o `AutorizacaoComercialHttp`
+  do `catalog` mapeia as permissões pelo `PermissaoDoCatalogo` e **descarta o que não conhece**,
+  com um `log.info` — como já fazia com as seis que não são de produto.
+
+**Os três tratam o valor desconhecido como "ignorar"** — os dois primeiros por não lê-lo, o
+terceiro por descartá-lo. A exceção da §2 vale, e não houve versão nova.
+
+**A medição envelhece com o consumidor.** O que hoje ignora o campo pode passar a lê-lo, e a
+exceção se mede de novo a cada valor novo — nunca se presume da medição anterior. E quando ela
+não se verificar, vale o processo do §3: consumidor primeiro.
+
+**Gatilho escrito: nenhum.** *Medir a cada valor novo é instrução de permanência (ADR-072), e
+mora aqui, ao lado da regra.*

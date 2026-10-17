@@ -7,7 +7,7 @@ credencial entre serviços é o token de quem pediu, e por isso `contexto` deixa
 de receber `usuarioId` · **emendada em 28/09/2026**: a porta tem consumidor
 desde a G-B3; o cache fica para a G-B4, com o evento que o invalida ·
 **emendada em 29/09/2026**: a topologia é `topic` com fila exclusiva, e o
-cache existe desde a G-B4
+cache existe desde a G-B4 · **emendada em 17/10/2026**: `CONFIGURAR_LOJA`, e por que ela é ampla
 **Relacionada:** ADR-012 (roteamento do gateway), ADR-015 (JWT com `NimbusJwtEncoder`)
 **Detalha:** `docs/dominio/estabelecimento.md` §2 e §3
 **Invariantes do `CLAUDE.md`:** 8 (nenhum serviço lê o banco de outro), 9 (identificador da URL não é confiável)
@@ -308,3 +308,31 @@ de um serviço derrubar dois em cascata, ou quando alguém medir que o tempo
 limite sozinho não basta"*. O cache reduz a pressão para que ele exista, porque
 uma queda do `merchant` passa a ser invisível durante 60 s — que é o que esta
 ADR chama de *"a janela de tolerância"*.
+
+## Emenda de 17/10/2026 — `CONFIGURAR_LOJA`, e por que ela é ampla
+
+A configuração da loja **não tinha permissão**. O `estabelecimento.md` diz que o `merchant` é
+*"onde mora a configuração que determina o comportamento do sistema inteiro"*, e **nenhum dos dez
+valores do `Permissao` dizia quem pode alterá-la** — medido na E-4.
+
+**`CONFIGURAR_LOJA` governa a configuração inteira:** o horário agora (ADR-073), e as áreas de
+entrega, o desconto de retirada e o pedido mínimo quando ganharem rota.
+
+**Ampla de propósito.** Uma permissão por campo faria o enum crescer com cada linha da H1.2, e
+**ninguém pediu** *"pode mexer no horário mas não nas taxas"*. Quando alguém pedir, ela se parte.
+
+**E permissão, não papel.** Autorizar por *"só `ADMINISTRADOR`"* criaria **um segundo critério
+de autorização** ao lado desta ADR. **Um mecanismo só.**
+
+**Quem a tem, hoje:** o fundador, porque o `ADMINISTRADOR` recebe `EnumSet.allOf(Permissao.class)`
+(`Membro.java`) — **a permissão nova entrou sozinha, sem lista literal a estender.**
+
+**E o convite não a oferece na tela.** A rota de convite **aceita** a permissão — a A2 governa,
+como governa as outras —, e **a tela não a mostra**: o `PermissaoDoConvite` do front a exclui
+por tipo. Oferecê-la faria uma rodada de back mudar tela. *A assimetria está no razão, com
+gatilho: a primeira tela de convite que a ofereça.*
+
+**A compatibilidade:** o `Permissao` viaja no `VinculoAlteradoV1` e na resposta da rota interna
+de autorização, e a emenda de hoje à **ADR-027** registra por que o valor novo não exigiu versão.
+
+**Gatilho escrito: nenhum.**
