@@ -2,6 +2,7 @@ import { Navigate, Outlet, useLocation, useNavigate, useParams } from 'react-rou
 
 import { CardapioPorSecao } from './CardapioPorSecao';
 import { ConvidarParaEquipe } from './ConvidarParaEquipe';
+import { HorarioDaSemana } from './HorarioDaSemana';
 import { ProdutoAberto } from './ProdutoAberto';
 import { ListaDeProdutos } from './ListaDeProdutos';
 import { caminhoDaLoja, caminhoDaSecao, caminhoDoNovoProduto, secaoDoCaminho } from './caminhos';
@@ -67,7 +68,12 @@ export function SecaoInicial() {
 }
 
 /** As duas seções que existem são a mesma lista; "Disponibilidade" a mostra com a marcação. */
-const MARCA: Record<Secao, boolean> = { cardapio: false, disponibilidade: true, equipe: false };
+const MARCA: Record<Secao, boolean> = {
+  cardapio: false,
+  disponibilidade: true,
+  equipe: false,
+  horario: false,
+};
 
 /**
  * O cardápio é lido por seção desde a W-F (ADR-067); a disponibilidade continua a lista
@@ -147,4 +153,10 @@ export function ProdutoDaSecao({ secao }: { secao: Secao }) {
       aoVoltar={() => void navegar(caminhoDaSecao(estabelecimentoId, secao))}
     />
   );
+}
+
+/** `/painel/lojas/:id/horario` — a semana inteira, lida e salva (ADR-074). */
+export function HorarioDaLoja() {
+  const { estabelecimentoId = '' } = useParams();
+  return <HorarioDaSemana key={estabelecimentoId} estabelecimentoId={estabelecimentoId} />;
 }

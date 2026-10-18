@@ -8,6 +8,7 @@ import { InicioDoPainel } from './painel/InicioDoPainel';
 import {
   ListaDaSecao,
   EquipeDaLoja,
+  HorarioDaLoja,
   LojaDoPainel,
   NovoProdutoDaLoja,
   ProdutoDaSecao,
@@ -47,6 +48,7 @@ export function App() {
           <Route path="produtos/:produtoId" element={<ProdutoDaSecao secao="cardapio" />} />
           <Route path="disponibilidade" element={<ListaDaSecao secao="disponibilidade" />} />
           <Route path="equipe" element={<EquipeDaLoja />} />
+          <Route path="horario" element={<HorarioDaLoja />} />
           <Route
             path="disponibilidade/:produtoId"
             element={<ProdutoDaSecao secao="disponibilidade" />}

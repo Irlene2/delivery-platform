@@ -70,11 +70,21 @@ const CANTINA = {
   permissoes: ['VER_PRODUTO'],
 };
 
+/** A dona configura a loja: tem `CONFIGURAR_LOJA`, e com ela a seção Horário (ADR-074). */
+const QUIOSQUE = {
+  estabelecimentoId: 'q3',
+  nome: 'Quiosque',
+  papel: 'ADMINISTRADOR',
+  permissoes: ['VER_PRODUTO', 'CONFIGURAR_LOJA'],
+};
+
 const MARGHERITA = { id: 'x9', nome: 'Pizza margherita', precoBase: 49.9, vendavel: true };
 
 function responder(lojas: unknown[], produtos: unknown[] = []) {
   chamarFalso.mockImplementation((caminho: string) => {
     if (caminho === '/api/v1/me/estabelecimentos') return Promise.resolve(lojas);
+    if (caminho.endsWith('/settings/horario'))
+      return Promise.resolve({ horarioDeFuncionamento: {} });
     // O cardápio compõe as seções com os produtos desde a W-F (ADR-067).
     if (caminho.endsWith('/catalog/categorias')) return Promise.resolve([]);
     if (caminho.includes('?page=')) {
@@ -192,6 +202,31 @@ describe('PainelPage', () => {
     montar('/painel/lojas/c2/produtos');
     const outro = await screen.findByRole('navigation', { name: 'Seções desta loja' });
     expect(within(outro).queryByRole('button', { name: 'Equipe' })).toBeNull();
+  });
+
+  it('17 · a seção Horário só aparece na loja em que se tem CONFIGURAR_LOJA', async () => {
+    responder([QUIOSQUE, CANTINA]);
+
+    const primeira = montar('/painel/lojas/q3/produtos');
+    const menu = await screen.findByRole('navigation', { name: 'Seções desta loja' });
+    expect(within(menu).getByRole('button', { name: 'Horário' })).toBeInTheDocument();
+    primeira.unmount();
+
+    montar('/painel/lojas/c2/produtos');
+    const outro = await screen.findByRole('navigation', { name: 'Seções desta loja' });
+    expect(within(outro).queryByRole('button', { name: 'Horário' })).toBeNull();
+  });
+
+  it('18 · a seção Horário vive sob a loja escolhida, e lê o horário daquela loja', async () => {
+    responder([QUIOSQUE, CANTINA]);
+
+    montar('/painel/lojas/q3/produtos');
+    const menu = await screen.findByRole('navigation', { name: 'Seções desta loja' });
+    await userEvent.click(within(menu).getByRole('button', { name: 'Horário' }));
+
+    await waitFor(() => expect(onde()).toHaveTextContent('/painel/lojas/q3/horario'));
+    expect(await screen.findByRole('heading', { name: 'Horário' })).toBeInTheDocument();
+    expect(caminhosPedidos()).toContain('/api/v1/merchants/q3/settings/horario');
   });
 
   it('C11 · o nome na lista leva ao endereço do produto', async () => {
