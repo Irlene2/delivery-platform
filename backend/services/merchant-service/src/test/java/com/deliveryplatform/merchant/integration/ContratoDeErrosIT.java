@@ -194,6 +194,16 @@ class ContratoDeErrosIT extends Infraestrutura {
                 new Provocacao("PUT", HORARIO, 401, "sem token",
                         () -> put("/api/v1/merchants/" + UUID.randomUUID() + "/settings/horario",
                                 DefinirHorarioIT.SEXTA_A_NOITE, null)),
+                new Provocacao("GET", HORARIO, 400, "identificador da loja que não é UUID",
+                        () -> get("/api/v1/merchants/nao-e-uuid/settings/horario", estranho())),
+                new Provocacao("GET", HORARIO, 401, "sem token",
+                        () -> get("/api/v1/merchants/" + UUID.randomUUID() + "/settings/horario", null)),
+                new Provocacao("GET", HORARIO, 403, "vínculo sem CONFIGURAR_LOJA",
+                        () -> {
+                            UUID loja = loja();
+                            String token = IDENTITY.tokenDe(vinculado(loja, Permissao.GERENCIAR_EQUIPE));
+                            return get("/api/v1/merchants/" + loja + "/settings/horario", token);
+                        }),
                 new Provocacao("PUT", HORARIO, 403, "vínculo sem CONFIGURAR_LOJA",
                         () -> {
                             UUID loja = loja();

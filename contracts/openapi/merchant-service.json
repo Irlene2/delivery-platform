@@ -17,6 +17,42 @@
   } ],
   "paths" : {
     "/api/v1/merchants/{estabelecimentoId}/settings/horario" : {
+      "get" : {
+        "tags" : [ "configuracao-da-loja-controller" ],
+        "summary" : "Lê o horário semanal da loja",
+        "description" : "Exige CONFIGURAR_LOJA. Mapa vazio quando a loja não abre por horário.",
+        "operationId" : "lerHorario",
+        "parameters" : [ {
+          "name" : "estabelecimentoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "O horário gravado; mapa vazio quando a loja não abre por horário",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/HorarioResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Identificador da loja malformado"
+          },
+          "401" : {
+            "description" : "Sem token, ou token inválido"
+          },
+          "403" : {
+            "description" : "Sem vínculo, sem CONFIGURAR_LOJA ou loja inexistente — a mesma recusa"
+          }
+        }
+      },
       "put" : {
         "tags" : [ "configuracao-da-loja-controller" ],
         "summary" : "Define o horário semanal da loja",

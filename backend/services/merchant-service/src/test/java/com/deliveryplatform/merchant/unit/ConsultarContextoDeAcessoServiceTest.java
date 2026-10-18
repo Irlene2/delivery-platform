@@ -112,7 +112,7 @@ class ConsultarContextoDeAcessoServiceTest {
             assertThat(contexto.permissoes())
                     .as("o estabelecimento.md §2 diz que papel não é lista de permissões, e o "
                             + "promover do agregado muda só o papel. Deduzir 'administrador tem "
-                            + "tudo' daria dez permissões que ninguém concedeu, a cada promoção")
+                            + "tudo' daria todas as permissões, que ninguém concedeu, a cada promoção")
                     .containsExactly(Permissao.VER_VENDAS);
         }
 

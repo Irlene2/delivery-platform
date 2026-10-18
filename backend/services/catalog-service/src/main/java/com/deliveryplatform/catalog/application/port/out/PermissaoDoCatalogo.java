@@ -19,7 +19,9 @@ import java.util.Optional;
  *
  * <h2>Quatro valores, e o que fica de fora não é esquecimento</h2>
  *
- * <p>O {@code merchant} tem dez permissões. O {@code catalog} nomeia as quatro
+ * <p>O {@code merchant} tem as permissões que o enum {@code Permissao} dele lista —
+ * contá-las aqui seria copiar uma população sem o comando que a enumera, e a cópia
+ * envelheceu uma vez (E-4). O {@code catalog} nomeia as quatro
  * de produto porque são as únicas sobre as quais ele tem regra. Nomear
  * {@code GERENCIAR_JORNADA} aqui seria declarar um interesse que este serviço
  * não tem — e enum com valor que nenhuma regra consulta é a mesma promessa com

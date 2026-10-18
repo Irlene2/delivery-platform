@@ -18,7 +18,7 @@ import type { Permissao } from './tipos';
  *
  * ## Só aparece o que tem tela
  *
- * Das dez permissões, **uma** tem tela hoje. As outras nove estão na tabela de
+ * Nem toda permissão tem tela. As que não têm estão na tabela de
  * `secoes.ts` com `secao: null` e não são renderizadas — um item de menu que não
  * leva a lugar nenhum é pior do que a ausência dele, e o dia em que a tela
  * existir é uma linha aqui.

@@ -4,6 +4,7 @@ import com.deliveryplatform.merchant.api.dto.FaixaDeHorarioRequest;
 import com.deliveryplatform.merchant.api.dto.HorarioRequest;
 import com.deliveryplatform.merchant.api.dto.HorarioResponse;
 import com.deliveryplatform.merchant.api.seguranca.SujeitoDoToken;
+import com.deliveryplatform.merchant.application.port.in.ConsultarHorario;
 import com.deliveryplatform.merchant.application.port.in.DefinirHorario;
 import com.deliveryplatform.merchant.application.port.in.DefinirHorario.FaixaPedida;
 import io.swagger.v3.oas.annotations.Operation;
@@ -14,6 +15,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -28,7 +30,7 @@ import java.util.UUID;
 
 /**
  * A configuração da loja, sob {@code /settings} — o prefixo que o gateway já roteia para
- * o {@code merchant} ({@code merchant-settings}, ADR-012). Hoje uma rota só: o horário
+ * o {@code merchant} ({@code merchant-settings}, ADR-012). Hoje o horário, lido e escrito
  * (ADR-073). As outras partes da H1.2 entram aqui, sob a mesma {@code CONFIGURAR_LOJA}.
  *
  * <p>O {@code estabelecimentoId} da URL <b>autoriza</b>: o caso de uso o confronta com o
@@ -39,9 +41,30 @@ import java.util.UUID;
 public class ConfiguracaoDaLojaController {
 
     private final DefinirHorario horarios;
+    private final ConsultarHorario leitura;
 
-    public ConfiguracaoDaLojaController(DefinirHorario horarios) {
+    public ConfiguracaoDaLojaController(DefinirHorario horarios, ConsultarHorario leitura) {
         this.horarios = horarios;
+        this.leitura = leitura;
+    }
+
+    /**
+     * O horário semanal como está gravado — a irmã de leitura do {@code PUT} (ADR-073, emenda
+     * de 17/10/2026). <b>Loja que nunca abre por horário responde 200 com o mapa vazio</b>, e
+     * não 404: vazio é um horário, e não a ausência de um.
+     */
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "O horário gravado; mapa vazio quando a loja não abre por horário"),
+            @ApiResponse(responseCode = "400", description = "Identificador da loja malformado", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Sem token, ou token inválido", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Sem vínculo, sem CONFIGURAR_LOJA ou loja inexistente — a mesma recusa", content = @Content)
+    })
+    @GetMapping(path = "/horario", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Lê o horário semanal da loja",
+            description = "Exige CONFIGURAR_LOJA. Mapa vazio quando a loja não abre por horário.")
+    public HorarioResponse lerHorario(
+            @PathVariable UUID estabelecimentoId, @AuthenticationPrincipal Jwt token) {
+        return HorarioResponse.de(leitura.daLoja(estabelecimentoId, SujeitoDoToken.de(token)));
     }
 
     /**

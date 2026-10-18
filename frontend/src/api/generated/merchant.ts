@@ -11,7 +11,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * Lê o horário semanal da loja
+         * @description Exige CONFIGURAR_LOJA. Mapa vazio quando a loja não abre por horário.
+         */
+        get: operations["lerHorario"];
         /**
          * Define o horário semanal da loja
          * @description Exige CONFIGURAR_LOJA. Substitui o horário inteiro; mapa vazio volta a loja a "nunca abre por horário".
@@ -322,6 +326,49 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    lerHorario: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                estabelecimentoId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description O horário gravado; mapa vazio quando a loja não abre por horário */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HorarioResponse"];
+                };
+            };
+            /** @description Identificador da loja malformado */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sem token, ou token inválido */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sem vínculo, sem CONFIGURAR_LOJA ou loja inexistente — a mesma recusa */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     definirHorario: {
         parameters: {
             query?: never;
