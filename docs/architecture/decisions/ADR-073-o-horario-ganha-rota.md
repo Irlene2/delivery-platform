@@ -1,6 +1,6 @@
 # ADR-073 — O horário ganha rota, sob uma permissão que não existia
 
-- **Status:** aceita
+- **Status:** aceita · **emendada em 17/10/2026**: a irmã de leitura
 - **Data:** 17/10/2026
 - **Rodada:** E-4
 - **Relacionada:** ADR-011 (autorização comercial), ADR-027 (compatibilidade de eventos), ADR-046
@@ -221,3 +221,23 @@ pausa manual, com a pergunta de quando ela expira.
 
 **E a primeira tela de convite que ofereça `CONFIGURAR_LOJA`.** Hoje a rota a aceita e a tela não
 a mostra.
+
+## Emenda de 17/10/2026 — a irmã de leitura
+
+Esta decisão deu ao horário **uma rota de escrita e nenhuma de leitura**, e a W-H parou nisso: a
+tela precisa **mostrar o horário atual antes de o trocar**, e nenhum dos cinco `GET` do
+`merchant` devolvia a semana — medido na W-H. *Sem leitura, a tela mostraria um formulário vazio
+sobre uma loja que talvez já abra.*
+
+**`GET .../settings/horario`** (E-5, `c384446`), no mesmo controlador, sob a mesma permissão,
+autorizando antes de buscar, e devolvendo o mesmo `HorarioResponse` que o `PUT` devolve. O caso
+de uso é próprio, o `ConsultarHorarioService`: não havia leitura de horário a reusar.
+
+**E o mapa vazio é uma resposta, não uma ausência.** Loja que nunca abre por horário responde
+**200 com o mapa vazio** — não 404, não `null`. *É o estado nomeado (§1), e a tela depende de
+poder distingui-lo de "não consegui ler".*
+
+**O que esta emenda não faz:** não acrescenta campo ao `HorarioResponse`, e **não cria o `GET` de
+detalhe da loja** — esse tem gatilho próprio na ADR-060.
+
+**Gatilho escrito: nenhum.**

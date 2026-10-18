@@ -1,6 +1,6 @@
 # O razão das dívidas
 
-**Gerado em 10/10/2026 na rodada R-1, sobre o commit `6fb73e6`; refeito na E-1, sobre `d7dbcc4` mais a ADR-060, na W-E, sobre `398d828` mais a ADR-061, na E-3b, sobre `9fbcee1` mais a ADR-064, na E-3c, sobre `cbd633c` mais as ADRs 065 e 066 e o `PublicarProdutoService`, na E-3d, sobre `a3ffe07` mais a ADR-068, na W-F, sobre `ec89666` mais a ADR-067, na E-2, sobre `ef82bc9` mais a ADR-069, na W-G, sobre `92e8099` mais a ADR-070, na R-2, sobre `e43d227` mais a emenda de 16/10/2026 à ADR-012, na R-3, sobre `0e545c0` mais as emendas às ADRs 024 e 038 e as frases trocadas no lugar, na R-4, sobre `4904159` mais a ADR-072 e a emenda de 16/10/2026 à ADR-071, na R-5, sobre `ab18956` mais as emendas de 16/10/2026 às ADRs 071 e 072, na R-6, sobre `2b57cc9` mais a emenda de 16/10/2026 à ADR-059, na R-7, sobre `60eb66b`, com a terceira passada, e na E-4, sobre `23e99a4` mais a ADR-073 e as emendas de 17/10/2026 às ADRs 011, 027 e 059. Este arquivo é
+**Gerado em 10/10/2026 na rodada R-1, sobre o commit `6fb73e6`; refeito na E-1, sobre `d7dbcc4` mais a ADR-060, na W-E, sobre `398d828` mais a ADR-061, na E-3b, sobre `9fbcee1` mais a ADR-064, na E-3c, sobre `cbd633c` mais as ADRs 065 e 066 e o `PublicarProdutoService`, na E-3d, sobre `a3ffe07` mais a ADR-068, na W-F, sobre `ec89666` mais a ADR-067, na E-2, sobre `ef82bc9` mais a ADR-069, na W-G, sobre `92e8099` mais a ADR-070, na R-2, sobre `e43d227` mais a emenda de 16/10/2026 à ADR-012, na R-3, sobre `0e545c0` mais as emendas às ADRs 024 e 038 e as frases trocadas no lugar, na R-4, sobre `4904159` mais a ADR-072 e a emenda de 16/10/2026 à ADR-071, na R-5, sobre `ab18956` mais as emendas de 16/10/2026 às ADRs 071 e 072, na R-6, sobre `2b57cc9` mais a emenda de 16/10/2026 à ADR-059, na R-7, sobre `60eb66b`, com a terceira passada, na E-4, sobre `23e99a4` mais a ADR-073 e as emendas de 17/10/2026 às ADRs 011, 027 e 059, e na E-5, sobre `c384446` mais a emenda de 17/10/2026 à ADR-073. Este arquivo é
 derivado e envelhece:** toda ADR, documento ou javadoc que escrever um gatilho novo o
 torna incompleto. Refaça-o com os comandos abaixo antes de confiar nele.
 
@@ -62,15 +62,15 @@ Triado na R-2 e na R-3.
 
 **Os comandos produzem candidatos; a tabela é a leitura deles.** Uma menção a
 "gatilho" pode ser a definição de um, a citação de um que já está na tabela, ou o
-relato de um que disparou. A conta, em 17/10/2026, na E-4:
+relato de um que disparou. A conta, em 17/10/2026, na E-5:
 
 | | linhas |
 | --- | --- |
-| o recorte estreito devolve | **93** |
+| o recorte estreito devolve | **94** |
 | — cópias em `frontend/.tsbuild/`, saída de build que o filtro não exclui | −3 |
 | — citação de um gatilho que já tem linha própria (ADR-045:17, ADR-054:15, ADR-055:12, ADR-059:21, `pedido.md`:397; e, na W-E, `PainelPage.tsx`:28 e as linhas 8, 18, 20 e 142 da ADR-061; e, na E-3b, `RegraDoCatalogoViolada`:25, que cita a linha 55; e, na E-3c, ADR-065:138, que relata o disparo da linha 56; e, na E-2, `estabelecimento.md`:234, que cita a linha 71) | −13 |
 | — o mesmo gatilho repetido em outro lugar, ou substituído por outro (ADR-045:123, que a ADR-054 substituiu; ADR-043:210, ADR-057:101, ADR-058:91, `ProdutoResponse`:30, `MarcarDisponibilidadeService`:64, `ContratoDeErrosIT`:73 e :105, `ReativacaoNoExpedienteIT`:58; e, na E-3d, ADR-068:57, a §1 repetindo o primeiro gatilho da seção; e, na W-F, ADR-067:95, a §4 repetindo o primeiro da seção; e, na R-6, a ADR-059, emenda de 16/10/2026, que substitui a condição da linha 34 — a cópia do `como-subir-local.md`:480 virou ponteiro e saiu do comando) | −12 |
-| — menção que nega um gatilho, e não o escreve (ADR-064:26, *"não havia gatilho escrito"*; e, na R-3, a ADR-012, emenda de 16/10 (2), *"Gatilho escrito: nenhum"*; e, na R-4, a ADR-071, emenda de 16/10, e a ADR-072, seção de gatilhos, *"Nenhum."*; e, na R-5, as emendas de 16/10/2026 (2) à ADR-071 e de 16/10/2026 à ADR-072, *"Gatilho escrito: nenhum."*; e, na E-4, as emendas de 17/10/2026 às ADRs 011, 027 e 059) | −9 |
+| — menção que nega um gatilho, e não o escreve (ADR-064:26, *"não havia gatilho escrito"*; e, na R-3, a ADR-012, emenda de 16/10 (2), *"Gatilho escrito: nenhum"*; e, na R-4, a ADR-071, emenda de 16/10, e a ADR-072, seção de gatilhos, *"Nenhum."*; e, na R-5, as emendas de 16/10/2026 (2) à ADR-071 e de 16/10/2026 à ADR-072, *"Gatilho escrito: nenhum."*; e, na E-4, as emendas de 17/10/2026 às ADRs 011, 027 e 059; e, na E-5, a emenda de 17/10/2026 à ADR-073) | −10 |
 | — menção ao título da seção, que fala dela e não escreve gatilho (R-4: ADR-072:13, :16, :27, :42, :65, :81 e :86; ADR-071:214, o título da emenda de 16/10; e o `README.md` das decisões :115 e :118). *A decisão sobre o título acrescentou dez linhas ao comando que lê o título* | −10 |
 | **= linhas da tabela vindas do recorte estreito** | **46** |
 | + entraram por outra redação — *"com gatilho:"* (linhas 1 e 2), *"Gatilho para trazê-lo de volta"* (4), *"Quando o segundo chegar"* (6), *"O gatilho para mudar"* (11), *"O gatilho para reabrir"* (19), *"O gatilho, escrito"* (22), *"Gatilho:"* (40 e 42), *"O gatilho para a função mudar de lugar"* (41), *"volta quando houver"* (43), *"Decidir antes do marco 5"* (44), *"Gatilho novo, e são dois"* (20 e 48); e, na R-3, *"Isso é linha de razão, com gatilho:"* (93) | **+15** |

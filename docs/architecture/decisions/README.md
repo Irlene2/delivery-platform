@@ -73,7 +73,7 @@
 | 070 | A tela do convite, e o segredo que já está no navegador de quem o recebeu | ✅ aceita |
 | 071 | A lista tem um dono, e a cópia não é lista | ✅ aceita · **emendada** (16/10/2026: o terceiro item do gatilho não era gatilho; 16/10/2026 (2): os dois itens restantes são regra, e saem do razão) |
 | 072 | A seção que o comando colhe, e o item que não era gatilho | ✅ aceita · **emendada** (16/10/2026: "condição nossa" tem duas espécies) |
-| 073 | O horário ganha rota, sob uma permissão que não existia | ✅ aceita |
+| 073 | O horário ganha rota, sob uma permissão que não existia | ✅ aceita · **emendada** (17/10/2026: a irmã de leitura) |
 
 **Setenta escritas, duas sem objeto — estas com registro próprio desde
 25/08/2026 —, nenhuma a escrever.**
@@ -198,6 +198,22 @@ enganoso, um documento que deveria citar a ADR e não cita. Depois do `grep`, le
 tocam o mesmo dado que a decisão governa. Foi assim que a ADR-013 revelou `Contato.consentimento`
 com nome da base legal que ela rejeitou, e o congelamento do endereço em `pedido.md` sem a
 ressalva que torna a anonimização possível.
+
+**Corpo de ADR é datado por construção; comentário de código afirma o presente.** Um número ou
+um estado escrito no corpo de uma ADR registra **o que se sabia naquela data**, e não envelhece
+por isso. O que envelhece é a frase que **sustenta algo que deixou de valer** — foi o caso da
+ADR-038, que adiava uma decisão até o segundo consumidor existir, e continuou dizendo que ele não
+existia depois que o mundo o trouxe.
+
+**A pergunta, antes de emendar um número:** *o argumento que ele sustenta muda com o número?* Se
+não muda, **o conserto é não fazer nada** — e isso se escreve, para o censo seguinte não refazer
+o trabalho.
+
+**Medido na E-5:** sete lugares escreviam a contagem das permissões do `merchant`. **Quatro são
+corpo ou emenda de ADR** — a ADR-011, a ADR-040 em duas linhas e a ADR-073 — e **ficam como
+estão**. **Três eram código** — o javadoc do `PermissaoDoCatalogo`, o do `MenuDoPainel` e a
+mensagem de uma asserção do `ConsultarContextoDeAcessoServiceTest` —, e foram trocados no lugar,
+sem número.
 
 **Cópia dentro do dono não é duplicação.** Uma ADR pode dizer a mesma coisa no corpo e em duas
 emendas de datas diferentes: isso é **histórico**, e **a emenda mais nova vence**. A regra da
