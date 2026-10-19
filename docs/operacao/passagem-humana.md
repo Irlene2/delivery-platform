@@ -232,9 +232,16 @@ descrição. O que é leitura de quem escreveu o pacote da rodada está na parte
     lista"**, que não trata a causa.
 14. Marcado o item dentro de uma faixa aberta, a lista **não mudou sozinha**: **"ele continua
     mas é preciso atualizar a página e isso é erro de usabilidade"**.
-15. **A cadeia fechou.** Com uma faixa das **04:41 às 04:43** na segunda 19/10, o item foi
-    marcado **Acabou hoje**; passada a varredura e recarregada a lista, **"permanece em Acabou
-    hoje após recarregar a lista"**, com o selo **"não vendável"**.
+15. **A marcação sobreviveu à abertura do próprio expediente.** Com uma faixa das **04:41 às
+    04:43** na segunda 19/10, o item foi marcado **Acabou hoje**; passada a varredura e
+    recarregada a lista, **"permanece em Acabou hoje após recarregar a lista"**, com o selo
+    **"não vendável"**.
+
+⚠ **O que o item 15 não prova.** A H3.2 promete que **o que acabou volte sozinho na abertura
+seguinte**. A faixa de 04:41 a 04:43 e a abertura publicada às 07:41:33 UTC são **o mesmo
+expediente** — logo, o que foi exercido é a abertura **não desfazendo** a marcação. **A devolução
+na abertura seguinte não foi exercida nessa passagem**, e a emenda de 19/10/2026 à ADR-074 diz o
+mesmo.
 
 **E o cadastro da loja:**
 

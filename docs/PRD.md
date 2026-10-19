@@ -156,7 +156,7 @@ Requisitos organizados por épico. Cada história traz critérios de aceite veri
 **H3.2** Como comerciante, quero marcar o que acabou sem precisar contar estoque.
 - Estado por produto: disponível, acabando, esgotado hoje, esgotado por tempo indeterminado
 - **Esgotado hoje volta automaticamente a disponível na abertura do expediente seguinte**
-- Produto esgotado não é oferecido no canal nem aceito no carrinho
+- Produto esgotado não é oferecido no canal nem aceito no rascunho da conversa
 
 > A reativação automática é o que faz o recurso ser usado de verdade. Se o comerciante precisar lembrar de reativar doze itens toda manhã, ele para de usar na segunda semana.
 
@@ -377,7 +377,7 @@ Cada marco entrega valor operável, não uma camada técnica.
 | **8** | Pagamento online e emissão fiscal | Cobrar antecipado e emitir documento |
 | **9** | Atendimento assistido e escalonamento | Atender sozinho a maior parte dos pedidos |
 | **10** | Controle quantitativo e substituição de item | Operar minimercado com contagem de estoque |
-| **11** | Rastreamento e telemetria | Mostrar a entrega no mapa |
+| **11** | Rastreamento e telemetria — **condicionado pelo §7** | Mostrar a entrega no mapa |
 
 **A ordem não é a dos números.** O marco 7 se parte em **7a** — o menu numerado de ponta a ponta,
 até o pedido confirmado — e **7b**, o resto. O 7a é executado **antes do marco 3**, porque é ele
