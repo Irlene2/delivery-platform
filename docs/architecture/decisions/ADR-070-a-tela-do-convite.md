@@ -1,6 +1,6 @@
 # ADR-070 — A tela do convite, e o segredo que já está no navegador de quem o recebeu
 
-- **Status:** aceita
+- **Status:** aceita · **emendada em 19/10/2026**: a página do convite tem uma ação, e ela é aceitar (ADR-076)
 - **Data:** 15/10/2026
 - **Rodada:** W-G
 - **Relacionada:** ADR-016 (front mínimo), ADR-047 (a sessão em `sessionStorage`), ADR-055
@@ -160,3 +160,11 @@ convites — rota e tela.
 escrever, e a página do convite passa a dizer quem convidou.
 
 **E a primeira tela que peça para promover, remover ou suspender.** As sete esperam ali.
+
+## Emenda de 19/10/2026 — a página do convite tem uma ação, e ela é aceitar
+
+A §4 diz: *"Quem não tem sessão vê entrar e criar conta, e volta para esta mesma URL. Quem tem
+vê o botão de aceitar."* **A ordem mudou pela ADR-076.** Sem sessão, a página oferece uma ação
+só, *Aceitar convite*, que leva ao login levando o caminho de volta e a intenção; com sessão e
+com a intenção, aceita sem segundo clique; com sessão e sem ela, mostra o botão, como esta ADR
+decidiu. O corpo fica como foi escrito.

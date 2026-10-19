@@ -70,14 +70,15 @@
 | 067 | O cardápio ganha escrita, e a seção passa a significar alguma coisa | ✅ aceita |
 | 068 | A listagem mostra o rascunho, porque quem a chama é o painel | ✅ aceita |
 | 069 | O convite chega pela mão de quem convida, e o token se lê uma vez | ✅ aceita |
-| 070 | A tela do convite, e o segredo que já está no navegador de quem o recebeu | ✅ aceita |
+| 070 | A tela do convite, e o segredo que já está no navegador de quem o recebeu | ✅ aceita · **emendada** (19/10/2026: uma ação, e ela é aceitar — ADR-076) |
 | 071 | A lista tem um dono, e a cópia não é lista | ✅ aceita · **emendada** (16/10/2026: o terceiro item do gatilho não era gatilho; 16/10/2026 (2): os dois itens restantes são regra, e saem do razão) |
 | 072 | A seção que o comando colhe, e o item que não era gatilho | ✅ aceita · **emendada** (16/10/2026: "condição nossa" tem duas espécies) |
 | 073 | O horário ganha rota, sob uma permissão que não existia | ✅ aceita · **emendada** (17/10/2026: a irmã de leitura) |
 | 074 | A tela do horário, e a tela que não valida o que o domínio decide | ✅ aceita · **emendada** (19/10/2026: marcar o que acabou não espera a varredura) |
 | 075 | O pedido nasce no canal, e o 7a vem antes do marco 3 | ✅ aceita |
+| 076 | O convite aceita antes de entrar | ✅ aceita |
 
-**Setenta e duas escritas, duas sem objeto — estas com registro próprio desde
+**Setenta e três escritas, duas sem objeto — estas com registro próprio desde
 25/08/2026 —, nenhuma a escrever.**
 
 ## Onde mora o quê

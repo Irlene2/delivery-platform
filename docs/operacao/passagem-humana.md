@@ -248,6 +248,13 @@ duas capturas** — uma do formulário vazio, outra da loja já criada. **Quem p
 corrigiu.** O item 16 é o que sobrou dela, e é o contrário. *Captura é um quadro, não um
 desfecho.*
 
+⚠ **E uma medição posterior, do mesmo dia.** Às 06h de 19/10/2026, duas capturas da mesma URL
+do convite mostraram que **a tela anuncia o retorno** — *"Depois você volta para esta página"* —
+e que **o endereço é o mesmo antes e depois do login**. **O retorno existe e funciona pelos
+botões da própria tela.** O que o item 4 nomeia, e o que a W-I trata (ADR-076), é a **ordem**:
+entrar primeiro, aceitar depois. **O caminho em que o convite se perdeu, do item 5, não foi
+medido.**
+
 ### B · O que tem causa medida no código
 
 1. **A recusa do horário não limpa quando o dia é corrigido** (item 11) porque o `mudar()` de
