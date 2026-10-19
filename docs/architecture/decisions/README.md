@@ -12,7 +12,7 @@
 | 008 | MongoDB como replica set de nó único | ✅ aceita · **emendada** (27/09/2026: `withReplicaSet()` na Testcontainers 2; `spring.mongodb.uri` no Boot 4) |
 | 009 | Modelo de valores do pedido | ✅ aceita · **emendada pela v1.1** · **emendada** (27/09/2026: `Money` em documento é texto) |
 | 010 | Saga do pedido: pivô em `PRONTO`, pagamento fora da transação | ✅ aceita · **reescrita pela v1.1** |
-| 011 | Autorização comercial: cache em processo, invalidação por evento, fail-closed | ✅ aceita · **emendada** (26/09/2026: a porta não recebe `usuarioId` — ADR-045; 28/09/2026: primeiro consumidor, sem cache até a G-B4; 29/09/2026: `topic` com fila exclusiva, e o cache existe; 17/10/2026: `CONFIGURAR_LOJA`, e por que ela é ampla) |
+| 011 | Autorização comercial: cache em processo, invalidação por evento, fail-closed | ✅ aceita · **emendada** (26/09/2026: a porta não recebe `usuarioId` — ADR-045; 28/09/2026: primeiro consumidor, sem cache até a G-B4; 29/09/2026: `topic` com fila exclusiva, e o cache existe; 17/10/2026: `CONFIGURAR_LOJA`, e por que ela é ampla; 19/10/2026: a permissão não alcança quem já era membro) |
 | 012 | Roteamento do gateway por recurso, não por serviço | ✅ aceita · **emendada** (24/09/2026: limite de taxa e `correlationId` fora do marco 1; 30/09/2026: `/api/v1/me` compartilhado, a ordem decide; 16/10/2026: a tabela não acompanhou o gateway; 16/10/2026 (2): a tabela deixa de ser a lista, e o teste deriva do gateway) |
 | 013 | Retenção, anonimização e exclusão de dados pessoais | ✅ aceita |
 | 014 | Não adotar H2; Testcontainers como fonte de verdade | ✅ aceita · **emendada pela v1.1** · **emendada** (27/09/2026: todo contêiner prova que é o usado — `ConteinerDeVerdadeIT`) |
@@ -74,7 +74,7 @@
 | 071 | A lista tem um dono, e a cópia não é lista | ✅ aceita · **emendada** (16/10/2026: o terceiro item do gatilho não era gatilho; 16/10/2026 (2): os dois itens restantes são regra, e saem do razão) |
 | 072 | A seção que o comando colhe, e o item que não era gatilho | ✅ aceita · **emendada** (16/10/2026: "condição nossa" tem duas espécies) |
 | 073 | O horário ganha rota, sob uma permissão que não existia | ✅ aceita · **emendada** (17/10/2026: a irmã de leitura) |
-| 074 | A tela do horário, e a tela que não valida o que o domínio decide | ✅ aceita |
+| 074 | A tela do horário, e a tela que não valida o que o domínio decide | ✅ aceita · **emendada** (19/10/2026: marcar o que acabou não espera a varredura) |
 | 075 | O pedido nasce no canal, e o 7a vem antes do marco 3 | ✅ aceita |
 
 **Setenta e duas escritas, duas sem objeto — estas com registro próprio desde

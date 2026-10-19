@@ -1,6 +1,6 @@
 # ADR-074 — A tela do horário, e a tela que não valida o que o domínio decide
 
-- **Status:** aceita
+- **Status:** aceita · **emendada em 19/10/2026**: marcar o que acabou não espera a varredura
 - **Data:** 18/10/2026
 - **Rodada:** W-H
 - **Relacionada:** ADR-016 (front mínimo), ADR-047 (a sessão), ADR-055 e ADR-063 (o corpo de
@@ -162,3 +162,23 @@ do menu deixa de se chamar "Horário" e passa a nomear a permissão, com o horá
 **A primeira pessoa que quiser convidar alguém já com acesso à configuração da loja.** Aí a
 `PermissaoDoConvite` perde a exclusão do `CONFIGURAR_LOJA`, e a tela do convite passa a oferecer
 uma permissão cujo recorte é maior do que a tela que esta decisão cria.
+
+## Emenda de 19/10/2026 — marcar o que acabou não espera a varredura
+
+A Consequências diz que a cadeia passa a ser percorrível como *"criar a loja, dar horário,
+esperar a varredura, e marcar o que acabou"*. **A ordem está errada desde que foi escrita**, e o
+corpo fica como está.
+
+**Marcar o que acabou não depende da varredura.** `Estabelecimento.expedienteParaCarimbo` usa a
+faixa corrente **ou a próxima abertura**, então a marcação funciona sempre que a loja tenha
+alguma faixa cadastrada, dentro ou fora do expediente. **A recusa aparece apenas quando não
+existe faixa nenhuma**, e foi vista assim na passagem de 19/10/2026, com a semana salva vazia.
+
+**O que a varredura faz é publicar a abertura**, e é a abertura que devolve à venda o que foi
+marcado num expediente anterior. Na mesma passagem, com uma faixa das 04:41 às 04:43, o item foi
+marcado dentro dela, a varredura publicou a abertura daquele expediente — a marca d'água da loja
+registra o expediente `2026-10-19` publicado às 07:41:33 UTC — e, recarregada a lista, o item
+permaneceu marcado, com o selo de não vendável. **Isso exerceu a abertura do mesmo expediente
+não desfazendo a marcação.** A devolução na abertura seguinte não foi exercida nessa passagem.
+
+O registro da passagem está em `docs/operacao/passagem-humana.md`.

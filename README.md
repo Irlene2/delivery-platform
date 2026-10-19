@@ -9,12 +9,15 @@ testes, container, contrato e pipeline próprios.
 > nasce numa conversa de WhatsApp. Se uma decisão parecer estranha, confira as
 > premissas em [`docs/PRD.md`](docs/PRD.md) §5 antes de "corrigir".
 
-**Estado: 15/10/2026, em `540511d`.** O `PRD.md` §10 define cada marco por uma coluna —
+**Estado: 19/10/2026, em `5208ae6`.** O `PRD.md` §10 define cada marco por uma coluna —
 *"o comerciante consegue"* —, e é por ela que este parágrafo se mede.
 
 - **Marco 1, *cadastrar a loja e o time*:** a loja, **sim** — cumprida no navegador em
-  10/10, com os semeadores desligados. O time tem rota e tela, e **espera a passagem de
-  duas pessoas**: quem convida e quem aceita.
+  10/10, com os semeadores desligados, e cadastrada outra vez por uma pessoa no navegador em
+  19/10/2026, sem semeador. O time foi **exercido** em 19/10/2026, por uma pessoa em duas
+  contas: convite emitido, aceito, e a permissão filtrando o cardápio na tela — **com o
+  caminho do convite quebrado**: o aceite só registrou depois de a pessoa entrar na conta. Os
+  achados estão em [`docs/operacao/passagem-humana.md`](docs/operacao/passagem-humana.md).
 - **Marco 2, *publicar o cardápio e marcar o que acabou*:** **cumprido**, no navegador,
   em 15/10.
 

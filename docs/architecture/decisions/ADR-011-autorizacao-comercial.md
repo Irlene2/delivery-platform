@@ -7,7 +7,8 @@ credencial entre serviços é o token de quem pediu, e por isso `contexto` deixa
 de receber `usuarioId` · **emendada em 28/09/2026**: a porta tem consumidor
 desde a G-B3; o cache fica para a G-B4, com o evento que o invalida ·
 **emendada em 29/09/2026**: a topologia é `topic` com fila exclusiva, e o
-cache existe desde a G-B4 · **emendada em 17/10/2026**: `CONFIGURAR_LOJA`, e por que ela é ampla
+cache existe desde a G-B4 · **emendada em 17/10/2026**: `CONFIGURAR_LOJA`, e por que ela é ampla ·
+**emendada em 19/10/2026**: a permissão não alcança quem já era membro
 **Relacionada:** ADR-012 (roteamento do gateway), ADR-015 (JWT com `NimbusJwtEncoder`)
 **Detalha:** `docs/dominio/estabelecimento.md` §2 e §3
 **Invariantes do `CLAUDE.md`:** 8 (nenhum serviço lê o banco de outro), 9 (identificador da URL não é confiável)
@@ -336,3 +337,21 @@ gatilho: a primeira tela de convite que a ofereça.*
 de autorização, e a emenda de hoje à **ADR-027** registra por que o valor novo não exigiu versão.
 
 **Gatilho escrito: nenhum.**
+
+## Emenda de 19/10/2026 — a permissão não alcança quem já era membro
+
+A emenda de 17/10/2026 diz, de `CONFIGURAR_LOJA`: *"Quem a tem, hoje: o fundador, porque o
+`ADMINISTRADOR` recebe `EnumSet.allOf(Permissao.class)`"*. **Vale para o fundador criado depois
+dela, e para nenhum outro.**
+
+`Membro.fundador` concede o conjunto inteiro **no momento da criação do membro**, e as permissões
+ficam gravadas em `membro_permissao`. A permissão nasceu **sem migração**, e **nenhuma rota
+concede permissão a membro já criado** — a alteração de permissões existe no
+`GerenciarEquipeService` e não tem borda. **Toda loja cadastrada antes de 17/10/2026 fica sem
+ela**, e a tela que ela protege não abre para o fundador dessas lojas.
+
+**Medido em 19/10/2026**, no banco desta máquina: 7 membros com o conjunto de administrador, e só
+**3** com `CONFIGURAR_LOJA` — os criados depois da E-4. A passagem do mesmo dia está em
+`docs/operacao/passagem-humana.md`.
+
+**Não é dívida com condição do mundo:** pagar é decisão nossa.

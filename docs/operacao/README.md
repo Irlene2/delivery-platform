@@ -36,6 +36,7 @@ funcionam.
 | Documento | Quando se abre |
 |---|---|
 | [`metodo-das-rodadas.md`](metodo-das-rodadas.md) | antes de escrever ou aplicar um pacote — os papéis, o formato e onde mora o erro de cada um |
+| [`passagem-humana.md`](passagem-humana.md) | antes de uma passagem no navegador — a pilha que é o código do commit, e o que a passagem de 19/10/2026 achou |
 
 ## Uma regra comum aos quatro procedimentos
 

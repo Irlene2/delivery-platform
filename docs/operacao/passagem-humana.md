@@ -171,3 +171,119 @@ perdida. A memória de quem viu não é fonte.
 **A W-G mexe só no front**: o `frontend` não é serviço do compose — ele roda no Vite, no
 Windows (`npm run dev`) —, e nenhum dos passos 1 a 4 se aplica a ele. Os jars do
 `merchant-service` e do `gateway` são os da E-2, recriados em 15/10 por este roteiro.
+
+---
+
+## A passagem de 19/10/2026 — o que uma pessoa viu
+
+*Registrado em 19/10/2026 (N-1).*
+
+Andada na madrugada de 19/10/2026, nas duas metades, **com `DELIVERY_SEMEADURA=false`** e numa
+loja criada naquela noite, **por uma pessoa, em duas contas** — a que convida e a que aceita. **Foi
+a primeira vez que as duas passagens deste roteiro foram andadas no navegador.**
+
+**O que foi exercido:** uma conta nova criada pelo telefone, com o código lido na tabela de
+verificação; uma loja cadastrada sem semeador; um convite de equipe emitido, aceito e exercido
+com uma permissão só; uma semana de horário escrita, recusada, corrigida e salva; um produto
+publicado; um item marcado como esgotado dentro de uma faixa aberta; e a varredura da abertura,
+esperada no relógio.
+
+⚠ **Esta seção não afirma coluna de marco nenhuma.** Ela diz o que foi exercido e o que foi
+visto. **Nada aqui foi consertado.**
+
+### A · O que quem passou no navegador relatou ter visto
+
+**Dezesseis.** Entre aspas está o que a pessoa escreveu ou o que a tela disse. Fora das aspas,
+descrição. O que é leitura de quem escreveu o pacote da rodada está na parte C, e não aqui.
+
+**A primeira metade — o time, em duas contas:**
+
+1. Uma conta nova, sem loja, entrou e viu **"Você ainda não faz parte de nenhuma loja"**. **O
+   isolamento entre contas existe, e foi visto.**
+2. A mesma conta, convidada para uma loja alheia com **apenas "Ver o cardápio"** marcado, viu
+   **um item** no cardápio daquela loja, enquanto o cardápio da loja dela mesma mostrava
+   **quatro**. **O filtro de permissão chega à tela.**
+3. **"quando eu entro na minha conta pelo login não aparece a opção de criar uma loja nova"** —
+   a tela de cadastrar loja **não tem porta de entrada** depois que a conta já tem loja.
+4. O link do convite, colado **sem sessão aberta**, não registrou o aceite. Depois de entrar na
+   conta convidada e colar o link outra vez, **aceitou**: **"só aceita o convite depois de logado
+   e isso NÃO é para ser esperado e sim aceitar o convite e em seguida ficar registrado ao fazer
+   o login com a nova conta"**.
+5. **"vai para o /painel e o convite se perde"** — e **o link é de uso único**, e **não há lista
+   de convites pendentes** em lugar nenhum da loja que convidou.
+6. Antes da conta limpa do item 1, duas lojas diferentes apareciam uma para a outra na mesma
+   sessão: **"Farmácia consegue ver o que Big Lanches Delivery também consegue ver e vice versa.
+   Não tem bloqueio? São contas diferentes."** **O item 1 é a passagem que respondeu a essa
+   pergunta.**
+7. **"Onde está a página de Admin que é o Usuário SUPER?"** — **não há.** Nenhuma tela, nenhuma
+   rota e nenhuma decisão escrita criam conta acima das lojas.
+
+**A segunda metade — a cadeia do marco 2:**
+
+8. Uma faixa **das 18:00 às 02:00** foi aceita e **nomeada pela tela** como virando o dia.
+9. Uma faixa **das 10:00 às 10:00** foi recusada.
+10. Duas faixas que **se sobrepõem** no mesmo dia foram **aceitas**.
+11. A recusa do horário: a tela recusou a semana **sem dizer qual dia**; o texto da recusa
+    **fica no rodapé**, longe do dia errado; **com o dia corrigido a recusa continuou na tela**;
+    e **a semana inteira ficou bloqueada** por um dia só.
+12. O salvar com a semana vazia **pediu confirmação e salvou**.
+13. Com o horário vazio, marcar um item como esgotado foi **recusado** — e a frase da recusa
+    **carrega os nomes `ESGOTADO_HOJE` e `ESGOTADO_INDETERMINADO`** e oferece **"Recarregar a
+    lista"**, que não trata a causa.
+14. Marcado o item dentro de uma faixa aberta, a lista **não mudou sozinha**: **"ele continua
+    mas é preciso atualizar a página e isso é erro de usabilidade"**.
+15. **A cadeia fechou.** Com uma faixa das **04:41 às 04:43** na segunda 19/10, o item foi
+    marcado **Acabou hoje**; passada a varredura e recarregada a lista, **"permanece em Acabou
+    hoje após recarregar a lista"**, com o selo **"não vendável"**.
+
+**E o cadastro da loja:**
+
+16. O cadastro **recusa loja sem endereço**: **"O cadastro não aceita sem endereço. Ele reclamou
+    e eu ajustei antes de avançar."** A frase da recusa, medida na tela, é **"A loja não foi
+    cadastrada. Confira os campos e tente de novo."** — **ela não nomeia o campo.**
+
+⚠ **Uma entrada falsa foi retirada desta lista antes de ela chegar aqui.** Dizia que o cadastro
+tinha aceitado endereço, bairro e troco vazios, e **quem escreveu o pacote a tinha deduzido de
+duas capturas** — uma do formulário vazio, outra da loja já criada. **Quem passou no navegador
+corrigiu.** O item 16 é o que sobrou dela, e é o contrário. *Captura é um quadro, não um
+desfecho.*
+
+### B · O que tem causa medida no código
+
+1. **A recusa do horário não limpa quando o dia é corrigido** (item 11) porque o `mudar()` de
+   `HorarioDaSemana.tsx` zera `salvo` e `confirmandoVazio` e **não zera `recusa`**.
+2. **A recusa de marcar esgotado só aparece quando não existe faixa nenhuma** (item 13):
+   `Estabelecimento.expedienteParaCarimbo(agora)` cai em
+   `disponibilidade.proximaAberturaApos(...)` quando o instante está fora da faixa, e **só
+   devolve vazio quando não há faixa cadastrada**. **Marcar funciona dentro e fora do
+   expediente.**
+3. **A permissão `CONFIGURAR_LOJA` não alcança nenhum administrador que já existia quando ela
+   nasceu.** `Membro.fundador` concede `EnumSet.allOf(Permissao.class)` **no momento da criação**,
+   as permissões ficam gravadas em `membro_permissao`, **não houve migração** quando a permissão
+   nasceu, e **nenhuma rota concede permissão a membro que já existe**. Em 19/10/2026 o banco
+   desta máquina tinha 7 membros com o conjunto de administrador, e só **3** com
+   `CONFIGURAR_LOJA` — os criados depois da E-4. A dívida está na ADR-011, emenda de 19/10/2026.
+4. **A sessão do front vive em `sessionStorage`** (`frontend/src/auth/armazenamento.ts`, a
+   gravação e a leitura da chave `delivery.sessao`), **que é por aba**: o link do convite colado
+   numa aba nova abre sem sessão, mesmo no navegador em que a conta está aberta (item 4). Quem
+   recebe o convite em outro aparelho chega sem sessão de qualquer forma.
+5. **Este roteiro não estava no índice da `docs/operacao/`** — a passagem foi andada a partir de
+   um arquivo que o índice não listava.
+
+### C · A leitura de quem escreveu o pacote — e ela não é observação
+
+⚠ **Nada nesta parte foi visto por ninguém.** Ela está separada porque, duas vezes em duas
+rodadas, leitura de quem escreve o pacote entrou na lista do que outro viu.
+
+1. O item 2 é o caso que o roteiro previa: permissão estreita filtrando cardápio alheio.
+   **Exercido por uma pessoa, e não por teste.**
+2. O item 6 se explica pela mesma conta administrando as duas lojas — e **a prova é o item 1**,
+   não o raciocínio. *Quem escreveu o pacote afirmou a explicação **antes** de a prova existir, e
+   estava apostando.*
+3. Os itens 11 e 16 são a **mesma família**: recusa que sabe o que está errado e **não diz qual**
+   — qual dia, qual campo. E o `premissas-do-front.md` explica por que o formulário não marca
+   nada em volta: **ele não antecipa recusa de domínio.** *A consequência é que o peso inteiro de
+   dizer o que falta cai no `detail` do servidor.*
+4. Os itens 3 e 5, juntos: **não existe caminho de produto** para a segunda loja de uma conta nem
+   para um convite que se perdeu.
+5. O item 14, somado à parte B.2, é o que obriga a emenda da ADR-074 nesta mesma rodada.
