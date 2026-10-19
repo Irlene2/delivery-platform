@@ -188,6 +188,13 @@ Requisitos organizados por épico. Cada história traz critérios de aceite veri
 - Pedido pago que é cancelado dispara devolução do valor
 - Pedido não pode ficar sem saída possível em nenhum estado
 
+**H4.5** Como atendente, quero lançar no painel um pedido que chegou por telefone ou no balcão, para que ele entre na mesma fila dos que chegam pelo canal.
+- *Entra a partir do marco 6*
+
+Esta história existe porque o 7a faz do canal a entrada de pedido (ADR-075). **Sem ela, o
+pedido que chega por telefone ou no balcão não tem história em marco nenhum**, e a mitigação do
+§11 — *"painel e balcão continuam operando"* — seria falsa.
+
 ### E5 — Liquidação e troco
 
 **H5.1** Como comerciante, quero registrar como cada pedido foi efetivamente pago.
@@ -366,17 +373,26 @@ Cada marco entrega valor operável, não uma camada técnica.
 | **4** | Liquidação presencial, troco e Pix confirmado | Registrar como cada pedido foi pago de verdade |
 | **5** | Entregadores, vínculo, remuneração e despacho | Despachar e saber quem está com cada pedido |
 | **6** | **Fechamento de expediente** | Fechar o dia com extrato por entregador |
-| **7** | Canal WhatsApp determinístico | Receber pedido pelo WhatsApp com menu numerado |
+| **7** | Canal WhatsApp determinístico — **o 7a vem antes do marco 3** (ADR-075) | Receber pedido pelo WhatsApp com menu numerado |
 | **8** | Pagamento online e emissão fiscal | Cobrar antecipado e emitir documento |
 | **9** | Atendimento assistido e escalonamento | Atender sozinho a maior parte dos pedidos |
 | **10** | Controle quantitativo e substituição de item | Operar minimercado com contagem de estoque |
 | **11** | Rastreamento e telemetria | Mostrar a entrega no mapa |
+
+**A ordem não é a dos números.** O marco 7 se parte em **7a** — o menu numerado de ponta a ponta,
+até o pedido confirmado — e **7b**, o resto. O 7a é executado **antes do marco 3**, porque é ele
+que faz um pedido nascer (ADR-075). Os números ficam como estão.
 
 ### 10.1 Ponto de parada com produto vendável
 
 **Ao fim do marco 6 existe produto completo.** A loja cadastra equipe e cardápio, recebe e prepara pedidos, despacha com entregador próprio, registra como cada pedido foi liquidado e fecha o expediente com extrato. Nenhum marco posterior é necessário para que isso funcione, e a dor que decide a compra já está resolvida.
 
 Os marcos 7 a 9 ampliam o alcance — trazem o pedido para dentro do canal onde ele já nasce. Os marcos 10 e 11 abrem segmentos novos.
+
+**Emenda de 18/10/2026.** Com a ADR-075, o 7a vem antes do marco 3, e o canal deixa de ser
+ampliação: ele é a entrada de pedido do produto, como a P4 do §5 já dizia. *"Ao fim do marco 6
+existe produto completo"* continua verdadeiro — e passa a incluir o 7a e a H4.5, o lançamento
+manual. *"Os marcos 7 a 9 ampliam o alcance"* vale para o 7b, o 8 e o 9.
 
 ---
 
@@ -389,7 +405,7 @@ Os marcos 7 a 9 ampliam o alcance — trazem o pedido para dentro do canal onde 
 | **Interpretação automática erra valor ou pedido** | Prejuízo e desconfiança | Valor nunca vem da interpretação; confirmação por botão; escalonamento obrigatório em alergia e restrição |
 | **Trote no pedido presencial** | Prejuízo direto do comerciante | Confirmação ativa na conversa; teto de valor para cliente sem histórico; bloqueio por reincidência |
 | **Entregador contesta o acerto** | Atrito e abandono do recurso | Extrato imutável, com lançamentos rastreáveis e correção por ajuste, nunca por edição |
-| **Dependência de um único canal externo** | Interrupção total do recebimento | Painel e balcão continuam operando; canal é entrada, não fundação da operação |
+| **Dependência de um único canal externo** | Interrupção total do recebimento | Canal é a entrada de pedido do produto (ADR-075), e por isso o risco é maior do que esta linha dizia. A mitigação é a **H4.5**, o lançamento manual no painel: com ela, o pedido que chega por telefone ou no balcão entra na mesma fila. **Até ela existir em código, a queda do canal é a queda do recebimento.** |
 | **Dados pessoais em conversa** | Exposição regulatória | Retenção definida por tipo; áudio com prazo curto; exclusão que alcança a conversa; contrato com o provedor de interpretação |
 
 ---

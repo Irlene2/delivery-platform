@@ -75,8 +75,9 @@
 | 072 | A seção que o comando colhe, e o item que não era gatilho | ✅ aceita · **emendada** (16/10/2026: "condição nossa" tem duas espécies) |
 | 073 | O horário ganha rota, sob uma permissão que não existia | ✅ aceita · **emendada** (17/10/2026: a irmã de leitura) |
 | 074 | A tela do horário, e a tela que não valida o que o domínio decide | ✅ aceita |
+| 075 | O pedido nasce no canal, e o 7a vem antes do marco 3 | ✅ aceita |
 
-**Setenta e uma escritas, duas sem objeto — estas com registro próprio desde
+**Setenta e duas escritas, duas sem objeto — estas com registro próprio desde
 25/08/2026 —, nenhuma a escrever.**
 
 ## Onde mora o quê
