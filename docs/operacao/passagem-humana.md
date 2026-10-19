@@ -89,9 +89,24 @@ docker compose --profile marco2 logs --since 5m merchant-service | grep -E "Star
 
 ## 5. Só então o navegador
 
-Com os semeadores **desligados** (`DELIVERY_SEMEADURA=false` no `.env`). O roteiro da
-passagem é da rodada que a pede; este documento só garante que o que está no navegador é o
-código do commit.
+Com os semeadores **desligados** (`DELIVERY_SEMEADURA=false` no `.env`). Confira sem abrir o
+arquivo: `grep -c '^DELIVERY_SEMEADURA=false$' .env` deve imprimir `1`. Os contêineres leem a
+chave **na subida**: se ela mudou depois da última, recrie `identity-service`,
+`merchant-service` e `catalog-service` com `--force-recreate`, como no passo 3.
+
+**Desligar não apaga.** Com a chave ligada, os semeadores rodam em toda subida e gravam o que
+falta, por id fixo. Com ela desligada, não gravam nada, e o que já gravaram fica. Medido em
+18/10/2026 (M-1): com a chave em `false` no `.env` e nos três contêineres, o banco tinha a
+loja da fixture, o usuário dela e o produto, além de 8 contas, 2 lojas e 2 produtos de
+passagens anteriores.
+
+**E isso não atrapalha a passagem.** Uma conta nova não tem vínculo com a loja semeada nem com
+as outras, e nenhuma delas aparece no painel dela. O painel vazio passa a ser prova do
+vínculo, não de banco vazio. **A colisão é o telefone:** `+5511999990001` é o do usuário da
+fixture. Use telefones que nunca foram usados nesta máquina, e anote quais foram.
+
+O roteiro da passagem é da rodada que a pede; este documento só garante que o que está no
+navegador é o código do commit.
 
 ---
 

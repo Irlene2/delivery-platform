@@ -383,7 +383,7 @@ bandeira (ADR-059, emenda da W-D).
 
 ```bash
 docker compose --profile marco2 exec -T postgres sh -c 'psql -U "$POSTGRES_USER" -d merchant_db -v ON_ERROR_STOP=1 -c "begin; delete from abertura_de_expediente where estabelecimento_id = '"'"'5eed0000-0000-4000-8000-000000000001'"'"'; delete from membro where estabelecimento_id = '"'"'5eed0000-0000-4000-8000-000000000001'"'"'; delete from estabelecimento where id = '"'"'5eed0000-0000-4000-8000-000000000001'"'"'; commit;"'
-docker compose --profile marco2 exec -T mongodb mongosh --quiet --eval 'db.getSiblingDB("catalog_db").produtos.deleteMany({estabelecimentoId: UUID("5eed0000-0000-4000-8000-000000000001")})'
+docker compose --profile marco2 exec -T mongodb mongosh --quiet --eval 'const l = UUID("5eed0000-0000-4000-8000-000000000001"); const c = db.getSiblingDB("catalog_db"); c.produtos.deleteMany({estabelecimentoId: l}); c.categorias.deleteMany({estabelecimentoId: l})'
 docker compose --profile marco2 up -d --force-recreate --no-deps --wait merchant-service catalog-service
 ```
 
@@ -391,7 +391,17 @@ A ordem do primeiro comando é a das chaves estrangeiras: a marca d'água e o v�
 apontam para a loja sem `cascade`; o resto da loja cai junto com ela. O usuário do
 `identity` fica — ele não depende da loja.
 
-Os três comandos, como estão acima, levaram **91 s** em 10/10/2026, e os dois semeadores gravaram.
+**O segundo comando apaga as categorias junto com os produtos.** Até 18/10/2026 ele apagava
+só os produtos, e cada ressemeadura deixava uma categoria "Pizzas" a mais na loja da
+fixture: o semeador grava a categoria antes do produto. E o contrário também aconteceu.
+A loja desta máquina tinha, em 18/10/2026, 1 produto e 0 categorias: o produto foi semeado
+em 10/10, e o semeador só passou a gravar categoria em 11/10 (`cbd633c`). Como a guarda dele
+é *"a loja já tem produto — nada a fazer"*, ele nunca voltou para criá-la. Ressemear com o
+comando de hoje refaz as duas coisas juntas. O filtro foi conferido em 18/10/2026 com
+`countDocuments` no lugar de `deleteMany` (produtos: 1 · categorias: 0); o apagar em si não
+foi executado.
+
+Os três comandos levaram **91 s** em 10/10/2026, com o segundo ainda sem as categorias, e os dois semeadores gravaram.
 
 **O `--force-recreate` não é enfeite.** Os semeadores rodam na **subida**, e o `up -d`
 não recria contêiner que não mudou. Medido em 10/10/2026: sem ele, o `merchant` foi
