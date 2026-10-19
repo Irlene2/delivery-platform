@@ -198,6 +198,7 @@ ADR-021.
 | [`CLAUDE.md`](CLAUDE.md) | Invariantes e convenções — leitura obrigatória antes do primeiro commit |
 | [`docs/architecture/decisions/`](docs/architecture/decisions/README.md) | Por que cada decisão foi tomada, com alternativas e consequências |
 | `docs/referencia/*.pdf` | Versões publicadas da arquitetura, do PRD e da revisão de escopo |
+| [`docs/operacao/metodo-das-rodadas.md`](docs/operacao/metodo-das-rodadas.md) | Como uma rodada de trabalho funciona, e onde cada papel erra |
 
 ---
 

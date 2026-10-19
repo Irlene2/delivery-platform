@@ -28,6 +28,15 @@ alguém de fora**.
 | [`legitimo-interesse.md`](legitimo-interesse.md) | o teste de balanceamento das duas hipóteses de legítimo interesse — rascunho de engenharia, para revisão jurídica |
 | [`revisao-juridica.md`](revisao-juridica.md) | a pauta da consulta com advogado: o que foi assumido, com que raciocínio, e o que muda conforme a resposta |
 
+## O método
+
+Não é procedimento de operação do produto: é como as rodadas de trabalho neste repositório
+funcionam.
+
+| Documento | Quando se abre |
+|---|---|
+| [`metodo-das-rodadas.md`](metodo-das-rodadas.md) | antes de escrever ou aplicar um pacote — os papéis, o formato e onde mora o erro de cada um |
+
 ## Uma regra comum aos quatro procedimentos
 
 Todos registram **quem autorizou, com que prova, quando**. O registro é
