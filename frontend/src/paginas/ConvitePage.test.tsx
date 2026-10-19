@@ -1,3 +1,4 @@
+import { StrictMode } from 'react';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, useLocation } from 'react-router';
@@ -42,14 +43,24 @@ beforeEach(() => {
 });
 
 function OndeEstou() {
-  return <p data-testid="onde-estou">{useLocation().pathname}</p>;
+  const local = useLocation();
+  return (
+    <>
+      <p data-testid="onde-estou">{local.pathname}</p>
+      <p data-testid="com-que-state">{JSON.stringify(local.state ?? null)}</p>
+    </>
+  );
+}
+
+function comQueState(): unknown {
+  return JSON.parse(screen.getByTestId('com-que-state').textContent ?? 'null');
 }
 
 function onde() {
   return screen.getByTestId('onde-estou');
 }
 
-function montar(endereco = CONVITE) {
+function montar(endereco: string | { pathname: string; state: unknown } = CONVITE) {
   return render(
     <MemoryRouter initialEntries={[endereco]}>
       <SessaoProvider>
@@ -69,6 +80,12 @@ type Opcoes = { metodo?: string; token?: string } | undefined;
 function caminhosPedidos(): string[] {
   return (chamarFalso.mock.calls as [string, Opcoes][]).map(([caminho]) => caminho);
 }
+
+function aceitesPedidos(): number {
+  return caminhosPedidos().filter((caminho) => caminho.endsWith('/aceite')).length;
+}
+
+const COM_A_INTENCAO = { pathname: CONVITE, state: { acao: 'aceitar-convite' } };
 
 /** O dublê: a leitura pública, o aceite, o login e as lojas — cada um com a sua resposta. */
 function servidor({
@@ -143,15 +160,20 @@ describe('ConvitePage', () => {
     expect(tela.replace(CONVITE, '')).not.toContain(TOKEN);
   });
 
-  it('B10 · sem sessão, oferece entrar e criar conta, e não aceitar', async () => {
+  /**
+   * W-I: até a ADR-076 esta tela oferecia "Entrar" e "Criar conta" sem sessão. A ação passou
+   * a ser uma só, e é aceitar — o login e o cadastro são o caminho dela, não a escolha.
+   */
+  it('B10 · sem sessão, a ação é uma só — aceitar —, e não há entrar nem criar conta', async () => {
     servidor();
 
     montar();
     await screen.findByTestId('nome-da-loja');
 
-    expect(screen.getByRole('button', { name: 'Entrar' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Criar conta' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Aceitar convite' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Aceitar convite' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Entrar' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Criar conta' })).toBeNull();
+    expect(screen.getByText(/Na volta, o convite já estará aceito/)).toBeInTheDocument();
   });
 
   it('B11 · com sessão, oferece aceitar, e não entrar', async () => {
@@ -175,51 +197,59 @@ describe('ConvitePage', () => {
     expect((document.body.textContent ?? '').replace(CONVITE, '')).not.toContain(TOKEN);
   });
 
-  it('C13 · entrar leva o destino, e o destino é esta URL, com o token', async () => {
+  it('C13 · aceitar sem sessão leva ao login com o destino e a intenção, os dois', async () => {
     servidor();
 
     montar();
-    await userEvent.click(await screen.findByRole('button', { name: 'Entrar' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Aceitar convite' }));
 
     await waitFor(() => expect(onde()).toHaveTextContent('/entrar'));
-    // O destino viaja no state do roteador, como o ExigeSessao já fazia: o login, ao
-    // terminar, o lê — e o C14 prova que ele foi lido, não só escrito.
+    // O destino e a intenção viajam no state do roteador: o login, ao terminar, volta com a
+    // intenção — e o C14 prova que ela foi lida, não só escrita.
+    expect(comQueState()).toEqual({ de: CONVITE, acao: 'aceitar-convite' });
+    expect(aceitesPedidos()).toBe(0);
   });
 
-  /** O caminho inteiro: sem ele, o teste prova que o destino foi escrito, e não lido. */
-  it('C14 · voltar do login cai de novo na página do convite', async () => {
+  /**
+   * O caminho inteiro: sem ele, o teste prova que a intenção foi escrita, e não lida. Até a
+   * W-I a volta caía na página do convite com o botão; agora ela já entra na equipe.
+   */
+  it('C14 · voltar do login já entra na equipe, com um aceite só e sem segundo clique', async () => {
     servidor();
 
     montar();
-    await userEvent.click(await screen.findByRole('button', { name: 'Entrar' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Aceitar convite' }));
     await userEvent.type(await screen.findByLabelText(/telefone/i), '(81) 98765-4321');
     await userEvent.type(screen.getByLabelText(/senha/i), 'segredo123');
     await userEvent.click(screen.getByRole('button', { name: 'Entrar' }));
 
-    await waitFor(() => expect(onde()).toHaveTextContent(CONVITE));
-    expect(await screen.findByRole('button', { name: 'Aceitar convite' })).toBeInTheDocument();
+    await waitFor(() => expect(onde()).toHaveTextContent('/painel/lojas/p1'));
+    expect(aceitesPedidos()).toBe(1);
   });
 
-  it('criar conta também leva o destino: o link do login para o cadastro o repassa', async () => {
+  it('criar conta também leva o destino e a intenção: o link do login os repassa', async () => {
     servidor();
 
     montar();
-    await userEvent.click(await screen.findByRole('button', { name: 'Entrar' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Aceitar convite' }));
     await userEvent.click(await screen.findByRole('link', { name: 'Criar conta' }));
 
     await waitFor(() => expect(onde()).toHaveTextContent('/cadastrar'));
+    expect(comQueState()).toEqual({ de: CONVITE, acao: 'aceitar-convite' });
   });
 
   /**
    * O cadastro também volta: até a W-G ele navegava sempre para o /painel, e passou a
    * honrar o mesmo state.de. O caminho inteiro — convite, criar conta, código, dados —,
-   * porque o destino escrito e não lido passaria por um teste mais curto.
+   * porque o destino escrito e não lido passaria por um teste mais curto. Desde a W-I o
+   * cadastro se alcança pelo link do login, e a volta já entra na equipe.
    */
-  it('criar conta pelo convite volta para a página do convite', async () => {
+  it('criar conta pelo convite volta e já entra na equipe', async () => {
     servidor();
 
     montar();
-    await userEvent.click(await screen.findByRole('button', { name: 'Criar conta' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Aceitar convite' }));
+    await userEvent.click(await screen.findByRole('link', { name: 'Criar conta' }));
     await userEvent.type(await screen.findByLabelText('Telefone'), '(81) 98765-4321');
     await userEvent.click(screen.getByRole('button', { name: 'Pedir código' }));
     await userEvent.type(await screen.findByLabelText('Código de verificação'), '123456');
@@ -227,8 +257,8 @@ describe('ConvitePage', () => {
     await userEvent.type(screen.getByLabelText('Senha'), 'segredo123');
     await userEvent.click(screen.getByRole('button', { name: 'Criar conta e entrar' }));
 
-    await waitFor(() => expect(onde()).toHaveTextContent(CONVITE));
-    expect(await screen.findByRole('button', { name: 'Aceitar convite' })).toBeInTheDocument();
+    await waitFor(() => expect(onde()).toHaveTextContent('/painel/lojas/p1'));
+    expect(aceitesPedidos()).toBe(1);
   });
 
   /** O dublê devolve as lojas sem a nova antes do aceite, e com ela depois. */
@@ -264,5 +294,85 @@ describe('ConvitePage', () => {
       montada.unmount();
       chamarFalso.mockReset();
     }
+  });
+
+  describe('W-I · a intenção de aceitar, e quem pode usá-la (ADR-076)', () => {
+    it('com sessão e com a intenção, aceita sozinho — uma vez, e sem clique', async () => {
+      comSessao();
+      servidor();
+
+      montar(COM_A_INTENCAO);
+
+      await waitFor(() => expect(onde()).toHaveTextContent('/painel/lojas/p1'));
+      expect(aceitesPedidos()).toBe(1);
+    });
+
+    it('enquanto aceita sozinho, não há botão de aceitar na tela', async () => {
+      comSessao();
+      let soltar: (valor: unknown) => void = () => undefined;
+      servidor({ aceite: () => new Promise((resolver) => (soltar = resolver)) });
+
+      montar(COM_A_INTENCAO);
+
+      expect(await screen.findByText('Aceitando o convite…')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Aceitar convite' })).toBeNull();
+      soltar({ estabelecimentoId: 'p1', papel: 'COLABORADOR', permissoes: [] });
+      await waitFor(() => expect(onde()).toHaveTextContent('/painel/lojas/p1'));
+      expect(aceitesPedidos()).toBe(1);
+    });
+
+    /** O app monta em StrictMode (main.tsx), que repete efeitos na montagem: o aceite é um. */
+    it('em StrictMode, o aceite sozinho acontece uma vez só', async () => {
+      comSessao();
+      servidor();
+
+      render(
+        <StrictMode>
+          <MemoryRouter initialEntries={[COM_A_INTENCAO]}>
+            <SessaoProvider>
+              <App />
+              <OndeEstou />
+            </SessaoProvider>
+          </MemoryRouter>
+        </StrictMode>,
+      );
+
+      await waitFor(() => expect(onde()).toHaveTextContent('/painel/lojas/p1'));
+      expect(aceitesPedidos()).toBe(1);
+    });
+
+    /** Quem abre a URL do convite direto chega assim: sem state, e portanto sem intenção. */
+    it('com sessão e sem a intenção, não aceita ao montar, e mostra o botão', async () => {
+      comSessao();
+      servidor();
+
+      montar();
+
+      expect(await screen.findByRole('button', { name: 'Aceitar convite' })).toBeInTheDocument();
+      expect(aceitesPedidos()).toBe(0);
+    });
+
+    /** O caso que impede o pior defeito desta tela: aceitar em nome de quem não entrou. */
+    it('com a intenção e sem sessão, não aceita, e volta a pedir o aceite', async () => {
+      servidor();
+
+      montar(COM_A_INTENCAO);
+
+      expect(await screen.findByRole('button', { name: 'Aceitar convite' })).toBeInTheDocument();
+      expect(screen.getByText(/Na volta, o convite já estará aceito/)).toBeInTheDocument();
+      expect(aceitesPedidos()).toBe(0);
+    });
+
+    it('se o aceite sozinho é recusado, a recusa vai à tela e nada tenta de novo', async () => {
+      comSessao();
+      const frase = 'você já faz parte da equipe desta loja';
+      servidor({ aceite: () => Promise.reject(new ErroDaApi(409, frase)) });
+
+      montar(COM_A_INTENCAO);
+
+      expect((await screen.findByRole('alert')).textContent).toBe(frase);
+      expect(screen.getByRole('button', { name: 'Aceitar convite' })).toBeInTheDocument();
+      expect(aceitesPedidos()).toBe(1);
+    });
   });
 });

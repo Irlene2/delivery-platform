@@ -42,7 +42,11 @@ export function EntrarPage() {
   const [erro, setErro] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState(false);
 
-  const destino = (local.state as { de?: string } | null)?.de ?? '/painel';
+  const volta = local.state as { de?: string; acao?: string } | null;
+  const destino = volta?.de ?? '/painel';
+  // A intenção que veio com o destino volta com ele (ADR-076): sem isso, o convite pedido
+  // antes do login chegaria de volta sem saber que foi pedido.
+  const naVolta = volta?.acao === undefined ? undefined : { acao: volta.acao };
 
   /**
    * O tratador é síncrono, e o trabalho é assíncrono.
@@ -70,7 +74,7 @@ export function EntrarPage() {
       await entrar(telefone.trim(), senha);
       // `void`: no React Router 7 o navigate pode devolver promessa, e esperar por
       // ela aqui prenderia o `finally` que solta o botão.
-      void navegar(destino, { replace: true });
+      void navegar(destino, { replace: true, state: naVolta });
     } catch (causa) {
       if (causa instanceof ErroDaApi) {
         // O 401 do login TEM corpo; o 401 de token não tem. O `??` é essa

@@ -40,7 +40,11 @@ export function CadastrarPage() {
   const { entrar } = useSessao();
   const navegar = useNavigate();
   const local = useLocation();
-  const destino = (local.state as { de?: string } | null)?.de ?? '/painel';
+  const volta = local.state as { de?: string; acao?: string } | null;
+  const destino = volta?.de ?? '/painel';
+  // A intenção que veio com o destino volta com ele (ADR-076): sem isso, o convite pedido
+  // antes do login chegaria de volta sem saber que foi pedido.
+  const naVolta = volta?.acao === undefined ? undefined : { acao: volta.acao };
 
   const [passo, setPasso] = useState<'telefone' | 'dados'>('telefone');
   const [telefone, setTelefone] = useState('');
@@ -119,7 +123,7 @@ export function CadastrarPage() {
       await entrar(telefone.trim(), senha);
       // O destino de quem chegou desviado — o convite, hoje (ADR-070 §3) —, pelo mesmo
       // state.de do ExigeSessao e do EntrarPage. Sem ele, o painel, como sempre foi.
-      void navegar(destino, { replace: true });
+      void navegar(destino, { replace: true, state: naVolta });
     } catch (causa) {
       setErro(traduzir(causa));
     } finally {

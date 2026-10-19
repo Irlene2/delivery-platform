@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router';
 
 import { fraseDaRecusa } from '../api/cardapio';
@@ -17,6 +17,13 @@ const PAPEIS: Record<Papel, string> = {
 };
 
 const VALIDADE = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'long', timeStyle: 'short' });
+
+/**
+ * A intenção que atravessa o login (ADR-076). É texto, e não booleano: uma marca `aceitar`
+ * só serviria a esta tela. Ela viaja no `state` do roteador, ao lado do `de` — no histórico
+ * daquela aba: sobrevive a recarregar aquela entrada, e não chega a um link aberto de novo.
+ */
+export const ACAO_ACEITAR_CONVITE = 'aceitar-convite';
 
 type Leitura =
   | { estado: 'carregando' }
@@ -38,11 +45,14 @@ type Leitura =
  * que identifique pessoa — e quem convidou não aparece, porque nenhum serviço o sabe dizer
  * (ADR-069 §2).
  *
- * <h2>Os dois caminhos</h2>
+ * <h2>Uma ação, e três entradas (ADR-076)</h2>
  *
- * **Sem sessão**, entrar e criar conta — levando **esta URL** como destino, pelo mesmo
- * `state.de` que o `ExigeSessao` já usa (ADR-070 §3, medido na W-G). **Com sessão**, aceitar;
- * no 200, o painel da loja, que relê as lojas ao montar.
+ * **Sem sessão**, a ação é aceitar: ela leva ao login levando **esta URL** como destino, pelo
+ * mesmo `state.de` que o `ExigeSessao` já usa (ADR-070 §3), e a intenção ao lado dele. **Com
+ * sessão e com a intenção**, aceita ao montar, sem segundo clique. **Com sessão e sem a
+ * intenção** — quem abriu a URL direto —, o botão, como antes. Sem sessão a intenção não
+ * significa nada: ela é pedido, nunca permissão. No 200, o painel da loja, que relê as lojas
+ * ao montar.
  *
  * <h2>As recusas</h2>
  *
@@ -61,6 +71,14 @@ export function ConvitePage() {
     frase: string;
     status: number;
   } | null>(null);
+  const pediuAceite = (local.state as { acao?: string } | null)?.acao === ACAO_ACEITAR_CONVITE;
+  // O aceite automático acontece uma vez por montagem: se ele falhar, a recusa fica na tela
+  // e o botão volta, mas nada tenta de novo sozinho. A guarda é defesa: nenhum teste a
+  // derruba (W-I) — o StrictMode só repete efeito na montagem, quando a leitura ainda não
+  // está pronta, e depois de uma recusa as dependências do efeito não mudam.
+  const aceiteAutomaticoTentado = useRef(false);
+  const [automaticoTerminou, definirAutomaticoTerminou] = useState(false);
+  const aceitandoSozinho = autenticado && pediuAceite && !automaticoTerminou;
 
   useEffect(() => {
     let atual = true;
@@ -82,7 +100,7 @@ export function ConvitePage() {
     };
   }, [token]);
 
-  async function aceitar() {
+  const aceitar = useCallback(async () => {
     if (sessao === null) return;
     definirAceitando(true);
     definirRecusaDoAceite(null);
@@ -97,9 +115,17 @@ export function ConvitePage() {
       }
       definirAceitando(false);
     }
-  }
+  }, [sessao, token, navegar]);
 
-  const destino = { de: local.pathname };
+  const prontoParaAceitar = leitura.estado === 'pronto';
+  useEffect(() => {
+    if (!prontoParaAceitar || !autenticado || !pediuAceite) return;
+    if (aceiteAutomaticoTentado.current) return;
+    aceiteAutomaticoTentado.current = true;
+    void aceitar().finally(() => definirAutomaticoTerminou(true));
+  }, [prontoParaAceitar, autenticado, pediuAceite, aceitar]);
+
+  const destino = { de: local.pathname, acao: ACAO_ACEITAR_CONVITE };
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-col gap-6 px-4 py-10">
@@ -141,7 +167,9 @@ export function ConvitePage() {
             </div>
           )}
 
-          {autenticado ? (
+          {aceitandoSozinho ? (
+            <p className="text-sm text-slate-600 dark:text-slate-300">Aceitando o convite…</p>
+          ) : autenticado ? (
             <div>
               <Botao type="button" ocupado={aceitando} onClick={() => void aceitar()}>
                 Aceitar convite
@@ -150,18 +178,12 @@ export function ConvitePage() {
           ) : (
             <div className="flex flex-col gap-3">
               <p className="text-sm text-slate-600 dark:text-slate-300">
-                Para aceitar, entre na sua conta — ou crie uma. Depois você volta para esta página.
+                Para entrar na equipe, você acessa sua conta — ou cria uma. Na volta, o convite já
+                estará aceito.
               </p>
-              <div className="flex gap-3">
+              <div>
                 <Botao type="button" onClick={() => void navegar('/entrar', { state: destino })}>
-                  Entrar
-                </Botao>
-                <Botao
-                  type="button"
-                  variante="discreto"
-                  onClick={() => void navegar('/cadastrar', { state: destino })}
-                >
-                  Criar conta
+                  Aceitar convite
                 </Botao>
               </div>
             </div>
