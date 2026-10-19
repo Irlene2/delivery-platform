@@ -372,3 +372,32 @@ que carregam comando.*
 `--exclude=dividas.md` existe porque o arquivo era contado como **fonte** de dívida, e aí ele
 inflava o próprio número. Aqui o arquivo é o **objeto auditado**, e o número que sai não entra na
 contagem de linhas. *São coisas diferentes, e a confusão entre as duas é fácil.*
+
+---
+
+## O censo das frases que prometem coluna
+
+**A regra é do `CLAUDE.md`**, na armadilha *"Vai escrever 'o marco N ganha X'"* (R-8): nenhum
+texto promete coluna de marco a código, e a coluna só se afirma depois de uma pessoa diante da
+tela. **Isto é o censo que a aplica ao que já estava escrito**, feito em 18/10/2026 sobre
+`067155e`, e não é dívida: nenhuma linha da tabela nasce dele.
+
+A população, em dois comandos:
+
+```bash
+grep -rn -i "coluna" docs CLAUDE.md README.md frontend/src backend contracts --include=*.md --include=*.java --include=*.ts --include=*.tsx --exclude-dir=node_modules --exclude-dir=build --exclude=dividas.md
+grep -rn -i "marco [0-9]\+[^0-9].\{0,40\}\(cumprid\|conclu\|fechad\|✅\|pronto\)" docs CLAUDE.md README.md frontend/src frontend/README.md backend contracts --include=*.md --include=*.java --include=*.ts --include=*.tsx --exclude-dir=node_modules --exclude-dir=build --exclude=dividas.md
+```
+
+**89** linhas no primeiro e **11** no segundo. Lidas uma a uma, quase todas **negam** a promessa
+(*"não diz que o marco 2 está cumprido"*), **citam** a coluna, ou **registram uma passagem feita
+por gente** — o `README.md` e o `passagem-humana.md` sobre 15/10. **Duas prometem coluna a
+código, e as duas estão em corpo de ADR:**
+
+| arquivo:linha | a frase | o que se faz |
+| --- | --- | --- |
+| ADR-070:152 | *"Recusada pelo corte: atravessa duas camadas, e esta rodada é a que fecha a coluna."* | **nada.** A frase é incidental: a recusa se sustenta pelo corte, e o corte continua valendo. Corpo de ADR é datado, e só se emenda quando o que a frase sustenta deixa de valer |
+| ADR-073:213 | o gatilho da tela do horário, que termina em *"e a coluna do marco 1 ganha a ponta que falta"* | **nada além do que já foi feito:** a linha 98 deste razão o copia com a ressalva de que o caminho ficou percorrível, não percorrido (W-H) |
+
+**Fora de código, nenhuma.** Se o número de qualquer dos dois comandos mudar, só a diferença
+precisa ser lida.
