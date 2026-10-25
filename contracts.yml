@@ -1,0 +1,43 @@
+# Validação dos contratos. Existe porque o package.json da raiz declarava quatro
+# ferramentas e NUNCA rodou: sem lockfile, sem node_modules, nenhum workflow
+# chamando npm, e os scripts apontando para *.yaml quando os contratos são
+# *.json. Mais uma peça vestida de funcionando — depois das nove da armadilha
+# de infraestrutura do CLAUDE.md e do Mongock.
+#
+# Fica na raiz, e não dentro de frontend/, porque validar contrato é do back:
+# os contratos existem com ou sem front.
+
+name: contracts
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'contracts/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/contracts.yml'
+  pull_request:
+    paths:
+      - 'contracts/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/contracts.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - run: npm ci
+      - run: npm run contracts
