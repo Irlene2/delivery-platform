@@ -17,7 +17,7 @@ import { useLojaAtual } from './lojaAtual';
  * duração zero são do servidor, e a frase dele aparece. O que a tela confere é só
  * o que ela sabe — hora em branco —, e diz **qual dia**.
  */
-export const DIAS = [
+const DIAS = [
   ['MONDAY', 'Segunda-feira'],
   ['TUESDAY', 'Terça-feira'],
   ['WEDNESDAY', 'Quarta-feira'],
@@ -30,7 +30,7 @@ type Dia = (typeof DIAS)[number][0];
 type Faixa = { inicio: string; fim: string };
 type Semana = Record<Dia, Faixa[]>;
 
-export const FRASE_DO_VAZIO =
+const FRASE_DO_VAZIO =
   'Salvar sem nenhuma faixa deixa a loja sem horário: ela não abre por horário, e marcar o ' +
   'que acabou como esgotado hoje passa a ser recusado.';
 

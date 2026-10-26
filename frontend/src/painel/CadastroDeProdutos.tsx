@@ -1,30 +1,19 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
-import { ROTULO, type EstadoDeDisponibilidade } from '../api/disponibilidade';
+import { ROTULO } from '../api/disponibilidade';
 import { emDemonstracao } from '../aki/demo';
 import { dinheiro } from '../aki/formatos';
-import { IMAGEM_PADRAO, type Situacao } from './catalogo';
+import { IMAGEM_PADRAO } from './catalogo';
 import { CascaDaLoja } from './CascaDaLoja';
 import { caminhoDaSecao, caminhoDoNovoProduto } from './caminhos';
 import { useLojaAtual } from './lojaAtual';
+import { COR_DA_DISPONIBILIDADE, ROTULO_DA_SITUACAO } from './rotulos';
 import { useCatalogo } from './useCatalogo';
 
 /**
  * Cadastro de produtos (`aki_delivery/pages/produtos.html`): a lista da loja,
  * com busca, filtro por tipo e os botões Novo produto e Editar.
  */
-export const COR_DA_DISPONIBILIDADE: Record<EstadoDeDisponibilidade, string> = {
-  DISPONIVEL: 'green',
-  ACABANDO: 'orange',
-  ESGOTADO_HOJE: 'vermelho',
-  ESGOTADO_INDETERMINADO: 'vermelho',
-};
-export const ROTULO_DA_SITUACAO: Record<Situacao, [string, string]> = {
-  ATIVO: ['Publicado', 'green'],
-  RASCUNHO: ['Rascunho', 'cinza'],
-  INATIVO: ['Inativo', 'cinza'],
-};
-
 export function CadastroDeProdutos() {
   const { estabelecimentoId, fonte } = useLojaAtual();
   const { leitura } = useCatalogo(fonte);

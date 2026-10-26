@@ -4,7 +4,7 @@ import { emDemonstracao } from '../aki/demo';
 import { toast } from '../aki/toast';
 import { IMAGEM_PADRAO, mensagemDoErro, type ItemDoCatalogo } from './catalogo';
 import { CascaDaLoja } from './CascaDaLoja';
-import { COR_DA_DISPONIBILIDADE } from './CadastroDeProdutos';
+import { COR_DA_DISPONIBILIDADE } from './rotulos';
 import { useLojaAtual } from './lojaAtual';
 import { useCatalogo } from './useCatalogo';
 
