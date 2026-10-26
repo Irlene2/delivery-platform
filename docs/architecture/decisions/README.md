@@ -77,6 +77,7 @@
 | 074 | A tela do horário, e a tela que não valida o que o domínio decide | ✅ aceita · **emendada** (19/10/2026: marcar o que acabou não espera a varredura) |
 | 075 | O pedido nasce no canal, e o 7a vem antes do marco 3 | ✅ aceita |
 | 076 | O convite aceita antes de entrar | ✅ aceita |
+| 077 | O recorte da entrega de 15/11: o pedido nasce pelo link do cardápio | 📝 proposta |
 
 **Setenta e três escritas, duas sem objeto — estas com registro próprio desde
 25/08/2026 —, nenhuma a escrever.**
