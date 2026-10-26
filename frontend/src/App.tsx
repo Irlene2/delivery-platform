@@ -1,25 +1,28 @@
 import { Navigate, Route, Routes } from 'react-router';
-import { EntrarPage } from './paginas/EntrarPage';
+import { CardapioDoCliente } from './cliente/CardapioDoCliente';
+import { InicioDoCliente } from './cliente/InicioDoCliente';
+import { MeusPedidos } from './cliente/MeusPedidos';
+import { EntregadorPage } from './entregador/EntregadorPage';
 import { CadastrarPage } from './paginas/CadastrarPage';
 import { CadastroDeLojaPage } from './paginas/CadastroDeLojaPage';
 import { ConvitePage } from './paginas/ConvitePage';
+import { EntrarPage } from './paginas/EntrarPage';
 import { PainelPage } from './paginas/PainelPage';
+import { CadastroDeProdutos } from './painel/CadastroDeProdutos';
+import { CardapioDaLoja } from './painel/CardapioDaLoja';
+import { Disponibilidade } from './painel/Disponibilidade';
+import { EditorDeProduto } from './painel/EditorDeProduto';
+import { Equipe } from './painel/Equipe';
+import { HorarioDaLoja } from './painel/Horario';
 import { InicioDoPainel } from './painel/InicioDoPainel';
-import {
-  ListaDaSecao,
-  EquipeDaLoja,
-  HorarioDaLoja,
-  LojaDoPainel,
-  NovoProdutoDaLoja,
-  ProdutoDaSecao,
-  SecaoInicial,
-} from './painel/LojaDoPainel';
+import { InicioDaLoja, LojaDoPainel } from './painel/LojaDoPainel';
 import { ExigeSessao } from './rotas/ExigeSessao';
 
 /**
- * As rotas, e a de `*` não é descuido: sem ela, um caminho errado renderiza
- * página em branco sem erro nenhum no console, que é o defeito mais difícil de
- * diagnosticar num roteador.
+ * As rotas. As telas são as do protótipo `aki_delivery`, com o mesmo CSS.
+ *
+ * A de `*` não é descuido: sem ela, um caminho errado renderiza página em
+ * branco sem erro nenhum no console.
  */
 export function App() {
   return (
@@ -29,6 +32,7 @@ export function App() {
       <Route path="/cadastrar" element={<CadastrarPage />} />
       {/* ADR-070 §4: pública, fora do ExigeSessao — quem abre o link pode não ter conta. */}
       <Route path="/convite/:token" element={<ConvitePage />} />
+
       {/* ADR-061: a loja escolhida mora na URL, e cada tela do painel tem endereço. */}
       <Route
         path="/painel"
@@ -41,20 +45,24 @@ export function App() {
         <Route index element={<InicioDoPainel />} />
         <Route path="lojas/nova" element={<CadastroDeLojaPage />} />
         <Route path="lojas/:estabelecimentoId" element={<LojaDoPainel />}>
-          <Route index element={<SecaoInicial />} />
-          <Route path="produtos" element={<ListaDaSecao secao="cardapio" />} />
+          <Route index element={<InicioDaLoja />} />
+          <Route path="produtos" element={<CadastroDeProdutos />} />
           {/* Segmento fixo ganha do :produtoId no ranking do roteador. ADR-067 §3. */}
-          <Route path="produtos/novo" element={<NovoProdutoDaLoja />} />
-          <Route path="produtos/:produtoId" element={<ProdutoDaSecao secao="cardapio" />} />
-          <Route path="disponibilidade" element={<ListaDaSecao secao="disponibilidade" />} />
-          <Route path="equipe" element={<EquipeDaLoja />} />
+          <Route path="produtos/novo" element={<EditorDeProduto />} />
+          <Route path="produtos/:produtoId" element={<EditorDeProduto />} />
+          <Route path="disponibilidade" element={<Disponibilidade />} />
+          <Route path="equipe" element={<Equipe />} />
           <Route path="horario" element={<HorarioDaLoja />} />
-          <Route
-            path="disponibilidade/:produtoId"
-            element={<ProdutoDaSecao secao="disponibilidade" />}
-          />
+          <Route path="cardapio" element={<CardapioDaLoja />} />
         </Route>
       </Route>
+
+      {/* Telas que ainda não têm back-end (pedido, entrega): dados de demonstração. */}
+      <Route path="/cliente" element={<InicioDoCliente />} />
+      <Route path="/cliente/cardapio" element={<CardapioDoCliente />} />
+      <Route path="/cliente/pedidos" element={<MeusPedidos />} />
+      <Route path="/entregador" element={<EntregadorPage />} />
+
       <Route path="*" element={<Navigate to="/painel" replace />} />
     </Routes>
   );

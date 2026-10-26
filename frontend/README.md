@@ -14,6 +14,43 @@ que este produto **decidiu não ter**, e por qual premissa.
     npm run dev        # porta 5173, fixa — é a origem que o gateway aceita
 
 O back precisa estar no ar: `identity-service` em 8081 e o `gateway` em 8080.
+Sem o back, a tela de entrada tem **"Ver as telas em modo demonstração"**: escolha o
+perfil e navegue com os dados de exemplo, sem nenhuma chamada à API.
+
+## O visual: o protótipo `aki_delivery`, em React
+
+As telas são as do protótipo HTML `frontend/aki_delivery`, reescritas em React com
+**a mesma marcação e as mesmas classes**. As folhas de estilo são cópias fiéis, em
+`src/estilos/` (por isso estão no `.prettierignore`):
+
+| Folha                                    | Onde vale                                                                                                             |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `style.css`, `toast.css`, `produtos.css` | o app inteiro (importadas no `main.tsx`)                                                                              |
+| `login.css`                              | só nas telas de entrada — ela redefine `.topbar`, `.badge` e `*`; entra e sai com a tela (`src/aki/estiloDoLogin.ts`) |
+
+O `index.css` importa o Tailwind **sem o preflight**: o reset dele mudaria margens,
+títulos e botões das folhas do protótipo. As utilidades continuam disponíveis.
+
+| Rota                                                           | Tela do protótipo                                                                 | Dados                       |
+| -------------------------------------------------------------- | --------------------------------------------------------------------------------- | --------------------------- |
+| `/entrar`, `/cadastrar`, `/convite/:token`                     | `index.html`                                                                      | `identity`, `merchant`      |
+| `/painel`                                                      | escolha da loja, ou "Cadastrar minha loja"                                        | `GET /me/estabelecimentos`  |
+| `/painel/lojas/nova`                                           | formulário no visual do protótipo                                                 | `POST /me/estabelecimentos` |
+| `/painel/lojas/:id`                                            | `administrador.html` ou `colaborador.html`, pelo **papel** que o servidor informa | pedidos: demonstração       |
+| `.../produtos`, `.../produtos/novo`, `.../produtos/:produtoId` | `produtos.html` (lista e editor, com as opções do produto)                        | `catalog`                   |
+| `.../disponibilidade`                                          | Estoque                                                                           | `catalog`                   |
+| `.../equipe`                                                   | convite para a equipe                                                             | `merchant`                  |
+| `.../cardapio`                                                 | `cardapio.html` com os produtos publicados                                        | `catalog`                   |
+| `/cliente`, `/cliente/cardapio`, `/cliente/pedidos`            | `cliente.html`, `cardapio.html`, `pedidos.html`                                   | demonstração                |
+| `/entregador`                                                  | `entregador.html`                                                                 | demonstração                |
+
+**O que ainda é demonstração** (sem rota no back): pedidos, carrinho, checkout,
+ticket, vendas, WhatsApp, entregador e a área do cliente. Ficam em `sessionStorage`
+(`src/aki/pedidos.ts`), e os valores são só exibição.
+
+**O que o servidor ainda não sabe**, e a tela diz: alterar nome, tipo, descrição ou
+preço de um produto existente; criar grupos de opções; guardar foto e selo. Os
+ingredientes vão no fim da descrição (`Ingredientes: a, b, c`) e voltam separados.
 
 ## 15.A — front mínimo (marco 3)
 

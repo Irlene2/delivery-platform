@@ -1,140 +1,288 @@
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
-import { useSessao } from '../auth/useSessao';
 import { ErroDaApi, SemResposta } from '../api/cliente';
-import { Aviso } from '../componentes/Aviso';
-import { Botao } from '../componentes/Botao';
-import { Campo } from '../componentes/Campo';
+import { useSessao } from '../auth/useSessao';
+import { entrarEmDemonstracao, sairDaDemonstracao, type PerfilDeDemonstracao } from '../aki/demo';
+import { AvisoDoCartao, CabecalhoDoCartao, TelaDeEntrada } from '../aki/TelaDeEntrada';
 
 /**
- * Entrar: telefone e senha.
+ * Entrar — a tela de login do protótipo, ligada ao `identity`.
  *
- * <h2>É telefone, e há senha</h2>
- *
- * O `LoginRequest` do contrato é `{ telefone, senha }`. Não é e-mail — e não é
- * o código de seis dígitos, que serve para verificar o telefone no cadastro e
- * não para entrar. (Eu afirmei o contrário em 28/09, ao criticar o protótipo, e
- * estava errado; a correção está na página do marco 2.)
- *
- * <h2>Nenhum seletor de perfil, e essa ausência é a decisão</h2>
- *
- * O protótipo tinha um `<select>` chamado "Tipo de acesso" com Administrador,
- * Colaborador, Entregador e Cliente, e o destino depois do login era a página
- * escolhida. Isso é autorização declarada pelo cliente, e é o inverso deste
- * sistema: o token tem seis claims e **nenhuma permissão dentro**
- * (`CLAUDE.md`: *"Permissão é do vínculo usuário × estabelecimento e é resolvida
- * por requisição"*). O que se pode fazer vem do `merchant`, por loja.
- *
- * <h2>O 401 não explica, e a tela não inventa</h2>
- *
- * O `identity` responde 401 com `detail: "telefone ou senha inválidos"` — uma
- * mensagem só, de propósito (ADR-037 §7): distinguir "não existe" de "senha
- * errada" transformaria o login num verificador de quem tem conta. A tela ecoa
- * o que veio e não acrescenta palpite.
+ * Entra por **telefone e senha**. O perfil não é escolhido aqui: depois do
+ * login, o painel lê o papel da pessoa em cada loja, e é o servidor que decide.
+ * O "Tipo de acesso" só aparece no modo demonstração, para ver as telas sem
+ * servidor.
  */
+const DESTINO_DA_DEMONSTRACAO: Record<PerfilDeDemonstracao, string> = {
+  administrador: '/painel',
+  colaborador: '/painel',
+  entregador: '/entregador',
+  cliente: '/cliente',
+};
+
 export function EntrarPage() {
   const { entrar } = useSessao();
   const navegar = useNavigate();
   const local = useLocation();
-
-  const [telefone, setTelefone] = useState('');
-  const [senha, setSenha] = useState('');
-  const [erro, setErro] = useState<string | null>(null);
-  const [ocupado, setOcupado] = useState(false);
-
+  // De onde a pessoa veio e o que ela já pediu para fazer na volta — hoje, aceitar o
+  // convite (ADR-076): a intenção viaja com a volta.
   const volta = local.state as { de?: string; acao?: string } | null;
   const destino = volta?.de ?? '/painel';
-  // A intenção que veio com o destino volta com ele (ADR-076): sem isso, o convite pedido
-  // antes do login chegaria de volta sem saber que foi pedido.
   const naVolta = volta?.acao === undefined ? undefined : { acao: volta.acao };
 
-  /**
-   * O tratador é síncrono, e o trabalho é assíncrono.
-   *
-   * `onSubmit` espera `void`. Passar uma função `async` direto devolve uma
-   * promessa que ninguém recebe: se ela rejeitasse, o erro sumiria no
-   * `unhandledrejection` em vez de virar mensagem na tela. O `void` explícito
-   * diz que a promessa é tratada por dentro — e é, pelo `try/catch` do `enviar`.
-   */
-  function aoEnviar(evento: React.FormEvent) {
+  const [telefone, definirTelefone] = useState('');
+  const [senha, definirSenha] = useState('');
+  const [verSenha, definirVerSenha] = useState(false);
+  const [perfil, definirPerfil] = useState<PerfilDeDemonstracao | ''>('');
+  const [demo, definirDemo] = useState(false);
+  const [erros, definirErros] = useState<{ telefone?: string; senha?: string; perfil?: string }>(
+    {},
+  );
+  const [ocupado, definirOcupado] = useState(false);
+  const [aviso, definirAviso] = useState<string | null>(null);
+
+  async function enviar(evento: FormEvent) {
     evento.preventDefault();
-    void enviar();
-  }
+    definirErros({});
+    definirAviso(null);
 
-  async function enviar() {
-    setErro(null);
-
-    if (telefone.trim().length === 0 || senha.length === 0) {
-      setErro('Preencha telefone e senha.');
+    if (demo) {
+      if (perfil === '') {
+        definirErros({ perfil: 'Selecione qual tela você quer ver.' });
+        return;
+      }
+      entrarEmDemonstracao(perfil);
+      void navegar(DESTINO_DA_DEMONSTRACAO[perfil], { replace: true });
       return;
     }
 
-    setOcupado(true);
+    const faltando: typeof erros = {};
+    if (telefone.trim() === '') faltando.telefone = 'Digite seu telefone.';
+    if (senha === '') faltando.senha = 'Digite sua senha.';
+    if (faltando.telefone !== undefined || faltando.senha !== undefined) {
+      definirErros(faltando);
+      return;
+    }
+
+    definirOcupado(true);
     try {
       await entrar(telefone.trim(), senha);
-      // `void`: no React Router 7 o navigate pode devolver promessa, e esperar por
-      // ela aqui prenderia o `finally` que solta o botão.
+      sairDaDemonstracao();
       void navegar(destino, { replace: true, state: naVolta });
     } catch (causa) {
-      if (causa instanceof ErroDaApi) {
-        // O 401 do login TEM corpo; o 401 de token não tem. O `??` é essa
-        // diferença, e não defensividade genérica.
-        setErro(causa.detalhe ?? 'Não foi possível entrar.');
-      } else if (causa instanceof SemResposta) {
-        setErro('Não foi possível falar com o servidor. Verifique se ele está no ar.');
-      } else {
-        setErro('Não foi possível entrar.');
+      let frase = 'Não foi possível entrar.';
+      if (causa instanceof ErroDaApi && causa.detalhe !== undefined) frase = causa.detalhe;
+      if (causa instanceof SemResposta) {
+        frase = 'Não foi possível falar com o servidor. Verifique se o back-end está no ar.';
       }
+      definirErros({ senha: frase });
     } finally {
-      setOcupado(false);
+      definirOcupado(false);
     }
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-sm flex-col justify-center gap-6 px-4 py-10">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-50">
-          Entrar
-        </h1>
-        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Painel de quem vende.</p>
-      </header>
+    <TelaDeEntrada>
+      <CabecalhoDoCartao
+        selo="Acesso ao sistema"
+        icone="lock"
+        titulo="Bem-vindo!"
+        texto="Entre na sua conta para continuar."
+      />
 
-      <form onSubmit={aoEnviar} noValidate className="flex flex-col gap-4">
-        {erro !== null && <Aviso tom="erro">{erro}</Aviso>}
+      <form
+        id="loginForm"
+        className="login-form"
+        noValidate
+        onSubmit={(evento) => void enviar(evento)}
+      >
+        <div className="form-group">
+          <label htmlFor="emailInput">Telefone</label>
+          <div className="input-container">
+            <span className="material-icons input-icon">person</span>
+            <input
+              type="tel"
+              id="emailInput"
+              name="telefone"
+              inputMode="tel"
+              placeholder="(21) 99999-0000"
+              autoComplete="username"
+              className={erros.telefone !== undefined ? 'input-error' : undefined}
+              value={telefone}
+              onChange={(evento) => definirTelefone(evento.target.value)}
+            />
+          </div>
+          <small className="error-message" id="emailError">
+            {erros.telefone}
+          </small>
+        </div>
 
-        <Campo
-          rotulo="Telefone"
-          type="tel"
-          inputMode="tel"
-          autoComplete="username"
-          value={telefone}
-          onChange={(evento) => setTelefone(evento.target.value)}
-          placeholder="(21) 99999-0000"
-        />
+        <div className="form-group">
+          <div className="form-label-row">
+            <label htmlFor="passwordInput">Senha</label>
+            <a
+              href="#"
+              className="forgot-password"
+              id="forgotPassword"
+              onClick={(evento) => {
+                evento.preventDefault();
+                definirAviso('A recuperação de senha será disponibilizada em uma próxima etapa.');
+              }}
+            >
+              Esqueci minha senha
+            </a>
+          </div>
+          <div className="input-container">
+            <span className="material-icons input-icon">lock</span>
+            <input
+              type={verSenha ? 'text' : 'password'}
+              id="passwordInput"
+              name="password"
+              placeholder="Digite sua senha"
+              autoComplete="current-password"
+              className={erros.senha !== undefined ? 'input-error' : undefined}
+              value={senha}
+              onChange={(evento) => definirSenha(evento.target.value)}
+            />
+            <button
+              type="button"
+              className="password-toggle"
+              id="passwordToggle"
+              aria-label={verSenha ? 'Ocultar senha' : 'Mostrar senha'}
+              onClick={() => definirVerSenha((valor) => !valor)}
+            >
+              <span className="material-icons">{verSenha ? 'visibility' : 'visibility_off'}</span>
+            </button>
+          </div>
+          <small className="error-message" id="passwordError">
+            {erros.senha}
+          </small>
+        </div>
 
-        <Campo
-          rotulo="Senha"
-          type="password"
-          autoComplete="current-password"
-          value={senha}
-          onChange={(evento) => setSenha(evento.target.value)}
-        />
+        <div className="form-group access-group" hidden={!demo}>
+          <label htmlFor="roleInput">Tipo de acesso</label>
+          <div className="input-container access-select-container">
+            <span className="material-icons input-icon">badge</span>
+            <select
+              id="roleInput"
+              name="role"
+              value={perfil}
+              className={erros.perfil !== undefined ? 'input-error' : undefined}
+              onChange={(evento) => definirPerfil(evento.target.value as PerfilDeDemonstracao)}
+            >
+              <option value="" disabled>
+                Selecione seu perfil
+              </option>
+              <option value="administrador">Administrador</option>
+              <option value="colaborador">Colaborador</option>
+              <option value="entregador">Entregador</option>
+              <option value="cliente">Cliente</option>
+            </select>
+            <span className="material-icons select-arrow">expand_more</span>
+          </div>
+          <small className="error-message" id="roleError">
+            {erros.perfil}
+          </small>
+        </div>
 
-        <Botao type="submit" ocupado={ocupado}>
-          {ocupado ? 'Entrando…' : 'Entrar'}
-        </Botao>
+        <div className="login-options">
+          <label className="remember-option">
+            <input type="checkbox" id="rememberMe" />
+            <span>Lembrar meu acesso</span>
+          </label>
+        </div>
+
+        <button
+          type="submit"
+          className={`login-button${ocupado ? ' loading' : ''}`}
+          id="submitBtn"
+          disabled={ocupado}
+        >
+          <span className="button-text" id="btnText">
+            {ocupado ? 'Entrando' : demo ? 'Ver a tela (demonstração)' : 'Entrar'}
+          </span>
+        </button>
+        {aviso !== null && <AvisoDoCartao>{aviso}</AvisoDoCartao>}
       </form>
 
-      <p className="text-sm text-slate-600 dark:text-slate-400">
-        Ainda não tem conta?{' '}
-        <Link
-          to="/cadastrar"
-          state={local.state as { de?: string } | null}
-          className="font-medium text-slate-900 underline underline-offset-4 dark:text-slate-100"
+      <div className="login-divider">
+        <span />
+        <small>ou continue com</small>
+        <span />
+      </div>
+
+      <div className="social-login">
+        <button
+          type="button"
+          className="social-button"
+          id="googleLogin"
+          aria-label="Entrar com Google"
+          onClick={() =>
+            definirAviso('O login com Google precisa ser conectado a um serviço de autenticação.')
+          }
         >
-          Criar conta
-        </Link>
-      </p>
-    </main>
+          <svg className="social-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M21.35 12.27c0-.78-.07-1.54-.22-2.27H12v4.3h5.24a4.48 4.48 0 0 1-1.94 2.94v2.45h3.14c1.84-1.69 2.91-4.18 2.91-7.42Z"
+              fill="#4285F4"
+            />
+            <path
+              d="M12 21.5c2.63 0 4.84-.87 6.45-2.35l-3.14-2.45c-.87.58-1.98.93-3.31.93-2.54 0-4.69-1.72-5.46-4.03H3.29v2.53A9.75 9.75 0 0 0 12 21.5Z"
+              fill="#34A853"
+            />
+            <path
+              d="M6.54 13.6a5.86 5.86 0 0 1 0-3.2V7.87H3.29a9.76 9.76 0 0 0 0 8.26l3.25-2.53Z"
+              fill="#FBBC05"
+            />
+            <path
+              d="M12 6.37c1.43 0 2.71.49 3.72 1.45l2.79-2.79C16.84 3.45 14.63 2.5 12 2.5a9.75 9.75 0 0 0-8.71 5.37l3.25 2.53C7.31 8.09 9.46 6.37 12 6.37Z"
+              fill="#EA4335"
+            />
+          </svg>
+          <span>Google</span>
+        </button>
+        <button
+          type="button"
+          className="social-button"
+          id="appleLogin"
+          aria-label="Entrar com Apple"
+          onClick={() =>
+            definirAviso('O login com Apple precisa ser conectado a um serviço de autenticação.')
+          }
+        >
+          <svg className="social-icon apple-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.1.8 1.21-.25 2.37-.94 3.66-.84 1.56.13 2.74.74 3.51 1.83-3.22 1.93-2.46 6.18.5 7.36-.59 1.55-1.35 3.09-2.77 3.82ZM12.03 7.25C11.88 4.95 13.74 3.07 15.88 2.89c.3 2.65-2.42 4.62-3.85 4.36Z"
+              fill="currentColor"
+            />
+          </svg>
+          <span>Apple</span>
+        </button>
+      </div>
+
+      <div className="login-footer">
+        <p>
+          Ainda não possui uma conta?{' '}
+          <Link to="/cadastrar" id="createAccount" state={local.state as { de?: string } | null}>
+            Cadastre-se
+          </Link>
+        </p>
+        <p>
+          Sem servidor no ar?{' '}
+          <a
+            href="#"
+            id="demoLink"
+            onClick={(evento) => {
+              evento.preventDefault();
+              definirDemo((valor) => !valor);
+              definirErros({});
+              definirAviso(null);
+            }}
+          >
+            {demo ? 'Voltar ao login com o servidor' : 'Ver as telas em modo demonstração'}
+          </a>
+        </p>
+      </div>
+    </TelaDeEntrada>
   );
 }

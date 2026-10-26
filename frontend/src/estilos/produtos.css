@@ -1,0 +1,87 @@
+/* AKI Delivery — cadastro de produtos (pages/produtos.html).
+   Usa as variáveis do style.css (--surface, --line, --orange…), então segue o
+   modo escuro sem regra própria. */
+
+#vistaLista[hidden],#vistaEditor[hidden],.prod-panel [hidden]{display:none!important}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.prod-panel{padding:20px;margin-bottom:18px}
+.prod-panel .table-title{gap:12px;flex-wrap:wrap}
+.prod-panel h2{margin:0;font-size:18px}
+.prod-novo,.prod-sair{width:auto;flex:0 0 auto}
+
+.prod-aviso{margin:0 0 14px;padding:12px 14px;border-radius:10px;border:1px solid var(--line);background:var(--orange-soft);color:var(--text);font-size:13px}
+.prod-nota{margin:0 0 16px;padding:12px 14px;border-radius:10px;border-left:4px solid var(--orange);background:var(--orange-soft);font-size:13px;line-height:1.45}
+
+.prod-toolbar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.prod-toolbar .search{min-width:220px}
+.prod-toolbar .search input{border:0;outline:0;background:transparent;color:var(--text);width:100%;height:100%}
+.prod-toolbar .select{min-width:180px}
+
+.prod-tabela td,.prod-tabela th{padding:11px 10px;text-align:left;border-bottom:1px solid var(--line);vertical-align:middle}
+.prod-tabela th{color:var(--muted);font-weight:700;font-size:11px}
+.prod-tabela td{font-size:13px}
+.prod-nome{display:flex;align-items:center;gap:10px}
+.prod-nome img{width:42px;height:42px;border-radius:9px;object-fit:cover;flex:0 0 auto;background:var(--line)}
+.prod-nome small{display:block;color:var(--muted);font-size:11px;margin-top:2px}
+.prod-editar{width:auto;min-height:34px;padding:7px 12px}
+.status.cinza{background:var(--line);color:var(--muted)}
+.status.vermelho{background:#fff0ef;color:#c94b42}
+.dark .status.vermelho{background:#34201f;color:#ff9a92}
+.prod-vazio{padding:28px 10px;text-align:center;color:var(--muted)}
+
+.prod-editor{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:22px;align-items:start}
+.prod-form{display:grid;gap:16px}
+.prod-grupo{border:1px solid var(--line);border-radius:12px;padding:14px 16px 16px;margin:0;display:grid;gap:12px;min-width:0}
+.prod-grupo legend{padding:0 6px;font-weight:800;font-size:13px}
+.prod-grupo:disabled{opacity:.62}
+.prod-campo{display:grid;gap:6px;font-size:12px;font-weight:700;color:var(--text)}
+.prod-campo input,.prod-campo select,.prod-campo textarea,.prod-ing-entrada input{width:100%;border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:10px;padding:10px 12px;font-size:14px;font-weight:500;outline:0}
+.prod-campo textarea{resize:vertical;min-height:72px;font-family:inherit}
+.prod-campo input:focus,.prod-campo select:focus,.prod-campo textarea:focus,.prod-ing-entrada input:focus{border-color:var(--orange);box-shadow:0 0 0 3px #f47b2026}
+.prod-campo .campo-invalido{border-color:#d9534f}
+.prod-erro{color:#d9534f;font-weight:600;min-height:0}
+.prod-erro:empty{display:none}
+.prod-linha{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.prod-dica{margin:0;color:var(--muted);font-size:12px}
+
+.prod-ing-entrada{display:flex;gap:8px}
+.prod-ing-entrada .btn{width:auto;flex:0 0 auto}
+.prod-chips{list-style:none;margin:4px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+.prod-chips li{display:inline-flex;align-items:center;gap:4px;background:var(--orange-soft);color:var(--orange-dark);border-radius:20px;padding:5px 6px 5px 11px;font-size:12px;font-weight:700}
+.prod-chips button{border:0;background:transparent;color:inherit;display:grid;place-items:center;width:22px;height:22px;border-radius:50%;padding:0}
+.prod-chips button:hover{background:#f47b2022}
+.prod-chips .material-symbols-outlined{font-size:16px}
+.prod-chips:empty::before{content:"Nenhum ingrediente ainda.";color:var(--muted);font-weight:500;font-size:12px}
+
+.prod-opcao{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-weight:500;cursor:pointer}
+.prod-opcao:has(input:checked){border-color:var(--orange);background:var(--orange-soft)}
+.prod-opcao input{width:auto;flex:0 0 auto;margin:3px 0 0;accent-color:var(--orange)}
+.prod-opcao>span{flex:1;text-align:left}
+.prod-opcao b{display:block;font-size:13px}
+.prod-opcao small{color:var(--muted);font-size:12px}
+
+.prod-acoes{display:flex;gap:10px;flex-wrap:wrap}
+.prod-acoes .btn{width:auto;flex:0 0 auto}
+.prod-confirmar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 14px;border-radius:10px;border:1px solid #ffd4d0;background:#fff7f6;font-size:13px;font-weight:600}
+.dark .prod-confirmar{background:#2a1c1b;border-color:#55302d}
+.prod-confirmar .btn{width:auto;flex:0 0 auto}
+.prod-msg{margin:0;font-size:13px;font-weight:600}
+.prod-msg:empty{display:none}
+.prod-msg.ok{color:var(--green)}
+.prod-msg.erro{color:#d9534f}
+
+.prod-previa{position:sticky;top:80px;display:grid;gap:8px}
+.prod-previa-rotulo{color:var(--muted);font-weight:700;font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+.prod-previa-card{cursor:default;position:relative}
+.prod-previa-card img{width:100%;aspect-ratio:4/3;object-fit:cover}
+.prod-previa-ing{font-size:12px;color:var(--muted)}
+.prod-previa-ing:empty{display:none}
+
+.btn[aria-busy="true"]{opacity:.7;pointer-events:none}
+
+@media (max-width:900px){
+  .prod-editor{grid-template-columns:1fr}
+  .prod-previa{position:static;order:-1;max-width:340px}
+  .prod-linha{grid-template-columns:1fr}
+  .prod-tabela th:nth-child(5),.prod-tabela td:nth-child(5){display:none}
+}

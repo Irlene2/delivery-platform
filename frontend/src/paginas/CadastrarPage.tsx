@@ -1,116 +1,77 @@
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { cadastrar, pedirCodigo } from '../api/autenticacao';
-import { useSessao } from '../auth/useSessao';
 import { ErroDaApi, SemResposta } from '../api/cliente';
-import { Aviso } from '../componentes/Aviso';
-import { Botao } from '../componentes/Botao';
-import { Campo } from '../componentes/Campo';
+import { useSessao } from '../auth/useSessao';
+import { CampoDoCartao } from '../aki/CampoDoCartao';
+import { sairDaDemonstracao } from '../aki/demo';
+import { AvisoDoCartao, CabecalhoDoCartao, TelaDeEntrada } from '../aki/TelaDeEntrada';
 
 /**
- * Cadastro em dois passos, porque a API tem dois passos.
+ * Criar conta, em dois passos, no visual da tela de entrada do protótipo.
  *
- * <h2>O 202 não confirma nada, e a tela não pode dizer que confirma</h2>
+ * 1. o telefone, para o `identity` mandar o código de verificação;
+ * 2. o código, o nome e a senha — e a conta já entra.
  *
- * `POST /api/v1/auth/verification-code` devolve **202 sem corpo, sempre** —
- * inclusive para um telefone que já tem conta, caso em que nenhum código é
- * criado (ADR-042 §5). A razão é que responder diferente transformaria a rota
- * num verificador de quem já é cliente.
- *
- * <p>Então a tela <b>não</b> diz "enviamos um código para o seu telefone". Ela
- * diz o que é verdade: o pedido foi aceito, e se este telefone puder receber um
- * código, ele está a caminho. É uma frase pior de ler e é a única honesta — e
- * uma tela que prometesse a entrega faria o suporte receber a ligação de quem
- * já tinha conta e nunca recebeu nada.
- *
- * <h2>O transporte do código é humano, e isso está escrito</h2>
- *
- * Não existe adaptador de canal ainda: a ADR-042 registra que o código sai em
- * texto claro no log do serviço, e que quem faz o onboarding o entrega. É por
- * isso que o 202 é 202 e não 200 — o que a requisição produz acontece fora
- * dela.
- *
- * <h2>O que o `signup` devolve, e o que ele não devolve</h2>
- *
- * **201 com `{ id }`** — e nenhum token. Cadastrar não autentica. Por isso esta
- * página faz login em seguida com a senha que a pessoa acabou de escolher, em
- * vez de mandá-la digitar tudo de novo numa segunda tela.
+ * A resposta do primeiro passo é a mesma exista ou não o telefone: a tela não
+ * diz "este número já tem conta" (o servidor não conta, de propósito).
  */
+function traduzir(causa: unknown): string {
+  if (causa instanceof ErroDaApi) return causa.detalhe ?? 'Não foi possível concluir o cadastro.';
+  if (causa instanceof SemResposta) {
+    return 'Não foi possível falar com o servidor. Verifique se ele está no ar.';
+  }
+  return 'Não foi possível concluir o cadastro.';
+}
+
 export function CadastrarPage() {
   const { entrar } = useSessao();
   const navegar = useNavigate();
   const local = useLocation();
+  // De onde a pessoa veio e o que ela já pediu para fazer na volta — hoje, aceitar o
+  // convite (ADR-076): a intenção viaja com a volta.
   const volta = local.state as { de?: string; acao?: string } | null;
   const destino = volta?.de ?? '/painel';
-  // A intenção que veio com o destino volta com ele (ADR-076): sem isso, o convite pedido
-  // antes do login chegaria de volta sem saber que foi pedido.
   const naVolta = volta?.acao === undefined ? undefined : { acao: volta.acao };
 
-  const [passo, setPasso] = useState<'telefone' | 'dados'>('telefone');
-  const [telefone, setTelefone] = useState('');
-  const [codigo, setCodigo] = useState('');
-  const [nome, setNome] = useState('');
-  const [senha, setSenha] = useState('');
-  const [erro, setErro] = useState<string | null>(null);
-  const [ocupado, setOcupado] = useState(false);
+  const [passo, definirPasso] = useState<'telefone' | 'dados'>('telefone');
+  const [telefone, definirTelefone] = useState('');
+  const [codigo, definirCodigo] = useState('');
+  const [nome, definirNome] = useState('');
+  const [senha, definirSenha] = useState('');
+  const [erro, definirErro] = useState<string | null>(null);
+  const [ocupado, definirOcupado] = useState(false);
 
-  function traduzir(causa: unknown): string {
-    if (causa instanceof ErroDaApi) {
-      // 400 do identity vem com detail: "código de verificação inválido ou
-      // expirado" ou "telefone inválido". O 401 não acontece aqui.
-      return causa.detalhe ?? 'Não foi possível concluir o cadastro.';
-    }
-    if (causa instanceof SemResposta) {
-      return 'Não foi possível falar com o servidor. Verifique se ele está no ar.';
-    }
-    return 'Não foi possível concluir o cadastro.';
-  }
-
-  /** Tratador síncrono, trabalho assíncrono — ver o javadoc do mesmo par na EntrarPage. */
-  function aoPedir(evento: React.FormEvent) {
+  async function pedir(evento: FormEvent) {
     evento.preventDefault();
-    void pedir();
-  }
-
-  async function pedir() {
-    setErro(null);
-    if (telefone.trim().length === 0) {
-      setErro('Informe o telefone.');
+    definirErro(null);
+    if (telefone.trim() === '') {
+      definirErro('Informe o telefone.');
       return;
     }
-    setOcupado(true);
+    definirOcupado(true);
     try {
       await pedirCodigo(telefone.trim());
-      setPasso('dados');
+      definirPasso('dados');
     } catch (causa) {
-      setErro(traduzir(causa));
+      definirErro(traduzir(causa));
     } finally {
-      setOcupado(false);
+      definirOcupado(false);
     }
   }
 
-  function aoConcluir(evento: React.FormEvent) {
+  async function concluir(evento: FormEvent) {
     evento.preventDefault();
-    void concluir();
-  }
-
-  async function concluir() {
-    setErro(null);
-
-    // As duas conferências que o contrato declara, e só elas: `codigo` e
-    // `nome` sem tamanho mínimo além de não-vazio, `senha` de 8 a 72. Copiar
-    // para cá uma regra que o servidor não tem seria criar uma segunda verdade
-    // — e foi o que o protótipo fez, exigindo seis caracteres de senha.
-    if (codigo.trim().length === 0 || nome.trim().length === 0) {
-      setErro('Preencha o código e o nome.');
+    definirErro(null);
+    if (codigo.trim() === '' || nome.trim() === '') {
+      definirErro('Preencha o código e o nome.');
       return;
     }
     if (senha.length < 8 || senha.length > 72) {
-      setErro('A senha precisa ter de 8 a 72 caracteres.');
+      definirErro('A senha precisa ter de 8 a 72 caracteres.');
       return;
     }
-
-    setOcupado(true);
+    definirOcupado(true);
     try {
       await cadastrar({
         telefone: telefone.trim(),
@@ -118,99 +79,119 @@ export function CadastrarPage() {
         nome: nome.trim(),
         senha,
       });
-      // O signup não devolve token. O login em seguida evita uma segunda tela
-      // pedindo o que a pessoa acabou de digitar.
       await entrar(telefone.trim(), senha);
-      // O destino de quem chegou desviado — o convite, hoje (ADR-070 §3) —, pelo mesmo
-      // state.de do ExigeSessao e do EntrarPage. Sem ele, o painel, como sempre foi.
+      sairDaDemonstracao();
       void navegar(destino, { replace: true, state: naVolta });
     } catch (causa) {
-      setErro(traduzir(causa));
+      definirErro(traduzir(causa));
     } finally {
-      setOcupado(false);
+      definirOcupado(false);
     }
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-sm flex-col justify-center gap-6 px-4 py-10">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-50">
-          Criar conta
-        </h1>
-        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-          {passo === 'telefone'
+    <TelaDeEntrada>
+      <CabecalhoDoCartao
+        selo="Nova conta"
+        icone="person_add"
+        titulo="Criar conta"
+        texto={
+          passo === 'telefone'
             ? 'Primeiro o telefone, para verificar.'
-            : 'Agora o código, seu nome e uma senha.'}
-        </p>
-      </header>
-
-      {erro !== null && <Aviso tom="erro">{erro}</Aviso>}
+            : 'Agora o código, seu nome e uma senha.'
+        }
+      />
 
       {passo === 'telefone' ? (
-        <form onSubmit={aoPedir} noValidate className="flex flex-col gap-4">
-          <Campo
+        <form className="login-form" noValidate onSubmit={(evento) => void pedir(evento)}>
+          <CampoDoCartao
+            id="cadastroTelefone"
             rotulo="Telefone"
+            icone="phone"
             type="tel"
             inputMode="tel"
             autoComplete="username"
-            value={telefone}
-            onChange={(evento) => setTelefone(evento.target.value)}
             placeholder="(21) 99999-0000"
+            value={telefone}
+            onChange={(evento) => definirTelefone(evento.target.value)}
           />
-          <Botao type="submit" ocupado={ocupado}>
-            {ocupado ? 'Pedindo…' : 'Pedir código'}
-          </Botao>
+          <button
+            type="submit"
+            className={`login-button${ocupado ? ' loading' : ''}`}
+            disabled={ocupado}
+          >
+            <span className="button-text">{ocupado ? 'Pedindo…' : 'Pedir código'}</span>
+          </button>
+          {erro !== null && <AvisoDoCartao tom="erro">{erro}</AvisoDoCartao>}
         </form>
       ) : (
-        <form onSubmit={aoConcluir} noValidate className="flex flex-col gap-4">
-          <Aviso tom="neutro">
-            Pedido aceito. <strong>Se este telefone puder receber um código</strong>, ele foi pedido
-            — quem faz o seu cadastro entrega os seis dígitos. O código vale por dez minutos e
-            aceita cinco tentativas.
-          </Aviso>
-
-          <Campo
+        <form className="login-form" noValidate onSubmit={(evento) => void concluir(evento)}>
+          <AvisoDoCartao>
+            Pedido aceito. Se este telefone puder receber um código, ele foi pedido. O código vale
+            por dez minutos e aceita cinco tentativas.
+          </AvisoDoCartao>
+          <CampoDoCartao
+            id="cadastroCodigo"
             rotulo="Código de verificação"
+            icone="pin"
             inputMode="numeric"
             autoComplete="one-time-code"
-            value={codigo}
-            onChange={(evento) => setCodigo(evento.target.value)}
             dica="Seis dígitos."
+            value={codigo}
+            onChange={(evento) => definirCodigo(evento.target.value)}
           />
-          <Campo
+          <CampoDoCartao
+            id="cadastroNome"
             rotulo="Seu nome"
+            icone="badge"
             autoComplete="name"
             maxLength={120}
             value={nome}
-            onChange={(evento) => setNome(evento.target.value)}
+            onChange={(evento) => definirNome(evento.target.value)}
           />
-          <Campo
+          <CampoDoCartao
+            id="cadastroSenha"
             rotulo="Senha"
+            icone="lock"
             type="password"
             autoComplete="new-password"
-            value={senha}
-            onChange={(evento) => setSenha(evento.target.value)}
             dica="De 8 a 72 caracteres."
+            value={senha}
+            onChange={(evento) => definirSenha(evento.target.value)}
           />
-
-          <Botao type="submit" ocupado={ocupado}>
-            {ocupado ? 'Criando…' : 'Criar conta e entrar'}
-          </Botao>
-          <Botao type="button" variante="discreto" onClick={() => setPasso('telefone')}>
-            Corrigir o telefone
-          </Botao>
+          <button
+            type="submit"
+            className={`login-button${ocupado ? ' loading' : ''}`}
+            disabled={ocupado}
+          >
+            <span className="button-text">{ocupado ? 'Criando…' : 'Criar conta e entrar'}</span>
+          </button>
+          {erro !== null && <AvisoDoCartao tom="erro">{erro}</AvisoDoCartao>}
         </form>
       )}
 
-      <p className="text-sm text-slate-600 dark:text-slate-400">
-        Já tem conta?{' '}
-        <Link
-          to="/entrar"
-          className="font-medium text-slate-900 underline underline-offset-4 dark:text-slate-100"
-        >
-          Entrar
-        </Link>
-      </p>
-    </main>
+      <div className="login-footer">
+        {passo === 'dados' && (
+          <p>
+            Telefone errado?{' '}
+            <a
+              href="#"
+              onClick={(evento) => {
+                evento.preventDefault();
+                definirPasso('telefone');
+              }}
+            >
+              Corrigir o telefone
+            </a>
+          </p>
+        )}
+        <p>
+          Já tem conta?{' '}
+          <Link to="/entrar" state={local.state as { de?: string } | null}>
+            Entrar
+          </Link>
+        </p>
+      </div>
+    </TelaDeEntrada>
   );
 }

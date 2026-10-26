@@ -1,13 +1,14 @@
-/* Tailwind 4: uma linha, e a configuração mora no CSS.
-   Não existe tailwind.config.js nesta versão — quem procurar por ele e não
-   achar vai pensar que falta arquivo. */
-@import 'tailwindcss';
+/* Tailwind 4, sem o "preflight".
+   O visual vem das folhas do protótipo aki_delivery (src/estilos/), que contam
+   com os estilos padrão do navegador — o reset do Tailwind mudaria margens,
+   títulos, botões e imagens delas. As utilidades continuam disponíveis. */
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
 
-/* O fundo explícito nos dois temas. Sem isto, o modo escuro do sistema deixa a
-   página branca com texto claro em alguns navegadores. */
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
 }
-body {
-  @apply bg-white text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100;
+:root.dark {
+  color-scheme: dark;
 }

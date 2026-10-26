@@ -2,3 +2,5 @@ src/api/generated/
 dist/
 .tsbuild/
 .tsbuild-node/
+# Cópias fiéis das folhas do protótipo aki_delivery: o visual depende delas iguais.
+src/estilos/

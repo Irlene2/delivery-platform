@@ -1,6 +1,7 @@
 import { Navigate, useLocation } from 'react-router';
 import type { ReactNode } from 'react';
 import { useSessao } from '../auth/useSessao';
+import { emDemonstracao } from '../aki/demo';
 
 /**
  * O guarda de rota — e ele é conveniência, não segurança.
@@ -23,7 +24,8 @@ export function ExigeSessao({ children }: { children: ReactNode }) {
   const { autenticado } = useSessao();
   const local = useLocation();
 
-  if (!autenticado) {
+  // O modo demonstração (sem servidor) também passa: nele nada é pedido à API.
+  if (!autenticado && !emDemonstracao()) {
     return <Navigate to="/entrar" replace state={{ de: local.pathname }} />;
   }
   return <>{children}</>;
