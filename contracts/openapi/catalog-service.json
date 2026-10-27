@@ -8,6 +8,10 @@
   "security" : [ {
     "bearerAuth" : [ ]
   } ],
+  "tags" : [ {
+    "name" : "vitrine",
+    "description" : "Público, sem token: o cardápio pelo link da loja."
+  } ],
   "paths" : {
     "/api/v1/merchants/{estabelecimentoId}/catalog/produtos/{produtoId}/publicacao" : {
       "put" : {
@@ -406,6 +410,39 @@
         }
       }
     },
+    "/api/v1/storefront/{estabelecimentoId}/menu" : {
+      "get" : {
+        "tags" : [ "vitrine" ],
+        "summary" : "O cardápio público da loja",
+        "description" : "Sem token. Só produto publicado, em seção ativa, pela ordem. Sem rascunho, sem inativo, sem grupos de opções. Loja inexistente responde o cardápio vazio: o catalog não conhece lojas.",
+        "operationId" : "cardapio",
+        "parameters" : [ {
+          "name" : "estabelecimentoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "As seções ativas e os produtos publicados; vazio quando a loja não tem nada publicado",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CardapioPublicoResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Identificador da loja malformado"
+          }
+        },
+        "security" : [ ]
+      }
+    },
     "/api/v1/merchants/{estabelecimentoId}/catalog/produtos/{produtoId}" : {
       "get" : {
         "tags" : [ "produto-controller" ],
@@ -680,6 +717,76 @@
           },
           "ativa" : {
             "type" : "boolean"
+          }
+        }
+      },
+      "CardapioPublicoResponse" : {
+        "type" : "object",
+        "description" : "O cardápio público da loja: seções ativas e produtos publicados.",
+        "properties" : {
+          "categorias" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Secao"
+            }
+          },
+          "produtos" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ProdutoNoCardapio"
+            }
+          }
+        }
+      },
+      "ProdutoNoCardapio" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "categoriaId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "nome" : {
+            "type" : "string"
+          },
+          "descricao" : {
+            "type" : "string"
+          },
+          "precoBase" : {
+            "type" : "number",
+            "description" : "Em reais, duas casas. É o preço que o pedido vai cobrar.",
+            "example" : 49.9
+          },
+          "ordem" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "disponibilidade" : {
+            "type" : "string",
+            "enum" : [ "DISPONIVEL", "ACABANDO", "ESGOTADO_HOJE", "ESGOTADO_INDETERMINADO" ]
+          },
+          "vendavel" : {
+            "type" : "boolean",
+            "description" : "Falso quando acabou: aparece, mas não se pede."
+          }
+        }
+      },
+      "Secao" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "nome" : {
+            "type" : "string"
+          },
+          "ordem" : {
+            "type" : "integer",
+            "format" : "int32"
           }
         }
       },
