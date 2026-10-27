@@ -16,6 +16,9 @@ import java.util.UUID;
 public record PedidoResponse(
         UUID id,
         String numero,
+        @Schema(description = "O código do acompanhamento público: a loja o manda ao cliente no "
+                + "link do WhatsApp.")
+        UUID codigoDeAcompanhamento,
         StatusDoPedido status,
         Modalidade modalidade,
         Cliente cliente,
@@ -49,7 +52,8 @@ public record PedidoResponse(
         var e = p.getEndereco();
         var r = p.getPagamentoRegistrado();
         var d = p.getPagamentoDeclarado();
-        return new PedidoResponse(p.getId(), p.numeroLegivel(), p.getStatus(), p.getModalidade(),
+        return new PedidoResponse(p.getId(), p.numeroLegivel(), p.getCodigoDeAcompanhamento(),
+                p.getStatus(), p.getModalidade(),
                 new Cliente(p.getCliente().nome(), p.getCliente().telefone().numero()),
                 e == null ? null : new Endereco(e.logradouro(), e.bairro(), e.complemento()),
                 p.getItens().stream().map(ItemResponse::de).toList(),
