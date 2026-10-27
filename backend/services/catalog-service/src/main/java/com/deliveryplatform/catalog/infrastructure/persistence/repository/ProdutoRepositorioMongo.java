@@ -1,7 +1,9 @@
 package com.deliveryplatform.catalog.infrastructure.persistence.repository;
 
 import com.deliveryplatform.catalog.application.port.out.ProdutoRepositorio;
+import com.deliveryplatform.catalog.application.port.out.VitrineRepositorio;
 import com.deliveryplatform.catalog.domain.model.EstadoDeDisponibilidade;
+import com.deliveryplatform.catalog.domain.model.EstadoDePublicacao;
 import com.deliveryplatform.catalog.domain.model.Produto;
 import com.deliveryplatform.catalog.infrastructure.persistence.entity.ProdutoDocumento;
 import com.deliveryplatform.catalog.infrastructure.persistence.mapper.ProdutoMapper;
@@ -32,7 +34,7 @@ import java.util.UUID;
  * verdades sobre o mesmo documento, e a segunda envelhece.
  */
 @Repository
-public class ProdutoRepositorioMongo implements ProdutoRepositorio {
+public class ProdutoRepositorioMongo implements ProdutoRepositorio, VitrineRepositorio {
 
     private static final String ESGOTADO_HOJE = EstadoDeDisponibilidade.ESGOTADO_HOJE.name();
 
@@ -172,6 +174,21 @@ public class ProdutoRepositorioMongo implements ProdutoRepositorio {
         return mongo.find(consulta, Document.class, mongo.getCollectionName(ProdutoDocumento.class))
                 .stream()
                 .map(documento -> documento.get("_id", UUID.class))
+                .toList();
+    }
+
+    /**
+     * O cardápio público (ADR-077). O filtro de estado é no banco, e não depois: um cardápio
+     * com muito rascunho não deve trazer o rascunho para a memória só para descartá-lo.
+     */
+    @Override
+    public List<Produto> publicadosDaLoja(UUID estabelecimentoId, int limite) {
+        Query consulta = new Query(Criteria.where("estabelecimentoId").is(estabelecimentoId)
+                .and("estadoDePublicacao").is(EstadoDePublicacao.ATIVO.name()))
+                .with(ORDEM_DA_LISTA)
+                .limit(limite);
+        return mongo.find(consulta, ProdutoDocumento.class).stream()
+                .map(ProdutoMapper::paraDominio)
                 .toList();
     }
 }

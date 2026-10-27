@@ -63,6 +63,43 @@ class CadeiaDeFiltrosIT extends GatewayNoAr {
                 .exchange().expectStatus().isUnauthorized();
     }
 
+    // ── a vitrine (ADR-077) ─────────────────────────────────────────────────
+
+    private static final String VITRINE = "/api/v1/storefront/7b1f0c22-9d3e-4a51-8f6b-2c0d7e5a1934";
+
+    @Test
+    void o_cardapio_publico_passa_sem_token() {
+        cliente().get().uri(VITRINE + "/menu").exchange().expectStatus().isOk();
+    }
+
+    @Test
+    void a_taxa_da_loja_passa_sem_token() {
+        cliente().get().uri(VITRINE + "/orders/settings").exchange().expectStatus().isOk();
+    }
+
+    @Test
+    void fazer_o_pedido_passa_sem_token() {
+        cliente().post().uri(VITRINE + "/orders").exchange().expectStatus().isOk();
+    }
+
+    @Test
+    void acompanhar_o_pedido_passa_sem_token() {
+        cliente().get().uri("/api/v1/storefront/orders/c3f9a1d0-0000-4000-8000-000000000001")
+                .exchange().expectStatus().isOk();
+    }
+
+    @Test
+    void a_vitrine_e_estreita_listar_os_pedidos_sem_token_e_401() {
+        // O GET de /orders, sob a vitrine, não é público: só o POST é.
+        cliente().get().uri(VITRINE + "/orders").exchange().expectStatus().isUnauthorized();
+    }
+
+    @Test
+    void o_painel_de_pedidos_continua_exigindo_token() {
+        cliente().get().uri("/api/v1/merchants/7b1f0c22-9d3e-4a51-8f6b-2c0d7e5a1934/orders")
+                .exchange().expectStatus().isUnauthorized();
+    }
+
     @Test
     void o_health_passa_sem_token() {
         cliente().get().uri("/actuator/health").exchange().expectStatus().isOk();

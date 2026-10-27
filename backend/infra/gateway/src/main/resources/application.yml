@@ -7,7 +7,7 @@ server:
 # é silenciosa: o serviço sobe e simplesmente não roteia.
 #
 # Isto deixou de depender de conferência manual: RoteamentoIT sobe o gateway
-# contra oito upstreams de mentira e confere as quinze rotas, uma a uma. Se o
+# contra oito upstreams de mentira e confere as rotas, uma a uma. Se o
 # namespace estiver errado, nenhuma casa e a suíte inteira fica vermelha.
 
 spring:
@@ -56,6 +56,26 @@ spring:
               uri: ${SERVICE_MERCHANT_URI:http://localhost:8082}
               predicates:
                 - Path=/api/v1/convites/**
+
+            # ── vitrine: PÚBLICA, sem JWT (ADR-077) ─────────────────────
+            # O cliente compra pelo link do cardápio, sem conta. Três rotas
+            # exatas, e não /storefront/**: o cardápio é do catalog, o pedido
+            # e o acompanhamento são do order. Quais métodos passam sem token
+            # é decidido no SecurityConfig, rota a rota.
+            - id: storefront-menu
+              uri: ${SERVICE_CATALOG_URI:http://localhost:8083}
+              predicates:
+                - Path=/api/v1/storefront/{merchantId}/menu
+
+            - id: storefront-orders
+              uri: ${SERVICE_ORDER_URI:http://localhost:8085}
+              predicates:
+                - Path=/api/v1/storefront/{merchantId}/orders/**
+
+            - id: storefront-tracking
+              uri: ${SERVICE_ORDER_URI:http://localhost:8085}
+              predicates:
+                - Path=/api/v1/storefront/orders/{codigo}
 
             # ── escopo do estabelecimento ───────────────────────────────
             # merchantId sempre na mesma posição: é dele que a invariante 9

@@ -92,6 +92,7 @@ class ContratoDeErrosIT extends Infraestrutura {
             BASE + "/{produtoId}/grupos/{grupoId}/opcoes/{opcaoId}/disponibilidade";
     private static final String PUBLICAR = BASE + "/{produtoId}/publicacao";
     private static final String CATEGORIAS = "/api/v1/merchants/{estabelecimentoId}/catalog/categorias";
+    private static final String MENU = "/api/v1/storefront/{estabelecimentoId}/menu";
 
     /**
      * O que o contrato declara e nenhum caso provoca, cada item com o motivo.
@@ -328,7 +329,11 @@ class ContratoDeErrosIT extends Infraestrutura {
                         () -> {
                             Cena c = cena("CRIAR_PRODUTO");
                             return listarCategorias(c.loja().toString(), c.token());
-                        }));
+                        }),
+
+                new Provocacao("GET", MENU, 400, "identificador da loja que não é UUID — a rota é pública, e não há 401 nem 403 a provocar",
+                        () -> cliente().get().uri("/api/v1/storefront/nao-e-uuid/menu")
+                                .exchange().returnResult(String.class).getStatus().value()));
     }
 
     // ── as duas direções ────────────────────────────────────────────────────

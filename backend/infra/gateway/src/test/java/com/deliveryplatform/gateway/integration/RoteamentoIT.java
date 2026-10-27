@@ -78,7 +78,13 @@ class RoteamentoIT extends GatewayNoAr {
             new Caso("/api/v1/merchants/{loja}/payments", "payment", "payments"),
             new Caso("/api/v1/merchants/{loja}/deliveries", "delivery", "deliveries"),
             new Caso("/api/v1/couriers/me/entregas", "delivery", "courier-self"),
-            new Caso("/api/v1/convites/um-token-qualquer", "merchant", "convites"));
+            new Caso("/api/v1/convites/um-token-qualquer", "merchant", "convites"),
+            // A vitrine (ADR-077): o cardápio é do catalog; pedido e acompanhamento, do order.
+            new Caso("/api/v1/storefront/{loja}/menu", "catalog", "storefront-menu"),
+            new Caso("/api/v1/storefront/{loja}/orders", "order", "storefront-orders"),
+            new Caso("/api/v1/storefront/{loja}/orders/settings", "order", "storefront-orders"),
+            new Caso("/api/v1/storefront/orders/c3f9a1d0-0000-4000-8000-000000000001", "order",
+                    "storefront-tracking"));
 
     private static final List<Caso> AUTH = List.of(
             new Caso("/api/v1/auth/login", "identity", "auth"),

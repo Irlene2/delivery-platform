@@ -6,6 +6,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplicat
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -86,6 +87,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(rotas -> {
                     rotas.dispatcherTypeMatchers(DispatcherType.ERROR).permitAll();
                     rotas.requestMatchers("/actuator/health/**").permitAll();
+                    // O cardápio público, e só ele (ADR-077). Padrão exato, um nível por
+                    // asterisco: uma rota nova debaixo de /storefront nasce fechada.
+                    rotas.requestMatchers(HttpMethod.GET, "/api/v1/storefront/*/menu").permitAll();
                     if (docs.abertas()) {
                         // ADR-050: só no computador de quem desenvolve, e o
                         // padrão da propriedade é false — esquecer fecha.

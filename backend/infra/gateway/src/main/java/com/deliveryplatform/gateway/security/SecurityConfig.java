@@ -94,6 +94,15 @@ public class SecurityConfig {
                         // abaixo — o token é exigido aqui, antes de chegar ao serviço.
                         .requestMatchers(HttpMethod.GET, "/api/v1/convites/*").permitAll()
 
+                        // A vitrine (ADR-077): o cliente pede pelo link do cardápio, sem
+                        // conta. Quatro pares exatos de método e caminho, um segmento por
+                        // asterisco — o painel de pedidos, sob /merchants, continua com token,
+                        // e qualquer outra rota sob /storefront cai no authenticated().
+                        .requestMatchers(HttpMethod.GET, "/api/v1/storefront/*/menu").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/storefront/*/orders/settings").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/storefront/*/orders").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/storefront/orders/*").permitAll()
+
                         // Probe de contêiner não carrega credencial, e health
                         // protegido reinicia o serviço em laço.
                         .requestMatchers(HttpMethod.GET, "/actuator/health/**").permitAll()
