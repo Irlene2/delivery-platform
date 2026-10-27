@@ -112,6 +112,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/storefront/{estabelecimentoId}/menu': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * O cardápio público da loja
+     * @description Sem token. Só produto publicado, em seção ativa, pela ordem. Sem rascunho, sem inativo, sem grupos de opções. Loja inexistente responde o cardápio vazio: o catalog não conhece lojas.
+     */
+    get: operations['cardapio'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/merchants/{estabelecimentoId}/catalog/produtos/{produtoId}': {
     parameters: {
       query?: never;
@@ -257,6 +277,37 @@ export interface components {
       /** Format: int32 */
       ordem?: number;
       ativa?: boolean;
+    };
+    /** @description O cardápio público da loja: seções ativas e produtos publicados. */
+    CardapioPublicoResponse: {
+      categorias?: components['schemas']['Secao'][];
+      produtos?: components['schemas']['ProdutoNoCardapio'][];
+    };
+    ProdutoNoCardapio: {
+      /** Format: uuid */
+      id?: string;
+      /** Format: uuid */
+      categoriaId?: string;
+      nome?: string;
+      descricao?: string;
+      /**
+       * @description Em reais, duas casas. É o preço que o pedido vai cobrar.
+       * @example 49.9
+       */
+      precoBase?: number;
+      /** Format: int32 */
+      ordem?: number;
+      /** @enum {string} */
+      disponibilidade?: 'DISPONIVEL' | 'ACABANDO' | 'ESGOTADO_HOJE' | 'ESGOTADO_INDETERMINADO';
+      /** @description Falso quando acabou: aparece, mas não se pede. */
+      vendavel?: boolean;
+    };
+    Secao: {
+      /** Format: uuid */
+      id?: string;
+      nome?: string;
+      /** Format: int32 */
+      ordem?: number;
     };
     PaginaResponseProdutoResumoResponse: {
       conteudo?: components['schemas']['ProdutoResumoResponse'][];
@@ -647,6 +698,35 @@ export interface operations {
       };
       /** @description Sem vínculo, sem CRIAR_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa */
       403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  cardapio: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        estabelecimentoId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description As seções ativas e os produtos publicados; vazio quando a loja não tem nada publicado */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CardapioPublicoResponse'];
+        };
+      };
+      /** @description Identificador da loja malformado */
+      400: {
         headers: {
           [name: string]: unknown;
         };

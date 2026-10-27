@@ -34,7 +34,7 @@ function menuDa(loja: LojaDoUsuario): ItemDoMenu[] {
   if (loja.papel === 'COLABORADOR') {
     return [
       { chave: 'dashboard', rotulo: 'Painel', icone: 'dashboard', para: base },
-      { chave: 'pedidos', rotulo: 'Pedidos', icone: 'receipt_long', para: `${base}#pedidos` },
+      { chave: 'pedidos', rotulo: 'Pedidos', icone: 'receipt_long', para: `${base}/pedidos` },
       ...(cadastra
         ? [
             {
@@ -60,7 +60,7 @@ function menuDa(loja: LojaDoUsuario): ItemDoMenu[] {
 
   return [
     { chave: 'dashboard', rotulo: 'Dashboard', icone: 'dashboard', para: base },
-    { chave: 'pedidos', rotulo: 'Pedidos', icone: 'receipt_long', para: `${base}#pedidos` },
+    { chave: 'pedidos', rotulo: 'Pedidos', icone: 'receipt_long', para: `${base}/pedidos` },
     { chave: 'catalogo', rotulo: 'Catálogo', icone: 'restaurant_menu', para: `${base}/produtos` },
     { chave: 'cardapio', rotulo: 'Ver cardápio', icone: 'storefront', para: `${base}/cardapio` },
     { chave: 'estoque', rotulo: 'Estoque', icone: 'inventory_2', para: `${base}/disponibilidade` },
@@ -82,7 +82,7 @@ function menuDa(loja: LojaDoUsuario): ItemDoMenu[] {
       chave: 'configuracoes',
       rotulo: 'Configurações',
       icone: 'settings',
-      para: `${base}#configuracoes`,
+      para: `${base}/configuracoes`,
     },
     // A porta para a segunda loja (passagem humana de 19/10, item 3).
     { chave: 'lojas', rotulo: 'Minhas lojas', icone: 'storefront', para: '/painel?todas=1' },

@@ -93,10 +93,55 @@ export function limparCarrinho(): void {
   salvarCarrinho([]);
 }
 
-export function totaisDoCarrinho(itens: readonly ItemDoCarrinho[]) {
+/**
+ * Os totais **para exibir**. A taxa padrão (5) é a da demonstração; o checkout da loja passa
+ * a taxa que a loja configurou. O total que vale é o da resposta do servidor.
+ */
+export function totaisDoCarrinho(itens: readonly ItemDoCarrinho[], taxa = 5) {
   const subtotal = itens.reduce((total, item) => total + item.price * item.qty, 0);
-  const fee = subtotal > 0 ? 5 : 0;
+  const fee = subtotal > 0 ? taxa : 0;
   return { subtotal, fee, total: subtotal + fee };
+}
+
+// ---------- o carrinho pertence a uma loja ----------
+const CHAVE_LOJA_DO_CARRINHO = 'aki.carrinho.loja';
+
+/**
+ * Ao abrir o cardápio de uma loja, o carrinho de outra loja é esvaziado: um pedido só tem
+ * produtos de uma loja, e o servidor recusaria o resto como "fora do cardápio".
+ */
+export function carrinhoDaLoja(estabelecimentoId: string): void {
+  const dona = ler<string | null>(CHAVE_LOJA_DO_CARRINHO, null);
+  if (dona !== estabelecimentoId) {
+    gravar(CHAVE_LOJA_DO_CARRINHO, estabelecimentoId);
+    if (carrinho.length > 0) salvarCarrinho([]);
+  }
+}
+
+// ---------- os pedidos de verdade feitos nesta aba ----------
+export interface PedidoLembrado {
+  readonly codigo: string;
+  readonly estabelecimentoId: string;
+  readonly numero: string;
+  readonly total: number;
+  readonly criadoEm: string;
+}
+
+const CHAVE_LEMBRADOS = 'aki.pedidosFeitos';
+let lembrados: PedidoLembrado[] = ler<PedidoLembrado[]>(CHAVE_LEMBRADOS, []);
+
+export function usePedidosLembrados(): readonly PedidoLembrado[] {
+  return useSyncExternalStore(assinar, () => lembrados);
+}
+
+/**
+ * Guarda o código de acompanhamento. Sem conta de cliente, o código **é** o acesso ao pedido:
+ * perdê-lo é perder o acompanhamento — por isso ele também vai no link da tela de sucesso.
+ */
+export function lembrarPedido(pedido: PedidoLembrado): void {
+  lembrados = [pedido, ...lembrados.filter((um) => um.codigo !== pedido.codigo)].slice(0, 20);
+  gravar(CHAVE_LEMBRADOS, lembrados);
+  avisar();
 }
 
 export const quantidadeNoCarrinho = (itens: readonly ItemDoCarrinho[]): number =>

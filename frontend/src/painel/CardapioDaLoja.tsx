@@ -16,7 +16,7 @@ export function CardapioDaLoja() {
       <ConteudoDoCardapio
         fonte={fonte}
         linkDoCardapio={`${base}/cardapio`}
-        linkDosPedidos={`${base}#pedidos`}
+        linkDosPedidos={`${base}/pedidos`}
       />
       <footer className="footer">
         <b>AKI Delivery</b> © 2026 — Cardápio online

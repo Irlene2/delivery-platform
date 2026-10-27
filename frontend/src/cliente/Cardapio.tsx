@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { ESTADOS, ROTULO, type EstadoDeDisponibilidade } from '../api/disponibilidade';
 import { dinheiro } from '../aki/formatos';
 import { adicionarAoCarrinho } from '../aki/pedidos';
+import type { PedidoPublico } from '../api/pedidos';
+import type { Vitrine } from '../pedido/fontes';
 import { toast } from '../aki/toast';
 import {
   IMAGEM_PADRAO,
@@ -25,10 +27,17 @@ export function ConteudoDoCardapio({
   fonte,
   linkDoCardapio,
   linkDosPedidos,
+  vitrine,
+  aoCriarPedido,
+  textoSemProdutos = 'Publique produtos pelo cadastro de produtos para eles aparecerem aqui.',
 }: {
   fonte: FonteDoCatalogo;
   linkDoCardapio: string;
   linkDosPedidos: string;
+  /** O cardápio pelo link da loja: o carrinho fecha um pedido de verdade (ADR-077). */
+  vitrine?: Vitrine;
+  aoCriarPedido?: (pedido: PedidoPublico) => void;
+  textoSemProdutos?: string;
 }) {
   const { leitura, trocar } = useCatalogo(fonte);
   const [categoria, definirCategoria] = useState('Todos');
@@ -256,7 +265,7 @@ export function ConteudoDoCardapio({
           <div className="empty-menu">
             <span className="material-symbols-outlined">restaurant_menu</span>
             <strong>Nenhum produto publicado ainda</strong>
-            <p>Publique produtos pelo cadastro de produtos para eles aparecerem aqui.</p>
+            <p>{textoSemProdutos}</p>
           </div>
         ) : filtrados.length === 0 ? (
           <div className="empty-menu">
@@ -323,6 +332,8 @@ export function ConteudoDoCardapio({
         variante="cardapio"
         linkDoCardapio={linkDoCardapio}
         linkDosPedidos={linkDosPedidos}
+        {...(vitrine === undefined ? {} : { vitrine })}
+        {...(aoCriarPedido === undefined ? {} : { aoCriarPedido })}
       />
 
       <div

@@ -1,7 +1,10 @@
 import { Navigate, Route, Routes } from 'react-router';
+import { AcompanhamentoDoPedido } from './cliente/AcompanhamentoDoPedido';
 import { CardapioDoCliente } from './cliente/CardapioDoCliente';
 import { InicioDoCliente } from './cliente/InicioDoCliente';
+import { LojaPublica } from './cliente/LojaPublica';
 import { MeusPedidos } from './cliente/MeusPedidos';
+import { PedidosDaVitrine } from './cliente/PedidosDaVitrine';
 import { EntregadorPage } from './entregador/EntregadorPage';
 import { CadastrarPage } from './paginas/CadastrarPage';
 import { CadastroDeLojaPage } from './paginas/CadastroDeLojaPage';
@@ -10,12 +13,14 @@ import { EntrarPage } from './paginas/EntrarPage';
 import { PainelPage } from './paginas/PainelPage';
 import { CadastroDeProdutos } from './painel/CadastroDeProdutos';
 import { CardapioDaLoja } from './painel/CardapioDaLoja';
+import { ConfiguracoesDaLoja } from './painel/ConfiguracoesDaLoja';
 import { Disponibilidade } from './painel/Disponibilidade';
 import { EditorDeProduto } from './painel/EditorDeProduto';
 import { Equipe } from './painel/Equipe';
 import { HorarioDaLoja } from './painel/Horario';
 import { InicioDoPainel } from './painel/InicioDoPainel';
 import { InicioDaLoja, LojaDoPainel } from './painel/LojaDoPainel';
+import { PedidosDaLoja } from './painel/PedidosDaLoja';
 import { ExigeSessao } from './rotas/ExigeSessao';
 
 /**
@@ -32,6 +37,10 @@ export function App() {
       <Route path="/cadastrar" element={<CadastrarPage />} />
       {/* ADR-070 §4: pública, fora do ExigeSessao — quem abre o link pode não ter conta. */}
       <Route path="/convite/:token" element={<ConvitePage />} />
+      {/* ADR-077: o cliente compra pelo link da loja, sem conta. Públicas, fora do ExigeSessao. */}
+      <Route path="/loja/:estabelecimentoId" element={<LojaPublica />} />
+      <Route path="/loja/:estabelecimentoId/pedidos" element={<PedidosDaVitrine />} />
+      <Route path="/pedido/:codigo" element={<AcompanhamentoDoPedido />} />
 
       {/* ADR-061: a loja escolhida mora na URL, e cada tela do painel tem endereço. */}
       <Route
@@ -54,10 +63,13 @@ export function App() {
           <Route path="equipe" element={<Equipe />} />
           <Route path="horario" element={<HorarioDaLoja />} />
           <Route path="cardapio" element={<CardapioDaLoja />} />
+          <Route path="pedidos" element={<PedidosDaLoja />} />
+          <Route path="configuracoes" element={<ConfiguracoesDaLoja />} />
         </Route>
       </Route>
 
-      {/* Telas que ainda não têm back-end (pedido, entrega): dados de demonstração. */}
+      {/* A área do cliente do protótipo, com dados de demonstração. O pedido de verdade é o
+          /loja/:estabelecimentoId acima. */}
       <Route path="/cliente" element={<InicioDoCliente />} />
       <Route path="/cliente/cardapio" element={<CardapioDoCliente />} />
       <Route path="/cliente/pedidos" element={<MeusPedidos />} />

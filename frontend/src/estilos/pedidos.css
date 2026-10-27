@@ -1,0 +1,25 @@
+/* AKI Delivery — o painel de pedidos (ADR-077). Só o que o protótipo não tinha: a linha de
+   detalhe, a área de ações do cartão e a etiqueta do cancelado. Usa as variáveis do
+   style.css, então segue o modo escuro sem regra própria. */
+
+.status.red,.ticket-status.red{background:#fff0ef;color:#c94b42}
+.dark .status.red,.dark .ticket-status.red{background:#34201f;color:#ff9a92}
+
+.pedido-linha{display:flex;align-items:center;gap:6px;margin:6px 0;color:var(--muted);font-size:11px}
+.pedido-linha .material-symbols-outlined{font-size:16px;color:var(--orange)}
+.pedido-pago{color:var(--green);font-weight:700}
+
+.pedido-acoes{display:grid;gap:8px;margin:12px 0 4px}
+.pedido-campo{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.pedido-campo .select{height:40px;min-width:180px;flex:1}
+.pedido-campo .btn{flex:0 0 auto}
+.pedido-confere{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600}
+.pedido-confere input{accent-color:var(--orange)}
+.prod-confirmar .select{height:40px;flex:1;min-width:200px}
+
+.link-do-cardapio{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.link-do-cardapio code{flex:1;min-width:220px;padding:11px 12px;border:1px dashed var(--line);border-radius:10px;background:var(--bg);font-size:12px;overflow-wrap:anywhere}
+
+@media (max-width:700px){
+  .pedido-campo .select,.pedido-campo .btn{width:100%;flex:1 1 100%}
+}
