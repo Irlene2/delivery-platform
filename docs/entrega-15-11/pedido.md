@@ -46,7 +46,13 @@ O cardápio de quem compra (a porta da ADR-018): **só produto publicado** (`ATI
 }
 ```
 
-Loja inexistente: **404**. Rascunho e inativo não aparecem.
+Rascunho e inativo não aparecem; produto publicado em **seção desativada** também não (é o
+"efeito de montagem" da `Categoria`).
+
+**Loja inexistente: cardápio vazio (200), e não 404** — mudança de 27/10 em relação ao desenho
+original. O `catalog` não conhece lojas, só produtos de uma loja, e o `merchant` não tem rota
+pública que diga se uma loja existe. A tela mostra "esta loja ainda não tem cardápio". Gatilho
+para o 404: o `merchant` ganhar essa rota.
 
 ### 2.2 `GET /api/v1/storefront/{merchantId}/orders/settings` → `order`
 
@@ -94,7 +100,8 @@ Loja que nunca configurou: taxa **0,00**, as duas modalidades aceitas.
 **Recusas (400, com `detail` que nomeia o problema — passagem de 19/10, item 16):**
 produto que não existe ou não está publicado ("O produto X não está no cardápio"), produto não
 vendável ("X acabou"), endereço ausente na entrega, troco menor que o total, modalidade que a loja
-não aceita. Loja inexistente: **404**. `catalog` fora do ar: **503**, e o pedido **não** é criado.
+não aceita. Loja inexistente cai em "produto fora do cardápio" (400), pelo mesmo motivo do §2.1.
+`catalog` fora do ar: **503**, e o pedido **não** é criado.
 
 ### 2.4 `GET /api/v1/storefront/orders/{codigoDeAcompanhamento}` → `order`
 
@@ -160,7 +167,18 @@ Qualquer outra transição: **409**, com `detail` dizendo de onde para onde não
 A forma efetiva pode ser diferente da declarada no pedido (o cliente disse dinheiro e pagou no
 cartão); as duas ficam guardadas.
 
-## 6. O que fica de fora, de propósito
+## 6. Como testar
+
+- **Testes de unidade** (sem Docker): `.\gradlew.bat :services:order-service:test` no
+  PowerShell, em `backend`. O domínio (`PedidoTest`) e os casos de uso com dublês
+  (`FazerPedidoServiceTest`, `PedidosDaLojaServiceTest`).
+- **Ponta a ponta pela API:** `docs/entrega-15-11/testes-pedido.http`, com a pilha de pé por
+  `./scripts/subir-local.sh --com-pedidos`.
+- **Ainda não há** teste de integração do `order` com banco de verdade (Testcontainers), nem
+  contrato em `contracts/openapi/order-service.json`. Gatilho: depois da demonstração, antes de
+  propor o merge ao grupo.
+
+## 7. O que fica de fora, de propósito
 
 Cupom e desconto, pedido mínimo, área por bairro, opções do produto no pedido (o item leva o
 produto, sem os grupos), avisos automáticos pelo WhatsApp (o painel monta o link `wa.me`),

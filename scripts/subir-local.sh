@@ -7,6 +7,7 @@
 #   ./scripts/subir-local.sh              # confere jars, imagens, e os quatro grupos
 #   ./scripts/subir-local.sh --sem-build  # só sobe; usa as imagens que já existem
 #   ./scripts/subir-local.sh --so-infra   # só o grupo 1: postgres, mongodb, rabbitmq
+#   ./scripts/subir-local.sh --com-pedidos  # o marco 2 e o order-service (ADR-077)
 #
 # Este script não lê e não imprime o .env. Quem lê o .env é o compose.
 
@@ -17,6 +18,7 @@ cd "$(dirname "$0")/.."
 BASE_JRE="eclipse-temurin:21-jre-alpine"
 COM_BUILD=1
 SO_INFRA=0
+COM_PEDIDOS=0
 
 # O perfil `marco2` é o que o marco 2 usa de verdade: postgres, mongodb, rabbitmq
 # e os quatro serviços da prova. Os cinco esqueletos, e o redis e o minio, que
@@ -30,10 +32,19 @@ for arg in "$@"; do
   case "$arg" in
     --sem-build) COM_BUILD=0 ;;
     --so-infra)  SO_INFRA=1 ;;
-    -h|--help)   sed -n '3,11p' "$0"; exit 0 ;;
+    --com-pedidos) COM_PEDIDOS=1 ;;
+    -h|--help)   sed -n '3,12p' "$0"; exit 0 ;;
     *) echo "argumento desconhecido: $arg" >&2; exit 2 ;;
   esac
 done
+
+# A entrega de 15/11 (ADR-077): o order-service entra pelo perfil `pedidos`,
+# somado ao marco2, e o jar dele passa a ser conferido como os outros quatro.
+# São cinco JVMs de 512 MB — confira a memória da VM antes (§2.4 do roteiro).
+if [ "$COM_PEDIDOS" -eq 1 ]; then
+  PERFIL="$PERFIL --profile pedidos"
+  MODULOS="$MODULOS backend/services/order-service/"
+fi
 
 passo() { printf '\n\033[1m== %s\033[0m\n' "$1"; }
 erro()  { printf '\n\033[31m!! %s\033[0m\n' "$1" >&2; }
@@ -140,6 +151,10 @@ if [ "$SO_INFRA" -eq 0 ]; then
   grupo "grupo 2 · identity" identity-service
   # 3. os dois lados do circuito do expediente
   grupo "grupo 3 · merchant e catalog" merchant-service catalog-service
+  # 3b. o pedido depende dos dois: do merchant para a permissão, do catalog para o preço
+  if [ "$COM_PEDIDOS" -eq 1 ]; then
+    grupo "grupo 3b · order" order-service
+  fi
   # 4. a porta de entrada
   grupo "grupo 4 · gateway" gateway
 fi

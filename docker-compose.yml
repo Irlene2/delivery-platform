@@ -297,11 +297,17 @@ services:
     restart: unless-stopped
 
   order-service:
-    profiles: ["services", "full"]
+    # `pedidos`: a entrega de 15/11 (ADR-077). Sobe junto com o marco 2 por
+    # ./scripts/subir-local.sh --com-pedidos, ou com os dois perfis à mão:
+    # docker compose --profile marco2 --profile pedidos up -d
+    profiles: ["services", "pedidos", "full"]
     build:
       context: ./backend
       dockerfile: services/order-service/Dockerfile
     environment:
+      # O mesmo teto dos outros quatro (I-B): o heap pelo mem_limit, não pela VM.
+      JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=75"
+      DELIVERY_DOCS_ABERTAS: ${DELIVERY_DOCS_ABERTAS:-false}
       SERVER_PORT: "8085"
       DB_URL: jdbc:postgresql://postgres:5432/order_db
       DB_USERNAME: ${POSTGRES_USER}
@@ -310,6 +316,11 @@ services:
       RABBITMQ_USERNAME: ${RABBITMQ_USER}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
       JWT_JWKS_URI: http://identity-service:8081/.well-known/jwks.json
+      JWT_ISSUER: ${JWT_ISSUER:-http://localhost:8081}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-delivery-platform}
+      # A permissão do painel (ADR-045) e o preço do pedido (ADR-077).
+      MERCHANT_URI: http://merchant-service:8082
+      CATALOG_URI: http://catalog-service:8083
     ports:
       - "127.0.0.1:8085:8085"
     depends_on:
@@ -317,7 +328,8 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
-    restart: unless-stopped
+    restart: "on-failure:3"
+    mem_limit: 512m
 
   payment-service:
     profiles: ["services", "full"]

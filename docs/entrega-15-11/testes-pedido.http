@@ -1,0 +1,190 @@
+### Entrega de 15/11 — o pedido de ponta a ponta, pela API (ADR-077)
+#
+# Como usar: extensão "REST Client" (Huachao Mao) no VS Code. Abra este arquivo e
+# clique em "Send Request" em cima de cada bloco, NA ORDEM — cada passo usa a
+# resposta do anterior (token, loja, produto, pedido).
+#
+# Antes: a pilha de pé com o pedido —  ./scripts/subir-local.sh --com-pedidos
+# — e a semeadura ligada (DELIVERY_SEMEADURA=true no .env; docs/como-subir-local.md).
+# Troque @senha pela sua DELIVERY_SEMEADURA_SENHA e NÃO faça commit com ela.
+
+@base = http://localhost:8080
+@telefone = +5511999990001
+@senha = TROQUE-PELA-SUA-SENHA
+
+### 1. Entrar (200, accessToken)
+# @name login
+POST {{base}}/api/v1/auth/login
+Content-Type: application/json
+
+{ "telefone": "{{telefone}}", "senha": "{{senha}}" }
+
+### 2. Minhas lojas (200; a primeira é a loja da semeadura)
+# @name lojas
+GET {{base}}/api/v1/me/estabelecimentos
+Authorization: Bearer {{login.response.body.accessToken}}
+
+@loja = {{lojas.response.body.$[0].estabelecimentoId}}
+@token = {{login.response.body.accessToken}}
+
+### 3. Uma seção para o teste (201)
+# @name categoria
+POST {{base}}/api/v1/merchants/{{loja}}/catalog/categorias
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "nome": "Pizzas de teste", "ordem": 0 }
+
+### 4. Um produto, em rascunho (201)
+# @name produto
+POST {{base}}/api/v1/merchants/{{loja}}/catalog/produtos
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "categoriaId": "{{categoria.response.body.id}}", "nome": "Pizza margherita", "descricao": "Molho, muçarela e manjericão", "precoBase": 49.90, "modoDeControle": "QUALITATIVO", "ordem": 0 }
+
+### 5. Publicar — agora ele está no cardápio público (200)
+PUT {{base}}/api/v1/merchants/{{loja}}/catalog/produtos/{{produto.response.body.id}}/publicacao
+Authorization: Bearer {{token}}
+
+### ── A VISÃO DO CLIENTE: sem token ─────────────────────────────────────────
+
+### 6. O cardápio público (200, a pizza aparece; rascunho não aparece)
+GET {{base}}/api/v1/storefront/{{loja}}/menu
+
+### 7. A taxa e as modalidades da loja (200; nunca configurou = 0,00 e as duas)
+GET {{base}}/api/v1/storefront/{{loja}}/orders/settings
+
+### ── O ADMINISTRADOR define a taxa ───────────────────────────────────────
+
+### 8. Taxa fixa de R$ 5,00, entrega e retirada (200)
+PUT {{base}}/api/v1/merchants/{{loja}}/orders/settings
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "taxaDeEntrega": 5.00, "aceitaEntrega": true, "aceitaRetirada": true }
+
+### ── O CLIENTE faz o pedido ─────────────────────────────────────────────
+
+### 9. Pedido de entrega, pagando em dinheiro com troco para 110 (201)
+# Esperado: total 104,80 (2 × 49,90 + 5,00), numero "000001" na primeira vez,
+# e nenhum telefone ou endereço na resposta.
+# @name pedido
+POST {{base}}/api/v1/storefront/{{loja}}/orders
+Content-Type: application/json
+
+{
+  "cliente": { "nome": "Maria Souza", "telefone": "(21) 99999-0000" },
+  "modalidade": "ENTREGA",
+  "endereco": { "logradouro": "Rua A, 10", "bairro": "Centro", "complemento": "ap 2" },
+  "itens": [{ "produtoId": "{{produto.response.body.id}}", "quantidade": 2, "observacao": "sem cebola" }],
+  "pagamento": { "forma": "DINHEIRO", "trocoPara": 110.00 }
+}
+
+### 10. O cliente acompanha pelo código (200, status RECEBIDO)
+GET {{base}}/api/v1/storefront/orders/{{pedido.response.body.codigoDeAcompanhamento}}
+
+### ── A LOJA opera o pedido ──────────────────────────────────────────────
+
+### 11. Pedidos de hoje (200, o pedido aparece, com telefone e endereço)
+GET {{base}}/api/v1/merchants/{{loja}}/orders
+Authorization: Bearer {{token}}
+
+### 12. Confirmar (200)
+PUT {{base}}/api/v1/merchants/{{loja}}/orders/{{pedido.response.body.id}}/status
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "status": "CONFIRMADO" }
+
+### 13. Em preparo (200)
+PUT {{base}}/api/v1/merchants/{{loja}}/orders/{{pedido.response.body.id}}/status
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "status": "EM_PREPARO" }
+
+### 14. Pronto (200)
+PUT {{base}}/api/v1/merchants/{{loja}}/orders/{{pedido.response.body.id}}/status
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "status": "PRONTO" }
+
+### 15. Sair SEM entregador — recusado (409, "informe o entregador…")
+PUT {{base}}/api/v1/merchants/{{loja}}/orders/{{pedido.response.body.id}}/status
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "status": "SAIU_PARA_ENTREGA" }
+
+### 16. Informar o entregador (200)
+PUT {{base}}/api/v1/merchants/{{loja}}/orders/{{pedido.response.body.id}}/courier
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "nome": "Carlos" }
+
+### 17. Saiu para entrega (200)
+PUT {{base}}/api/v1/merchants/{{loja}}/orders/{{pedido.response.body.id}}/status
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "status": "SAIU_PARA_ENTREGA" }
+
+### 18. Entregar SEM pagamento registrado — recusado (409, "registre o pagamento…")
+PUT {{base}}/api/v1/merchants/{{loja}}/orders/{{pedido.response.body.id}}/status
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "status": "ENTREGUE" }
+
+### 19. Registrar o pagamento: recebeu 110 em dinheiro (200, trocoDevolvido 5,20)
+PUT {{base}}/api/v1/merchants/{{loja}}/orders/{{pedido.response.body.id}}/settlement
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "formaEfetiva": "DINHEIRO", "valorRecebido": 110.00 }
+
+### 20. Entregue (200) — o pedido encerra
+PUT {{base}}/api/v1/merchants/{{loja}}/orders/{{pedido.response.body.id}}/status
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "status": "ENTREGUE" }
+
+### ── RECUSAS que o servidor precisa fazer ────────────────────────────────
+
+### 21. Entrega sem endereço (400, "para entrega, informe o endereço e o bairro")
+POST {{base}}/api/v1/storefront/{{loja}}/orders
+Content-Type: application/json
+
+{ "cliente": { "nome": "João", "telefone": "21988887777" }, "modalidade": "ENTREGA",
+  "itens": [{ "produtoId": "{{produto.response.body.id}}", "quantidade": 1 }],
+  "pagamento": { "forma": "PIX" } }
+
+### 22. Produto que não está no cardápio (400, "um dos produtos do carrinho não está mais no cardápio…")
+POST {{base}}/api/v1/storefront/{{loja}}/orders
+Content-Type: application/json
+
+{ "cliente": { "nome": "João", "telefone": "21988887777" }, "modalidade": "RETIRADA",
+  "itens": [{ "produtoId": "00000000-0000-4000-8000-000000000000", "quantidade": 1 }],
+  "pagamento": { "forma": "PIX" } }
+
+### 23. Troco menor que o total (400, "o troco para R$ 50,00 é menor que o total…")
+POST {{base}}/api/v1/storefront/{{loja}}/orders
+Content-Type: application/json
+
+{ "cliente": { "nome": "João", "telefone": "21988887777" }, "modalidade": "RETIRADA",
+  "itens": [{ "produtoId": "{{produto.response.body.id}}", "quantidade": 2 }],
+  "pagamento": { "forma": "DINHEIRO", "trocoPara": 50.00 } }
+
+### 24. O painel sem token (401) — só a vitrine é pública
+GET {{base}}/api/v1/merchants/{{loja}}/orders
+
+### 25. Mexer num pedido encerrado (409, "um pedido «Entregue» não pode ir para «Cancelado»")
+PUT {{base}}/api/v1/merchants/{{loja}}/orders/{{pedido.response.body.id}}/status
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "status": "CANCELADO", "motivo": "teste" }
