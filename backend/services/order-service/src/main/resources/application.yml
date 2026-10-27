@@ -46,6 +46,31 @@ spring:
         jwt:
           jwk-set-uri: ${JWT_JWKS_URI:http://localhost:8081/.well-known/jwks.json}
 
+delivery:
+  # Swagger UI e /v3/api-docs sem token — ADR-050. Falso por padrão: esquecer fecha.
+  docs:
+    abertas: ${DELIVERY_DOCS_ABERTAS:false}
+  jwt:
+    issuer: ${JWT_ISSUER:http://localhost:8081}
+    audience: ${JWT_AUDIENCE:delivery-platform}
+  # A mesma porta de autorização do catalog: o token de quem pediu, encaminhado
+  # ao merchant (ADR-011, ADR-045).
+  autorizacao:
+    merchant-uri: ${MERCHANT_URI:http://localhost:8082}
+    tempo-de-conexao: 300ms
+    tempo-de-leitura: 300ms
+  # O preço do pedido é lido no cardápio público do catalog na hora de criar
+  # (ADR-077). Fora do ar = 503, e o pedido não nasce.
+  catalogo:
+    catalog-uri: ${CATALOG_URI:http://localhost:8083}
+    tempo-de-conexao: 500ms
+    tempo-de-leitura: 2s
+  pedidos:
+    # O "hoje" da lista do painel. Todas as lojas da entrega de 15/11 estão
+    # neste fuso; gatilho para ler o fuso de cada loja no merchant: a primeira
+    # que não estiver.
+    fuso: ${DELIVERY_PEDIDOS_FUSO:America/Sao_Paulo}
+
 management:
   endpoints:
     web:
@@ -58,6 +83,8 @@ management:
       show-details: never
 
 springdoc:
+  # Como no catalog (ADR-053): cada rota declara as próprias recusas.
+  override-with-generic-response: false
   swagger-ui:
     path: /swagger-ui.html
 
