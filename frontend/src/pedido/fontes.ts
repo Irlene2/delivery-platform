@@ -1,14 +1,22 @@
 import {
   acompanharPedido,
+  apresentarComoEntregador,
+  avancarEntrega,
   definirConfiguracao,
+  euComoEntregador,
   fazerPedido,
   informarEntregador,
   lerConfiguracao,
   lerConfiguracaoPublica,
+  listarEntregadores,
   listarPedidos,
+  minhasEntregas,
   mudarStatus,
+  receberNaEntrega,
   registrarPagamento,
   type ConfiguracaoDePedidos,
+  type EntregadorDaEquipe,
+  type EntregadorEscolhido,
   type NovoPedido,
   type PagamentoInformado,
   type PedidoDaLoja,
@@ -30,6 +38,7 @@ import {
   avancarNaDemonstracao,
   configuracaoDaDemonstracao,
   definirConfiguracaoDaDemonstracao,
+  ENTREGADORES_DA_DEMONSTRACAO,
   entregadorNaDemonstracao,
   fazerPedidoNaDemonstracao,
   pagamentoNaDemonstracao,
@@ -136,7 +145,9 @@ export function acompanhar(codigo: string): Promise<PedidoPublico> {
 export interface FonteDePedidos {
   listar(filtro: { status?: StatusDoPedido; dia?: string }): Promise<PedidoDaLoja[]>;
   avancar(pedidoId: string, status: StatusDoPedido, motivo?: string): Promise<PedidoDaLoja>;
-  entregador(pedidoId: string, nome: string): Promise<PedidoDaLoja>;
+  entregador(pedidoId: string, escolhido: EntregadorEscolhido): Promise<PedidoDaLoja>;
+  /** Os entregadores da equipe, para escolher no pedido. */
+  entregadores(): Promise<EntregadorDaEquipe[]>;
   pagamento(pedidoId: string, pagamento: PagamentoInformado): Promise<PedidoDaLoja>;
   configuracao(): Promise<ConfiguracaoDePedidos>;
   definirConfiguracao(configuracao: ConfiguracaoDePedidos): Promise<ConfiguracaoDePedidos>;
@@ -156,7 +167,8 @@ export function pedidosDaDemonstracaoComoFonte(): FonteDePedidos {
     // Na demonstração não há "dia": todos os pedidos desta aba.
     listar: (filtro) => emPromessa(() => pedidosDaDemonstracao(filtro.status)),
     avancar: (id, status, motivo) => emPromessa(() => avancarNaDemonstracao(id, status, motivo)),
-    entregador: (id, nome) => emPromessa(() => entregadorNaDemonstracao(id, nome)),
+    entregador: (id, escolhido) => emPromessa(() => entregadorNaDemonstracao(id, escolhido)),
+    entregadores: () => Promise.resolve([...ENTREGADORES_DA_DEMONSTRACAO]),
     pagamento: (id, pagamento) => emPromessa(() => pagamentoNaDemonstracao(id, pagamento)),
     configuracao: () => emPromessa(configuracaoDaDemonstracao),
     definirConfiguracao: (c) => emPromessa(() => definirConfiguracaoDaDemonstracao(c)),
@@ -167,9 +179,49 @@ export function pedidosDoServidor(estabelecimentoId: string, token: string): Fon
   return {
     listar: (filtro) => listarPedidos(estabelecimentoId, token, filtro),
     avancar: (id, status, motivo) => mudarStatus(estabelecimentoId, id, status, motivo, token),
-    entregador: (id, nome) => informarEntregador(estabelecimentoId, id, nome, token),
+    entregador: (id, escolhido) => informarEntregador(estabelecimentoId, id, escolhido, token),
+    entregadores: () => listarEntregadores(estabelecimentoId, token),
     pagamento: (id, pagamento) => registrarPagamento(estabelecimentoId, id, pagamento, token),
     configuracao: () => lerConfiguracao(estabelecimentoId, token),
     definirConfiguracao: (c) => definirConfiguracao(estabelecimentoId, c, token),
+  };
+}
+
+// ═══════════════════════ o app do entregador ═══════════════════════
+
+export interface FonteDasEntregas {
+  /** Eu, como entregador desta loja; `undefined` se ainda não me apresentei. */
+  eu(): Promise<EntregadorDaEquipe | undefined>;
+  apresentar(nome: string): Promise<EntregadorDaEquipe>;
+  doDia(dia?: string): Promise<PedidoDaLoja[]>;
+  avancar(pedidoId: string, status: 'SAIU_PARA_ENTREGA' | 'ENTREGUE'): Promise<PedidoDaLoja>;
+  receber(
+    pedidoId: string,
+    recebimento: { formaEfetiva: 'DINHEIRO' | 'CARTAO'; valorRecebido?: number },
+  ): Promise<PedidoDaLoja>;
+}
+
+export function entregasDoServidor(estabelecimentoId: string, token: string): FonteDasEntregas {
+  return {
+    eu: () => euComoEntregador(estabelecimentoId, token),
+    apresentar: (nome) => apresentarComoEntregador(estabelecimentoId, nome, token),
+    doDia: (dia) => minhasEntregas(estabelecimentoId, token, dia),
+    avancar: (id, status) => avancarEntrega(estabelecimentoId, id, status, token),
+    receber: (id, recebimento) => receberNaEntrega(estabelecimentoId, id, recebimento, token),
+  };
+}
+
+/** Na demonstração, "eu" sou o entregador de exemplo, e as entregas são as passadas a ele. */
+export function entregasDaDemonstracao(): FonteDasEntregas {
+  const eu = ENTREGADORES_DA_DEMONSTRACAO[0];
+  return {
+    eu: () => Promise.resolve(eu),
+    apresentar: () => Promise.resolve(eu ?? { usuarioId: 'demo-entregador', nome: 'Você' }),
+    doDia: () =>
+      emPromessa(() =>
+        pedidosDaDemonstracao().filter((pedido) => pedido.entregadorId === eu?.usuarioId),
+      ),
+    avancar: (id, status) => emPromessa(() => avancarNaDemonstracao(id, status)),
+    receber: (id, recebimento) => emPromessa(() => pagamentoNaDemonstracao(id, recebimento)),
   };
 }

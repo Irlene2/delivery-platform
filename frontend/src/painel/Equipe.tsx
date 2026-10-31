@@ -18,7 +18,7 @@ const ROTULOS: Record<PermissaoDoConvite, string> = {
   VER_PEDIDO: 'Ver pedidos',
   ALTERAR_STATUS: 'Mudar o andamento do pedido',
   VER_VENDAS: 'Ver vendas',
-  VER_ENTREGA: 'Ver entregas',
+  VER_ENTREGA: 'Entregador: ver e fazer as próprias entregas',
   GERENCIAR_EQUIPE: 'Convidar e gerenciar a equipe',
   GERENCIAR_JORNADA: 'Abrir e fechar a jornada dos entregadores',
 };

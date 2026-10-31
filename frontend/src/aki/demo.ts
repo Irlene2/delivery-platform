@@ -45,7 +45,16 @@ const TODAS: Permissao[] = [
 
 /** A loja de exemplo, com o papel escolhido na tela de entrada. */
 export function lojaDeDemonstracao(): LojaDoUsuario {
-  const colaborador = perfilDaDemonstracao() === 'colaborador';
+  const perfil = perfilDaDemonstracao();
+  if (perfil === 'entregador') {
+    return {
+      estabelecimentoId: ID_DA_LOJA_DEMO,
+      nome: 'AKI Lanches',
+      papel: 'COLABORADOR',
+      permissoes: ['VER_ENTREGA'],
+    };
+  }
+  const colaborador = perfil === 'colaborador';
   return {
     estabelecimentoId: ID_DA_LOJA_DEMO,
     nome: 'AKI Lanches',

@@ -1,19 +1,26 @@
-import { useEffect } from 'react';
+import { useMemo } from 'react';
 import { Link } from 'react-router';
 import { dinheiro } from '../aki/formatos';
-import { semearPedidosDeExemplo, usePedidos } from '../aki/pedidos';
+import { resumoDoDia } from '../pedido/fechamento';
+import { classeDoStatus, ROTULO_DO_STATUS } from '../pedido/regras';
 import { CascaDaLoja } from './CascaDaLoja';
 import { caminhoDaLoja } from './caminhos';
 import { useLojaAtual } from './lojaAtual';
+import { useFonteDePedidos } from './useFonteDePedidos';
+import { usePedidosDoDia } from './usePedidosDoDia';
 
-/** O painel do colaborador do protótipo (`colaborador.html`). Pedidos: demonstração. */
+/**
+ * O painel do colaborador do protótipo (`colaborador.html`), com os pedidos de verdade do dia.
+ * Sem `VER_PEDIDO`, o servidor recusa a lista, e a tela mostra só os atalhos.
+ */
 export function DashboardColaborador() {
-  const { estabelecimentoId } = useLojaAtual();
-  useEffect(semearPedidosDeExemplo, []);
-  const pedidos = usePedidos();
+  const { estabelecimentoId, loja } = useLojaAtual();
+  const fonte = useFonteDePedidos(estabelecimentoId);
+  const vePedidos = loja?.permissoes.includes('VER_PEDIDO') ?? false;
+  const { pedidos: lidos } = usePedidosDoDia(fonte);
+  const pedidos = useMemo(() => (vePedidos ? (lidos ?? []) : []), [vePedidos, lidos]);
+  const resumo = useMemo(() => resumoDoDia(pedidos), [pedidos]);
   const base = caminhoDaLoja(estabelecimentoId);
-  const contendo = (texto: string) =>
-    pedidos.filter((pedido) => pedido.status.toLowerCase().includes(texto)).length;
 
   return (
     <CascaDaLoja
@@ -35,13 +42,13 @@ export function DashboardColaborador() {
       <section className="stats">
         <article className="stat panel">
           <div className="stat-top">
-            <span>Pedidos registrados</span>
+            <span>Pedidos hoje</span>
             <span className="stat-icon">
               <span className="material-symbols-outlined">receipt_long</span>
             </span>
           </div>
-          <strong id="collabOrders">{pedidos.length}</strong>
-          <small>Pedidos no sistema</small>
+          <strong id="collabOrders">{resumo.pedidos}</strong>
+          <small>Pedidos recebidos hoje</small>
         </article>
         <article className="stat panel">
           <div className="stat-top">
@@ -50,7 +57,7 @@ export function DashboardColaborador() {
               <span className="material-symbols-outlined">soup_kitchen</span>
             </span>
           </div>
-          <strong id="collabPrep">{contendo('preparo')}</strong>
+          <strong id="collabPrep">{resumo.naCozinha}</strong>
           <small>Acompanhamento operacional</small>
         </article>
         <article className="stat panel">
@@ -60,7 +67,7 @@ export function DashboardColaborador() {
               <span className="material-symbols-outlined">delivery_dining</span>
             </span>
           </div>
-          <strong id="collabDelivery">{contendo('entrega')}</strong>
+          <strong id="collabDelivery">{resumo.emEntrega}</strong>
           <small>Pedidos em rota</small>
         </article>
         <article className="stat panel">
@@ -81,7 +88,7 @@ export function DashboardColaborador() {
               <h2>Pedidos recentes</h2>
               <p className="admin-muted">Visualização para acompanhamento da operação.</p>
             </div>
-            <Link className="btn btn-light" to={`${base}#pedidos`}>
+            <Link className="btn btn-light" to={`${base}/pedidos`}>
               Ver pedidos
             </Link>
           </div>
@@ -98,17 +105,19 @@ export function DashboardColaborador() {
               <tbody id="collabOrdersTable">
                 {pedidos.length === 0 ? (
                   <tr>
-                    <td colSpan={4}>Nenhum pedido registrado.</td>
+                    <td colSpan={4}>Nenhum pedido hoje ainda.</td>
                   </tr>
                 ) : (
                   pedidos.slice(0, 8).map((pedido) => (
-                    <tr key={pedido.number}>
+                    <tr key={pedido.id}>
                       <td>
-                        <strong>#{pedido.number}</strong>
+                        <strong>#{pedido.numero}</strong>
                       </td>
-                      <td>{pedido.customer}</td>
+                      <td>{pedido.cliente.nome}</td>
                       <td>
-                        <span className="status orange">{pedido.status}</span>
+                        <span className={`status ${classeDoStatus(pedido.status)}`}>
+                          {ROTULO_DO_STATUS[pedido.status]}
+                        </span>
                       </td>
                       <td>{dinheiro(pedido.total)}</td>
                     </tr>
@@ -123,7 +132,7 @@ export function DashboardColaborador() {
             <h2>Acessos disponíveis</h2>
           </div>
           <div className="quick-list">
-            <Link className="quick-card" to={`${base}#pedidos`}>
+            <Link className="quick-card" to={`${base}/pedidos`}>
               <span className="material-symbols-outlined">receipt_long</span>
               <span>
                 <strong>Consultar pedidos</strong>

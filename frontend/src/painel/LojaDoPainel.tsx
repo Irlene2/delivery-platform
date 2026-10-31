@@ -1,5 +1,6 @@
-import { Link, Outlet } from 'react-router';
+import { Link, Navigate, Outlet } from 'react-router';
 import { Casca } from '../aki/Casca';
+import { caminhoDaLoja } from './caminhos';
 import { useContextoDoPainel } from './contextoDoPainel';
 import { DashboardAdmin } from './DashboardAdmin';
 import { DashboardColaborador } from './DashboardColaborador';
@@ -36,8 +37,15 @@ export function LojaDoPainel() {
   return <Outlet context={contexto} />;
 }
 
-/** A página inicial da loja: o painel do administrador ou o do colaborador, pelo papel. */
+/**
+ * A página inicial da loja: o painel do administrador ou o do colaborador, pelo papel. O
+ * entregador puro — `VER_ENTREGA` sem `VER_PEDIDO` — vai direto para as entregas dele.
+ */
 export function InicioDaLoja() {
   const { loja } = useLojaAtual();
+  const permissoes = loja?.permissoes ?? [];
+  if (permissoes.includes('VER_ENTREGA') && !permissoes.includes('VER_PEDIDO')) {
+    return <Navigate to={`${caminhoDaLoja(loja?.estabelecimentoId ?? '')}/entregas`} replace />;
+  }
   return loja?.papel === 'COLABORADOR' ? <DashboardColaborador /> : <DashboardAdmin />;
 }

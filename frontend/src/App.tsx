@@ -5,7 +5,6 @@ import { InicioDoCliente } from './cliente/InicioDoCliente';
 import { LojaPublica } from './cliente/LojaPublica';
 import { MeusPedidos } from './cliente/MeusPedidos';
 import { PedidosDaVitrine } from './cliente/PedidosDaVitrine';
-import { EntregadorPage } from './entregador/EntregadorPage';
 import { CadastrarPage } from './paginas/CadastrarPage';
 import { CadastroDeLojaPage } from './paginas/CadastroDeLojaPage';
 import { ConvitePage } from './paginas/ConvitePage';
@@ -14,12 +13,14 @@ import { PainelPage } from './paginas/PainelPage';
 import { CadastroDeProdutos } from './painel/CadastroDeProdutos';
 import { CardapioDaLoja } from './painel/CardapioDaLoja';
 import { ConfiguracoesDaLoja } from './painel/ConfiguracoesDaLoja';
+import { FechamentoDoDia } from './painel/FechamentoDoDia';
 import { Disponibilidade } from './painel/Disponibilidade';
 import { EditorDeProduto } from './painel/EditorDeProduto';
 import { Equipe } from './painel/Equipe';
 import { HorarioDaLoja } from './painel/Horario';
 import { InicioDoPainel } from './painel/InicioDoPainel';
 import { InicioDaLoja, LojaDoPainel } from './painel/LojaDoPainel';
+import { MinhasEntregas } from './painel/MinhasEntregas';
 import { PedidosDaLoja } from './painel/PedidosDaLoja';
 import { ExigeSessao } from './rotas/ExigeSessao';
 
@@ -65,6 +66,8 @@ export function App() {
           <Route path="cardapio" element={<CardapioDaLoja />} />
           <Route path="pedidos" element={<PedidosDaLoja />} />
           <Route path="configuracoes" element={<ConfiguracoesDaLoja />} />
+          <Route path="fechamento" element={<FechamentoDoDia />} />
+          <Route path="entregas" element={<MinhasEntregas />} />
         </Route>
       </Route>
 
@@ -73,7 +76,8 @@ export function App() {
       <Route path="/cliente" element={<InicioDoCliente />} />
       <Route path="/cliente/cardapio" element={<CardapioDoCliente />} />
       <Route path="/cliente/pedidos" element={<MeusPedidos />} />
-      <Route path="/entregador" element={<EntregadorPage />} />
+      {/* O app do entregador agora mora na loja (painel/MinhasEntregas). */}
+      <Route path="/entregador" element={<Navigate to="/painel" replace />} />
 
       <Route path="*" element={<Navigate to="/painel" replace />} />
     </Routes>

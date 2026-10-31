@@ -88,6 +88,8 @@ export interface PedidoDaLoja {
   readonly pagamentoDeclarado: PagamentoDeclarado;
   readonly pagamentoRegistrado: PagamentoRegistrado | null;
   readonly entregador: string | null;
+  /** O entregador da equipe, quando tem conta; nulo quando é só o nome. */
+  readonly entregadorId: string | null;
   readonly motivoDoCancelamento: string | null;
   readonly criadoEm: string;
   readonly atualizadoEm: string;
@@ -172,15 +174,89 @@ export function mudarStatus(
   });
 }
 
+/** O entregador do pedido: da equipe (`usuarioId`) ou avulso (só o `nome`). */
+export type EntregadorEscolhido = { readonly usuarioId: string } | { readonly nome: string };
+
 export function informarEntregador(
   estabelecimentoId: string,
   pedidoId: string,
-  nome: string,
+  entregador: EntregadorEscolhido,
   token: string,
 ): Promise<PedidoDaLoja> {
   return chamar<PedidoDaLoja>(`${doPainel(estabelecimentoId)}/${pedidoId}/courier`, {
     metodo: 'PUT',
+    corpo: entregador,
+    token,
+  });
+}
+
+// ─────────────── o entregador da equipe ───────────────
+
+export interface EntregadorDaEquipe {
+  readonly usuarioId: string;
+  readonly nome: string;
+}
+
+export function listarEntregadores(
+  estabelecimentoId: string,
+  token: string,
+): Promise<EntregadorDaEquipe[]> {
+  return chamar<EntregadorDaEquipe[]>(`${doPainel(estabelecimentoId)}/couriers`, { token });
+}
+
+/** Eu, como entregador desta loja; `undefined` (204) se ainda não me apresentei. */
+export function euComoEntregador(
+  estabelecimentoId: string,
+  token: string,
+): Promise<EntregadorDaEquipe | undefined> {
+  return chamar<EntregadorDaEquipe | undefined>(`${doPainel(estabelecimentoId)}/couriers/me`, {
+    token,
+  });
+}
+
+export function apresentarComoEntregador(
+  estabelecimentoId: string,
+  nome: string,
+  token: string,
+): Promise<EntregadorDaEquipe> {
+  return chamar<EntregadorDaEquipe>(`${doPainel(estabelecimentoId)}/couriers/me`, {
+    metodo: 'PUT',
     corpo: { nome },
+    token,
+  });
+}
+
+export function minhasEntregas(
+  estabelecimentoId: string,
+  token: string,
+  dia?: string,
+): Promise<PedidoDaLoja[]> {
+  const sufixo = dia === undefined ? '' : `?dia=${dia}`;
+  return chamar<PedidoDaLoja[]>(`${doPainel(estabelecimentoId)}/deliveries${sufixo}`, { token });
+}
+
+export function avancarEntrega(
+  estabelecimentoId: string,
+  pedidoId: string,
+  status: 'SAIU_PARA_ENTREGA' | 'ENTREGUE',
+  token: string,
+): Promise<PedidoDaLoja> {
+  return chamar<PedidoDaLoja>(`${doPainel(estabelecimentoId)}/deliveries/${pedidoId}/status`, {
+    metodo: 'PUT',
+    corpo: { status },
+    token,
+  });
+}
+
+export function receberNaEntrega(
+  estabelecimentoId: string,
+  pedidoId: string,
+  recebimento: { readonly formaEfetiva: 'DINHEIRO' | 'CARTAO'; readonly valorRecebido?: number },
+  token: string,
+): Promise<PedidoDaLoja> {
+  return chamar<PedidoDaLoja>(`${doPainel(estabelecimentoId)}/deliveries/${pedidoId}/settlement`, {
+    metodo: 'PUT',
+    corpo: recebimento,
     token,
   });
 }

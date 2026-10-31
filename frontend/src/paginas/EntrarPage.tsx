@@ -16,8 +16,10 @@ import { AvisoDoCartao, CabecalhoDoCartao, TelaDeEntrada } from '../aki/TelaDeEn
 const DESTINO_DA_DEMONSTRACAO: Record<PerfilDeDemonstracao, string> = {
   administrador: '/painel',
   colaborador: '/painel',
-  entregador: '/entregador',
-  cliente: '/cliente',
+  // O entregador entra na loja de exemplo e cai nas entregas dele (InicioDaLoja).
+  entregador: '/painel',
+  // O cliente vê o fluxo de verdade: o cardápio pelo link, com a loja de exemplo.
+  cliente: '/loja/demo',
 };
 
 export function EntrarPage() {

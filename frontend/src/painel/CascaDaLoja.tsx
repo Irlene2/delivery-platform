@@ -23,6 +23,8 @@ export type ChaveDoMenu =
   | 'lojas'
   | 'whatsapp'
   | 'pagamentos'
+  | 'fechamento'
+  | 'entregas'
   | 'configuracoes';
 
 function menuDa(loja: LojaDoUsuario): ItemDoMenu[] {
@@ -31,10 +33,24 @@ function menuDa(loja: LojaDoUsuario): ItemDoMenu[] {
     loja.permissoes.includes(permissao);
   const cadastra = tem('CRIAR_PRODUTO') || tem('ALTERAR_PRODUTO');
 
+  const entregas = tem('VER_ENTREGA')
+    ? [
+        {
+          chave: 'entregas',
+          rotulo: 'Minhas entregas',
+          icone: 'two_wheeler',
+          para: `${base}/entregas`,
+        },
+      ]
+    : [];
+
   if (loja.papel === 'COLABORADOR') {
+    // O entregador puro (VER_ENTREGA sem VER_PEDIDO) vê só o app dele.
+    if (!tem('VER_PEDIDO')) return entregas;
     return [
       { chave: 'dashboard', rotulo: 'Painel', icone: 'dashboard', para: base },
       { chave: 'pedidos', rotulo: 'Pedidos', icone: 'receipt_long', para: `${base}/pedidos` },
+      ...entregas,
       ...(cadastra
         ? [
             {
@@ -71,13 +87,12 @@ function menuDa(loja: LojaDoUsuario): ItemDoMenu[] {
       ? [{ chave: 'horario', rotulo: 'Horário', icone: 'schedule', para: `${base}/horario` }]
       : []),
     {
-      chave: 'whatsapp',
-      rotulo: 'WhatsApp',
-      icone: 'chat',
-      para: `${base}#whatsapp`,
-      selo: <span className="nav-badge">novo</span>,
+      chave: 'fechamento',
+      rotulo: 'Fechamento do dia',
+      icone: 'point_of_sale',
+      para: `${base}/fechamento`,
     },
-    { chave: 'pagamentos', rotulo: 'Pagamentos', icone: 'payments', para: `${base}#pagamentos` },
+    { chave: 'whatsapp', rotulo: 'WhatsApp', icone: 'chat', para: `${base}#whatsapp` },
     {
       chave: 'configuracoes',
       rotulo: 'Configurações',
@@ -104,6 +119,10 @@ export function CascaDaLoja({
   const navegar = useNavigate();
   if (loja === undefined) return null;
   const colaborador = loja.papel === 'COLABORADOR';
+  const entregador =
+    colaborador &&
+    loja.permissoes.includes('VER_ENTREGA') &&
+    !loja.permissoes.includes('VER_PEDIDO');
 
   return (
     <Casca
@@ -149,8 +168,10 @@ export function CascaDaLoja({
               <b>4</b>
             </button>
           )}
-          <div className="avatar">{colaborador ? 'CO' : 'AD'}</div>
-          <span className="role">{colaborador ? 'Colaborador' : 'Administrador'}</span>
+          <div className="avatar">{entregador ? 'EN' : colaborador ? 'CO' : 'AD'}</div>
+          <span className="role">
+            {entregador ? 'Entregador' : colaborador ? 'Colaborador' : 'Administrador'}
+          </span>
         </>
       }
     >

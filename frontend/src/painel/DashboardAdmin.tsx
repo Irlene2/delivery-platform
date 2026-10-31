@@ -1,89 +1,96 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
-import { dinheiro } from '../aki/formatos';
-import { semearPedidosDeExemplo, usePedidos, type Pedido } from '../aki/pedidos';
+import type { PedidoDaLoja } from '../api/pedidos';
+import { dataEHora, dinheiro } from '../aki/formatos';
 import { JanelaDoTicket } from '../aki/Ticket';
 import { toast } from '../aki/toast';
+import {
+  acertosDosEntregadores,
+  FAIXAS_DE_HORARIO,
+  paraOTicket,
+  resumoDoDia,
+} from '../pedido/fechamento';
+import {
+  classeDoStatus,
+  linkDoWhatsApp,
+  mensagemDoWhatsApp,
+  ROTULO_DA_FORMA,
+  ROTULO_DO_STATUS,
+} from '../pedido/regras';
 import { CascaDaLoja } from './CascaDaLoja';
 import { caminhoDaLoja } from './caminhos';
 import { useLojaAtual } from './lojaAtual';
+import { linkDoAcompanhamento, linkDoCardapio, useFonteDePedidos } from './useFonteDePedidos';
+import { usePedidosDoDia } from './usePedidosDoDia';
 
 /**
- * O painel administrativo do protótipo (`administrador.html`).
+ * O painel administrativo do protótipo (`administrador.html`), com os **pedidos de verdade**
+ * do dia (ADR-077). Os números de exemplo e as mensagens de exemplo saíram: tudo aqui vem da
+ * mesma lista da fila de Pedidos.
  *
- * Pedidos, vendas, pagamentos e WhatsApp ainda não têm rota no back-end
- * (marcos 3, 4 e 7): os números vêm dos pedidos de demonstração desta aba,
- * como no protótipo.
+ * Loja nova, sem produto publicado, vê primeiro os primeiros passos — cadastrar o cardápio,
+ * a taxa, o link e a equipe.
  */
-const HORARIOS = ['08h', '10h', '12h', '14h', '16h', '18h', '20h', '22h'];
-const FORMAS = ['Pix', 'Cartão de crédito', 'Cartão de débito', 'Dinheiro', 'Vale-refeição'];
-const MENSAGEM_POR_STATUS: Record<string, string> = {
-  recebido: 'Seu pedido foi recebido pela AKI Delivery. Já estamos cuidando dele! 🍔',
-  preparo: 'Seu pedido está em preparo. Em breve estará a caminho! 👨‍🍳',
-  entrega: 'Seu pedido saiu para entrega. O entregador está a caminho! 🛵',
-  entregue: 'Seu pedido foi entregue. Obrigado por pedir com a AKI Delivery! ❤️',
-};
-const MODELOS: Record<string, string> = {
-  recebido: 'Olá! Aqui é da AKI Delivery. Recebemos seu pedido e já estamos cuidando dele. 🍔',
-  preparo: 'Olá! Seu pedido está em preparo. Em breve estará a caminho! 👨‍🍳',
-  entrega: 'Olá! Seu pedido saiu para entrega. O entregador está a caminho! 🛵',
-  entregue: 'Olá! Seu pedido foi entregue. Obrigado por pedir com a AKI Delivery! ❤️',
-};
-
-const doDia = (pedido: Pedido) =>
-  new Date(pedido.date).toDateString() === new Date().toDateString();
-
-function chaveDoStatus(status: string): string {
-  const texto = status.toLowerCase();
-  if (texto.includes('preparo')) return 'preparo';
-  if (texto.includes('entrega')) return 'entrega';
-  if (texto.includes('entreg') || texto.includes('conclu')) return 'entregue';
-  return 'recebido';
-}
-
 export function DashboardAdmin() {
-  const { estabelecimentoId } = useLojaAtual();
-  useEffect(semearPedidosDeExemplo, []);
-  const pedidos = usePedidos();
-  const [ticket, definirTicket] = useState<Pedido | null>(null);
+  const { estabelecimentoId, loja, fonte } = useLojaAtual();
+  const fonteDePedidos = useFonteDePedidos(estabelecimentoId);
+  const { pedidos, falha } = usePedidosDoDia(fonteDePedidos);
+  const [ticket, definirTicket] = useState<PedidoDaLoja | null>(null);
   const [pedidoDoWhats, definirPedidoDoWhats] = useState('');
-  const [statusDoWhats, definirStatusDoWhats] = useState('recebido');
+  const [publicados, definirPublicados] = useState<number | null>(null);
 
-  const deHoje = pedidos.filter(doDia);
-  const vendasDeHoje = deHoje.reduce((soma, pedido) => soma + pedido.total, 0);
-  const porHorario = HORARIOS.map((_, i) =>
-    deHoje.reduce((soma, pedido) => {
-      const hora = new Date(pedido.date).getHours();
-      return hora >= 8 + i * 2 && hora < 10 + i * 2 ? soma + pedido.total : soma;
-    }, 0),
+  useEffect(() => {
+    let atual = true;
+    fonte
+      .carregar()
+      .then((catalogo) => {
+        if (atual) definirPublicados(catalogo.itens.filter((um) => um.situacao === 'ATIVO').length);
+      })
+      .catch(() => undefined);
+    return () => {
+      atual = false;
+    };
+  }, [fonte]);
+
+  const lista = useMemo(() => pedidos ?? [], [pedidos]);
+  const resumo = useMemo(() => resumoDoDia(lista), [lista]);
+  const emRota = useMemo(
+    () => acertosDosEntregadores(lista).filter((um) => um.emRota > 0).length,
+    [lista],
   );
-  const maiorHorario = Math.max(...porHorario, 1);
-  const porForma = new Map<string, number>(FORMAS.map((forma) => [forma, 0]));
-  for (const pedido of deHoje) {
-    const forma = pedido.paymentMethod ?? 'Pix';
-    porForma.set(forma, (porForma.get(forma) ?? 0) + pedido.total);
-  }
-  const maiorForma = Math.max(...porForma.values(), 1);
-  const totalDosPedidos = pedidos.reduce((soma, pedido) => soma + pedido.total, 0);
+  const maiorHorario = Math.max(...resumo.porHorario, 1);
+  const formas = Object.entries(resumo.porForma) as [keyof typeof ROTULO_DA_FORMA, number][];
+  const maiorForma = Math.max(...formas.map(([, valor]) => valor), 1);
+  const base = caminhoDaLoja(estabelecimentoId);
+  const nomeDaLoja = loja?.nome ?? 'nossa loja';
 
   function abrirWhatsApp() {
-    const pedido = pedidos.find((um) => um.number === pedidoDoWhats);
+    const pedido = lista.find((um) => um.id === pedidoDoWhats);
     if (pedido === undefined) {
       toast('Selecione um pedido.');
       return;
     }
-    const texto = `Olá! Aqui é da AKI Delivery. Pedido #${pedido.number} — ${MENSAGEM_POR_STATUS[statusDoWhats] ?? ''} Total: ${dinheiro(pedido.total)}.`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank', 'noopener');
+    const texto = mensagemDoWhatsApp(
+      pedido,
+      nomeDaLoja,
+      linkDoAcompanhamento(pedido.codigoDeAcompanhamento),
+    );
+    window.open(linkDoWhatsApp(pedido.cliente.telefone, texto), '_blank', 'noopener');
   }
-
-  const base = caminhoDaLoja(estabelecimentoId);
 
   return (
     <CascaDaLoja
       atual="dashboard"
       titulo="Painel administrativo"
-      subtitulo="Visão geral da operação do AKI Delivery."
+      subtitulo={`Visão geral do dia na ${nomeDaLoja}.`}
     >
+      {publicados === 0 && <PrimeirosPassos base={base} link={linkDoCardapio(estabelecimentoId)} />}
+      {falha !== null && (
+        <p className="prod-aviso" role="alert">
+          {falha}
+        </p>
+      )}
+
       <section className="stats">
         <div className="stat">
           <div className="stat-top">
@@ -92,8 +99,10 @@ export function DashboardAdmin() {
               <span className="material-symbols-outlined">receipt_long</span>
             </div>
           </div>
-          <strong id="todayOrders">{deHoje.length}</strong>
-          <small>Pedidos registrados hoje</small>
+          <strong id="todayOrders">{resumo.pedidos}</strong>
+          <small>
+            {resumo.novos > 0 ? `${resumo.novos} esperando confirmação` : 'Pedidos recebidos hoje'}
+          </small>
         </div>
         <div className="stat">
           <div className="stat-top">
@@ -102,8 +111,8 @@ export function DashboardAdmin() {
               <span className="material-symbols-outlined">restaurant</span>
             </div>
           </div>
-          <strong>8</strong>
-          <small>Pedidos em produção</small>
+          <strong>{resumo.naCozinha}</strong>
+          <small>Confirmados, em preparo e prontos</small>
         </div>
         <div className="stat">
           <div className="stat-top">
@@ -112,8 +121,8 @@ export function DashboardAdmin() {
               <span className="material-symbols-outlined">two_wheeler</span>
             </div>
           </div>
-          <strong>6</strong>
-          <small>Entregadores ativos</small>
+          <strong>{resumo.emEntrega}</strong>
+          <small>{emRota === 1 ? '1 entregador em rota' : `${emRota} entregadores em rota`}</small>
         </div>
         <div className="stat">
           <div className="stat-top">
@@ -122,8 +131,11 @@ export function DashboardAdmin() {
               <span className="material-symbols-outlined">payments</span>
             </div>
           </div>
-          <strong id="todaySales">{dinheiro(vendasDeHoje)}</strong>
-          <small>Atualizado pelo app</small>
+          <strong id="todaySales">{dinheiro(resumo.vendas)}</strong>
+          <small>
+            {resumo.concluidos}{' '}
+            {resumo.concluidos === 1 ? 'pedido concluído' : 'pedidos concluídos'}
+          </small>
         </div>
       </section>
 
@@ -132,28 +144,28 @@ export function DashboardAdmin() {
           <div className="table-title">
             <div>
               <h2>Vendas do dia</h2>
-              <p className="admin-muted">Acompanhe a evolução das vendas por horário.</p>
+              <p className="admin-muted">Pedidos concluídos, pelo horário em que foram feitos.</p>
             </div>
             <span className="status orange">Hoje</span>
           </div>
           <div className="sales-chart" id="salesChart" aria-label="Gráfico de vendas do dia">
-            {porHorario.map((valor, i) => (
+            {resumo.porHorario.map((valor, i) => (
               <div
                 className="sales-bar-wrap"
-                key={HORARIOS[i]}
-                title={`${HORARIOS[i]} — ${dinheiro(valor)}`}
+                key={FAIXAS_DE_HORARIO[i]}
+                title={`${FAIXAS_DE_HORARIO[i] ?? ''} — ${dinheiro(valor)}`}
               >
                 <div className="sales-value">{valor > 0 ? dinheiro(valor) : ''}</div>
                 <div
                   className="sales-bar"
                   style={{ height: `${Math.max(8, (valor / maiorHorario) * 180)}px` }}
                 />
-                <small>{HORARIOS[i]}</small>
+                <small>{FAIXAS_DE_HORARIO[i]}</small>
               </div>
             ))}
           </div>
           <div className="chart-axis">
-            {HORARIOS.map((hora) => (
+            {FAIXAS_DE_HORARIO.map((hora) => (
               <span key={hora}>{hora}</span>
             ))}
           </div>
@@ -162,15 +174,15 @@ export function DashboardAdmin() {
           <div className="table-title">
             <div>
               <h2>Formas de pagamento</h2>
-              <p className="admin-muted">Distribuição dos pedidos pagos.</p>
+              <p className="admin-muted">O que entrou hoje, pela forma registrada.</p>
             </div>
             <span className="material-symbols-outlined section-icon">account_balance_wallet</span>
           </div>
           <div className="payment-list" id="paymentList">
-            {[...porForma.entries()].map(([forma, valor]) => (
+            {formas.map(([forma, valor]) => (
               <div className="payment-row" key={forma}>
                 <div>
-                  <span>{forma}</span>
+                  <span>{ROTULO_DA_FORMA[forma]}</span>
                   <strong>{dinheiro(valor)}</strong>
                 </div>
                 <div className="payment-track">
@@ -179,6 +191,9 @@ export function DashboardAdmin() {
               </div>
             ))}
           </div>
+          <Link className="go-orders" to={`${base}/fechamento`}>
+            <span className="material-symbols-outlined">point_of_sale</span>Ver o fechamento do dia
+          </Link>
         </section>
       </div>
 
@@ -186,15 +201,12 @@ export function DashboardAdmin() {
         <div className="table-title">
           <div>
             <h2>
-              <span className="material-symbols-outlined inline-icon">chat</span> WhatsApp integrado
+              <span className="material-symbols-outlined inline-icon">chat</span> WhatsApp
             </h2>
             <p className="admin-muted">
-              Envie atualizações do pedido diretamente pelo WhatsApp do cliente.
+              Avise o cliente pelo WhatsApp dele, com o status atual e o link do acompanhamento.
             </p>
           </div>
-          <span className="whatsapp-connected">
-            <span className="material-symbols-outlined">check_circle</span> Integrado
-          </span>
         </div>
         <div className="whatsapp-grid">
           <div className="whatsapp-info">
@@ -203,9 +215,7 @@ export function DashboardAdmin() {
             </div>
             <div>
               <strong>Central de mensagens</strong>
-              <p>
-                Selecione um pedido para montar uma mensagem automática com número, status e total.
-              </p>
+              <p>Escolha um pedido de hoje: a mensagem sai pronta com o status em que ele está.</p>
             </div>
           </div>
           <div className="whatsapp-actions">
@@ -215,21 +225,11 @@ export function DashboardAdmin() {
               onChange={(evento) => definirPedidoDoWhats(evento.target.value)}
             >
               <option value="">Selecione um pedido</option>
-              {[...pedidos].reverse().map((pedido) => (
-                <option key={pedido.number} value={pedido.number}>
-                  #{pedido.number} · {pedido.customer} · {dinheiro(pedido.total)}
+              {lista.map((pedido) => (
+                <option key={pedido.id} value={pedido.id}>
+                  #{pedido.numero} · {pedido.cliente.nome} · {ROTULO_DO_STATUS[pedido.status]}
                 </option>
               ))}
-            </select>
-            <select
-              id="whatsappStatus"
-              value={statusDoWhats}
-              onChange={(evento) => definirStatusDoWhats(evento.target.value)}
-            >
-              <option value="recebido">Pedido recebido</option>
-              <option value="preparo">Em preparo</option>
-              <option value="entrega">Saiu para entrega</option>
-              <option value="entregue">Pedido entregue</option>
             </select>
             <button
               className="btn btn-primary"
@@ -247,48 +247,61 @@ export function DashboardAdmin() {
         <div className="table-title">
           <div>
             <h2>
-              <span className="material-symbols-outlined inline-icon">forum</span> Mensagens no
-              aplicativo
+              <span className="material-symbols-outlined inline-icon">forum</span> Mensagens dos
+              pedidos de hoje
             </h2>
-            <p className="admin-muted">
-              Consulte e expanda as mensagens preparadas para cada pedido.
-            </p>
+            <p className="admin-muted">A mensagem que cada pedido manda, no status em que está.</p>
           </div>
-          <span className="status green">Central ativa</span>
         </div>
         <div id="whatsappMessages" className="whatsapp-messages-list">
-          {pedidos.length === 0 ? (
+          {lista.length === 0 ? (
             <div className="empty-menu">
               <span className="material-symbols-outlined">forum</span>
-              <strong>Nenhuma mensagem disponível</strong>
-              <p>As mensagens dos pedidos aparecerão aqui.</p>
+              <strong>Nenhum pedido hoje</strong>
+              <p>As mensagens aparecem aqui quando os pedidos chegarem.</p>
             </div>
           ) : (
-            pedidos.slice(0, 8).map((pedido, i) => (
-              <details className="whatsapp-message" key={pedido.number} open={i === 0}>
+            lista.slice(0, 8).map((pedido, i) => (
+              <details className="whatsapp-message" key={pedido.id} open={i === 0}>
                 <summary>
                   <span className="message-avatar">
                     <span className="material-symbols-outlined">chat</span>
                   </span>
                   <span className="message-summary">
-                    <strong>{pedido.customer}</strong>
+                    <strong>{pedido.cliente.nome}</strong>
                     <small>
-                      Pedido #{pedido.number} · {pedido.status}
+                      Pedido #{pedido.numero} · {ROTULO_DO_STATUS[pedido.status]}
                     </small>
                   </span>
                   <span className="material-symbols-outlined expand-icon">expand_more</span>
                 </summary>
                 <div className="message-body">
                   <p>
-                    {MODELOS[chaveDoStatus(pedido.status)]} Pedido #{pedido.number}. Total:{' '}
-                    {dinheiro(pedido.total)}.
+                    {mensagemDoWhatsApp(
+                      pedido,
+                      nomeDaLoja,
+                      linkDoAcompanhamento(pedido.codigoDeAcompanhamento),
+                    )}
                   </p>
                   <div className="message-meta">
                     <span>
                       <span className="material-symbols-outlined">payments</span>
-                      {pedido.paymentMethod ?? 'Pix'}
+                      {ROTULO_DA_FORMA[pedido.pagamentoDeclarado.forma]}
                     </span>
-                    <span>{dinheiro(pedido.total)}</span>
+                    <a
+                      href={linkDoWhatsApp(
+                        pedido.cliente.telefone,
+                        mensagemDoWhatsApp(
+                          pedido,
+                          nomeDaLoja,
+                          linkDoAcompanhamento(pedido.codigoDeAcompanhamento),
+                        ),
+                      )}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Enviar
+                    </a>
                   </div>
                 </div>
               </details>
@@ -299,15 +312,15 @@ export function DashboardAdmin() {
 
       <section className="panel order-total-card">
         <div className="stat-top">
-          <span>Ticket dos pedidos</span>
+          <span>Ticket médio</span>
           <div className="stat-icon">
             <span className="material-symbols-outlined">receipt_long</span>
           </div>
         </div>
-        <strong data-orders-total="">{dinheiro(totalDosPedidos)}</strong>
+        <strong data-orders-total="">{dinheiro(resumo.ticketMedio)}</strong>
         <small>
-          <b data-orders-count="">{pedidos.length > 99 ? '99+' : pedidos.length}</b> pedidos
-          registrados no app
+          <b data-orders-count="">{resumo.concluidos}</b> pedidos concluídos hoje ·{' '}
+          {dinheiro(resumo.taxas)} em taxas de entrega
         </small>
       </section>
 
@@ -315,7 +328,9 @@ export function DashboardAdmin() {
         <section className="panel table-panel">
           <div className="table-title">
             <h2>Pedidos recentes</h2>
-            <span className="status orange">Atualizado pelo app</span>
+            <Link className="btn btn-light" to={`${base}/pedidos`}>
+              Abrir a fila
+            </Link>
           </div>
           <div className="table-scroll">
             <table className="orders-table">
@@ -329,29 +344,39 @@ export function DashboardAdmin() {
                 </tr>
               </thead>
               <tbody id="adminOrdersBody">
-                {pedidos.slice(0, 8).map((pedido) => (
-                  <tr key={pedido.number}>
-                    <td>
-                      <strong>#{pedido.number}</strong>
-                    </td>
-                    <td>{pedido.customer}</td>
-                    <td>{dinheiro(pedido.total)}</td>
-                    <td>
-                      <span className={`status ${pedido.statusClass || 'orange'}`}>
-                        {pedido.status}
-                      </span>
-                    </td>
-                    <td>
-                      <button
-                        type="button"
-                        className="ticket-btn"
-                        onClick={() => definirTicket(pedido)}
-                      >
-                        <span className="material-symbols-outlined">receipt_long</span> Ticket
-                      </button>
+                {lista.length === 0 ? (
+                  <tr>
+                    <td colSpan={5}>
+                      {pedidos === null ? 'Carregando…' : 'Nenhum pedido hoje ainda.'}
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  lista.slice(0, 8).map((pedido) => (
+                    <tr key={pedido.id}>
+                      <td>
+                        <strong>#{pedido.numero}</strong>
+                        <br />
+                        <small>{dataEHora(pedido.criadoEm)}</small>
+                      </td>
+                      <td>{pedido.cliente.nome}</td>
+                      <td>{dinheiro(pedido.total)}</td>
+                      <td>
+                        <span className={`status ${classeDoStatus(pedido.status)}`}>
+                          {ROTULO_DO_STATUS[pedido.status]}
+                        </span>
+                      </td>
+                      <td>
+                        <button
+                          type="button"
+                          className="ticket-btn"
+                          onClick={() => definirTicket(pedido)}
+                        >
+                          <span className="material-symbols-outlined">receipt_long</span> Ticket
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -361,6 +386,13 @@ export function DashboardAdmin() {
             <h2>Acesso rápido</h2>
           </div>
           <div className="quick-list">
+            <Link className="quick-card" to={`${base}/pedidos`}>
+              <span className="material-symbols-outlined">receipt_long</span>
+              <div>
+                <strong>Fila de pedidos</strong>
+                <small>Confirmar, preparar e despachar</small>
+              </div>
+            </Link>
             <Link className="quick-card" to={`${base}/produtos`}>
               <span className="material-symbols-outlined">restaurant_menu</span>
               <div>
@@ -368,63 +400,78 @@ export function DashboardAdmin() {
                 <small>Produtos, preços e categorias</small>
               </div>
             </Link>
-            <Link className="quick-card" to={`${base}/disponibilidade`} id="estoque">
-              <span className="material-symbols-outlined">inventory_2</span>
+            <Link className="quick-card" to={`${base}/fechamento`}>
+              <span className="material-symbols-outlined">point_of_sale</span>
               <div>
-                <strong>Controle de estoque</strong>
-                <small>Entradas, saídas e alertas</small>
+                <strong>Fechamento do dia</strong>
+                <small>Caixa e acerto dos entregadores</small>
               </div>
             </Link>
-            <Link className="quick-card" to={`${base}#whatsapp`}>
-              <span className="material-symbols-outlined">chat</span>
-              <div>
-                <strong>WhatsApp</strong>
-                <small>Mensagens e atualizações</small>
-              </div>
-            </Link>
-            <Link className="quick-card" to={`${base}#configuracoes`}>
+            <Link className="quick-card" to={`${base}/configuracoes`}>
               <span className="material-symbols-outlined">settings</span>
               <div>
                 <strong>Configurações</strong>
-                <small>Empresa, horários e pagamentos</small>
+                <small>Link do cardápio, taxa e modalidades</small>
               </div>
             </Link>
           </div>
         </section>
       </div>
-
-      <section className="panel admin-settings-panel" id="configuracoes">
-        <div className="table-title">
-          <div>
-            <h2>Configurações de recebimento</h2>
-            <p className="admin-muted">Defina as formas aceitas pelo estabelecimento.</p>
-          </div>
-        </div>
-        <div className="payment-method-config">
-          {[
-            ['Pix', 'qr_code_2'],
-            ['Cartão de crédito', 'credit_card'],
-            ['Cartão de débito', 'credit_card'],
-            ['Dinheiro', 'payments'],
-            ['Vale-refeição', 'confirmation_number'],
-          ].map(([forma, icone]) => (
-            <label key={forma}>
-              <input type="checkbox" defaultChecked data-payment={forma} />
-              <span className="material-symbols-outlined">{icone}</span>
-              <b>{forma}</b>
-            </label>
-          ))}
-        </div>
-      </section>
       <footer className="footer">
         <b>Aki Delivery</b> © 2026 — Painel administrativo
       </footer>
 
       <JanelaDoTicket
-        pedido={ticket}
+        pedido={ticket === null ? null : paraOTicket(ticket)}
         aoFechar={() => definirTicket(null)}
         linkDoCardapio={`${base}/cardapio`}
       />
     </CascaDaLoja>
+  );
+}
+
+/** A loja nova: o que fazer antes do primeiro pedido, na ordem. */
+function PrimeirosPassos({ base, link }: { base: string; link: string }) {
+  return (
+    <section className="panel prod-panel" aria-label="Primeiros passos">
+      <div className="table-title">
+        <div>
+          <h2>Primeiros passos da sua loja</h2>
+          <p className="admin-muted">
+            Quatro passos e a loja está pronta para receber pedidos pelo link.
+          </p>
+        </div>
+      </div>
+      <div className="quick-list">
+        <Link className="quick-card" to={`${base}/produtos/novo`}>
+          <span className="material-symbols-outlined">restaurant_menu</span>
+          <div>
+            <strong>1. Cadastre e publique os produtos</strong>
+            <small>Só o que está publicado aparece no cardápio do cliente.</small>
+          </div>
+        </Link>
+        <Link className="quick-card" to={`${base}/configuracoes`}>
+          <span className="material-symbols-outlined">two_wheeler</span>
+          <div>
+            <strong>2. Defina a taxa de entrega</strong>
+            <small>E se a loja faz entrega, retirada ou as duas.</small>
+          </div>
+        </Link>
+        <Link className="quick-card" to={`${base}/equipe`}>
+          <span className="material-symbols-outlined">group_add</span>
+          <div>
+            <strong>3. Convide a equipe e os entregadores</strong>
+            <small>Entregador recebe a permissão de entregas e usa o app dele.</small>
+          </div>
+        </Link>
+        <Link className="quick-card" to={`${base}/configuracoes`}>
+          <span className="material-symbols-outlined">link</span>
+          <div>
+            <strong>4. Mande o link do cardápio</strong>
+            <small>{link}</small>
+          </div>
+        </Link>
+      </div>
+    </section>
   );
 }

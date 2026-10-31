@@ -1,6 +1,8 @@
 import { ErroDaApi } from '../api/cliente';
 import type {
   ConfiguracaoDePedidos,
+  EntregadorDaEquipe,
+  EntregadorEscolhido,
   NovoPedido,
   PagamentoInformado,
   PedidoDaLoja,
@@ -160,6 +162,7 @@ export async function fazerPedidoNaDemonstracao(novo: NovoPedido): Promise<Pedid
     pagamentoDeclarado: { forma: novo.pagamento.forma, trocoPara: troco ?? null },
     pagamentoRegistrado: null,
     entregador: null,
+    entregadorId: null,
     motivoDoCancelamento: null,
     criadoEm: agora,
     atualizadoEm: agora,
@@ -228,13 +231,32 @@ export function avancarNaDemonstracao(
   });
 }
 
-export function entregadorNaDemonstracao(pedidoId: string, nome: string): PedidoDaLoja {
+/** Os entregadores da equipe de exemplo. "Você" é quem entra como entregador na demonstração. */
+export const ENTREGADORES_DA_DEMONSTRACAO: readonly EntregadorDaEquipe[] = [
+  { usuarioId: 'demo-entregador', nome: 'Você (entregador de exemplo)' },
+  { usuarioId: 'demo-carlos', nome: 'Carlos Moto' },
+];
+
+export function entregadorNaDemonstracao(
+  pedidoId: string,
+  escolhido: EntregadorEscolhido,
+): PedidoDaLoja {
   return alterar(pedidoId, (pedido) => {
-    if (pedido.modalidade !== 'ENTREGA')
+    if (pedido.modalidade !== 'ENTREGA') {
       throw recusa('este pedido é de retirada e não tem entregador');
+    }
     if (encerrado(pedido.status)) throw conflito('este pedido já foi encerrado');
-    if (nome.trim() === '') throw recusa('informe o nome do entregador');
-    return { ...pedido, entregador: nome.trim() };
+    if ('usuarioId' in escolhido) {
+      const da = ENTREGADORES_DA_DEMONSTRACAO.find((um) => um.usuarioId === escolhido.usuarioId);
+      if (da === undefined) {
+        throw recusa(
+          'este entregador não está na equipe da loja; peça para ele abrir a área de entregas uma vez e informar o nome',
+        );
+      }
+      return { ...pedido, entregador: da.nome, entregadorId: da.usuarioId };
+    }
+    if (escolhido.nome.trim() === '') throw recusa('informe o nome do entregador');
+    return { ...pedido, entregador: escolhido.nome.trim(), entregadorId: null };
   });
 }
 

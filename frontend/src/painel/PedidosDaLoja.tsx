@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { FormaDePagamento, PedidoDaLoja, StatusDoPedido } from '../api/pedidos';
+import type {
+  EntregadorDaEquipe,
+  FormaDePagamento,
+  PedidoDaLoja,
+  StatusDoPedido,
+} from '../api/pedidos';
 import { emDemonstracao } from '../aki/demo';
 import { dataEHora, dinheiro } from '../aki/formatos';
 import { toast } from '../aki/toast';
@@ -54,6 +59,20 @@ export function PedidosDaLoja() {
   const [pedidos, definirPedidos] = useState<PedidoDaLoja[] | null>(null);
   const [falha, definirFalha] = useState<string | null>(null);
   const conhecidos = useRef<Set<string> | null>(null);
+  const [equipe, definirEquipe] = useState<EntregadorDaEquipe[]>([]);
+
+  useEffect(() => {
+    let atual = true;
+    fonte
+      .entregadores()
+      .then((lidos) => {
+        if (atual) definirEquipe(lidos);
+      })
+      .catch(() => undefined);
+    return () => {
+      atual = false;
+    };
+  }, [fonte]);
 
   const ler = useCallback(() => {
     fonte
@@ -205,6 +224,7 @@ export function PedidosDaLoja() {
                 key={pedido.id}
                 pedido={pedido}
                 fonte={fonte}
+                equipe={equipe}
                 nomeDaLoja={loja?.nome ?? 'loja'}
                 aoMudar={trocar}
               />
@@ -216,20 +236,30 @@ export function PedidosDaLoja() {
   );
 }
 
+const AVULSO = '__avulso__';
+
 function CartaoDoPedido({
   pedido,
   fonte,
+  equipe,
   nomeDaLoja,
   aoMudar,
 }: {
   pedido: PedidoDaLoja;
   fonte: FonteDePedidos;
+  equipe: readonly EntregadorDaEquipe[];
   nomeDaLoja: string;
   aoMudar: (pedido: PedidoDaLoja) => void;
 }) {
   const [ocupado, definirOcupado] = useState(false);
   const [recusa, definirRecusa] = useState<string | null>(null);
-  const [entregador, definirEntregador] = useState(pedido.entregador ?? '');
+  // Da equipe pelo usuarioId; "avulso" abre o campo do nome.
+  const [escolhido, definirEscolhido] = useState(
+    pedido.entregadorId ?? (pedido.entregador !== null || equipe.length === 0 ? AVULSO : ''),
+  );
+  const [entregador, definirEntregador] = useState(
+    pedido.entregadorId === null ? (pedido.entregador ?? '') : '',
+  );
   const [cancelando, definirCancelando] = useState(false);
   const [motivo, definirMotivo] = useState('');
   const [forma, definirForma] = useState<FormaDePagamento>(pedido.pagamentoDeclarado.forma);
@@ -358,24 +388,49 @@ function CartaoDoPedido({
         <div className="pedido-acoes">
           {precisaEntregador && (
             <div className="pedido-campo">
-              <input
+              <select
                 className="select"
                 aria-label={`Entregador do pedido ${pedido.numero}`}
-                placeholder="Nome do entregador"
-                maxLength={80}
-                value={entregador}
-                onChange={(evento) => definirEntregador(evento.target.value)}
-              />
+                value={escolhido}
+                onChange={(evento) => definirEscolhido(evento.target.value)}
+              >
+                <option value="">Escolha o entregador</option>
+                {equipe.map((um) => (
+                  <option key={um.usuarioId} value={um.usuarioId}>
+                    {um.nome}
+                  </option>
+                ))}
+                <option value={AVULSO}>Outro, sem conta (digitar o nome)</option>
+              </select>
+              {escolhido === AVULSO && (
+                <input
+                  className="select"
+                  aria-label={`Nome do entregador do pedido ${pedido.numero}`}
+                  placeholder="Nome do entregador"
+                  maxLength={80}
+                  value={entregador}
+                  onChange={(evento) => definirEntregador(evento.target.value)}
+                />
+              )}
               <button
                 type="button"
                 className="btn btn-light"
                 disabled={
-                  ocupado || entregador.trim() === '' || entregador.trim() === pedido.entregador
+                  ocupado ||
+                  escolhido === '' ||
+                  (escolhido === AVULSO && entregador.trim() === '') ||
+                  (escolhido !== AVULSO && escolhido === pedido.entregadorId)
                 }
                 onClick={() =>
                   void fazer(
-                    () => fonte.entregador(pedido.id, entregador.trim()),
-                    `Entregador do pedido #${pedido.numero}: ${entregador.trim()}`,
+                    () =>
+                      fonte.entregador(
+                        pedido.id,
+                        escolhido === AVULSO
+                          ? { nome: entregador.trim() }
+                          : { usuarioId: escolhido },
+                      ),
+                    `Entregador do pedido #${pedido.numero} definido`,
                   )
                 }
               >
