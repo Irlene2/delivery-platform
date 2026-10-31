@@ -43,6 +43,30 @@ usa (`order`, `payment`, `delivery`, `settlement`, `conversation`) são esquelet
 - **O risco do §11 do PRD continua mitigado:** o cardápio público é uma segunda entrada além do
   WhatsApp.
 
+## Decisões tomadas depois, dentro deste recorte
+
+Registradas aqui para a ADR não descrever menos do que o código faz. O detalhe de cada uma está
+em [`docs/entrega-15-11/pedido.md`](../../entrega-15-11/pedido.md).
+
+- **26/10/2026 — entrega e retirada, com taxa fixa por loja.** O cliente escolhe no checkout; na
+  retirada a taxa é zero. A taxa mora no `order` (configuração de pedidos da loja), e não no
+  `merchant`, para não mexer no agregado da loja nesta entrega. A área por bairro (ADR-020)
+  continua sendo o modelo do produto.
+- **27/10/2026 — loja que não existe devolve cardápio vazio (200)**, e não 404, na rota
+  pública: o `catalog` só conhece produtos, e o `merchant` não tem rota pública que diga se uma
+  loja existe. Gatilho para o 404: o `merchant` ganhar essa rota.
+- **31/10/2026 — o entregador da equipe entra com a conta dele.** A loja o convida pela Equipe
+  com a permissão `VER_ENTREGA`; ele vê só as entregas que estão com ele, marca a saída e a
+  entrega, e registra dinheiro ou cartão — o Pix é conferido pela loja. Como a equipe do
+  `merchant` não guarda nome, o `order` guarda o nome com que o entregador se apresenta. O
+  entregador avulso, sem conta, continua possível só pelo nome. **A P2 não muda:** não há
+  corrida aberta nem aceite.
+- **31/10/2026 — o repasse é a taxa de entrega de cada pedido entregue**, e o acerto do dia é
+  `dinheiro recebido − repasse`. O **fechamento do dia é um relatório** calculado na tela a
+  partir dos pedidos, com impressão; fechar o caixa com registro e histórico continua sendo o
+  marco 6, no `settlement`. A ADR-022 (a remuneração pertence ao vínculo) não é revogada: a taxa como
+  repasse é a regra única desta entrega, no lugar das modalidades de remuneração.
+
 ## Alternativas consideradas
 
 - **A ADR-075 completa antes de 15/11.** Recusada pelo prazo.

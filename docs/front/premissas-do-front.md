@@ -28,6 +28,18 @@ rodadas.
 | **P5** | Taxa de entrega por área nomeada | Mapa com raio, arrastar o pino, pedir permissão de localização, acompanhar o entregador em tempo real |
 | **P6** | Disponibilidade qualitativa | Quantidade em estoque, "restam 3 unidades", contagem de inventário. Há quatro estados: disponível, acabando, acabou hoje, acabou sem data |
 
+> **Emenda de 31/10/2026 — a P4 fica suspensa até 15/11 (ADR-077, proposta).** Nesta entrega o
+> pedido nasce no **cardápio público** que a conversa entrega por link, e por isso existe
+> carrinho e checkout em `/loja/:id`. O que continua valendo: o carrinho é **estado da tela**
+> (`sessionStorage`), o total exibido é só exibição, e o que vale é o total que o `order`
+> calcula com o preço lido do `catalog`. O cliente não tem conta; ele acompanha o pedido pelo
+> código em `/pedido/:codigo`. Passada a entrega, a ADR-075 volta e a P4 com ela.
+>
+> **A P2 continua valendo, e a tela do entregador foi desenhada a partir dela:** o entregador é
+> alguém da equipe da loja, com a permissão `VER_ENTREGA`, e vê **só as entregas que a loja
+> entregou a ele** — nada de corrida aberta, aceite em broadcast ou ganhos. O repasse do fim do
+> dia é a taxa de cada entrega feita, e está no fechamento do administrador.
+
 **P5 tem uma consequência que não é de tela, é de regra:** o `CLAUDE.md` proíbe
 guardar coordenada. Endereço é **texto e bairro**. Nenhum componente deste front
 pede `navigator.geolocation`, e nenhum guarda latitude ou longitude.
@@ -58,8 +70,9 @@ Portanto, e sem exceção:
 
 ### 2.2 O guarda de rota é conveniência, não segurança
 
-Toda rota deste sistema exige token — **salvo a entrada (login e cadastro) e, desde a W-G,
-a leitura do convite** —, e a autorização é resolvida no servidor a cada requisição. O
+Toda rota deste sistema exige token — **salvo a entrada (login e cadastro), desde a W-G
+a leitura do convite, e, na entrega de 15/11, a vitrine: o cardápio público, a taxa da loja,
+fazer o pedido e acompanhá-lo pelo código** (`docs/entrega-15-11/pedido.md` §2) —, e a autorização é resolvida no servidor a cada requisição. O
 `ExigeSessao` existe para a pessoa não ver um painel piscando antes do 401. **Apagá-lo não
 abriria dado nenhum.**
 
@@ -249,6 +262,7 @@ tela, com o gatilho de cada um.
 | `required` nos esquemas do `catalog` e na `LojaDoUsuario` do `merchant` | Todo campo do tipo gerado é opcional, e a tela precisa tratar ausência que não acontece | a primeira tela que leia produto |
 | O **estado da operação** — a loja está aberta agora? | O seletor não pode mostrar aberta/fechada. A `OperacaoDoEstabelecimentoPort` do `estabelecimento.md` §3 não existe em código | sem rodada marcada — a porta não existe (ADR-046, emenda de 30/09/2026), e a rota da G-C1 responde outra pergunta: qual expediente carimbar |
 | Paginação na tela do cardápio | O cardápio pede a página do teto da rota — 100 — e diz quantos há (W-F); a lista da disponibilidade continua com 20. Quem tiver 200 produtos não alcança o resto | a primeira loja de teste com mais de 100 produtos |
+| ~~Rotas de **pedido**~~ | ~~Painel, vendas, ticket e entregador eram demonstração~~ | **resolvido na entrega de 15/11** — o `order-service` (ADR-077). Os tipos do pedido no front ainda são escritos à mão em `src/api/pedidos.ts`, porque o contrato OpenAPI do `order` não foi gerado (`dividas.md`) |
 | Rota de escrita do catálogo | Criar seção, criar produto e publicar existem desde a W-F (ADR-067). **Editar** produto, despublicar, grupos e opções, renomear e reordenar seção não têm tela — cada um com gatilho no `dividas.md` | a rota de cada um |
 
 **Enquanto um item desta tabela não tiver rota, a tela que depende dele não é

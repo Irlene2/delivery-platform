@@ -241,6 +241,28 @@ Achadas nas rodadas, sem condição que as reabra. **Sem gatilho, ninguém olha.
 | As modalidades não estão no contrato: o mapa `metodosPorModalidade` é declarado com chave `string`, e o formulário da W-E nomeia `ENTREGA` e `RETIRADA` numa constante — a única lista dele sem o contrato atrás. Uma divergência com o domínio vira 400 sem `detail` | medido na W-E |
 | A correção do Mongo no `conversation`, que nenhum teste exerce | `CLAUDE.md`, armadilha do MongoDB no Boot 4 |
 
+### As da entrega de 15/11 (ADR-077)
+
+Assumidas pelo prazo. O gatilho comum é **depois da demonstração, antes de propor o merge ao
+grupo**, salvo onde a linha diz outro.
+
+**O gatilho 33 disparou e foi pago no `order`:** ele é o primeiro esqueleto a subir, e subiu com
+`mem_limit: 512m` e `restart: on-failure:3` (`docker-compose.yml`). Os outros quatro continuam
+sem.
+
+| Dívida | De onde |
+| --- | --- |
+| O `order` não tem contrato em `contracts/openapi/order-service.json` nem `ContratoOpenApiIT` / `ContratoDeErrosIT` | `docs/entrega-15-11/pedido.md` §6 |
+| O `order` não tem teste de integração com banco de verdade (Testcontainers) — a numeração por loja (`INSERT … ON CONFLICT`) e a migration V2 só são exercidas subindo a pilha | idem |
+| Os tipos do pedido no front são escritos à mão (`frontend/src/api/pedidos.ts`), porque não há contrato do que gerar | consequência da primeira linha |
+| `npm run tipos:conferir` sempre acusa diferença: o `openapi-typescript` não formata e os arquivos versionados passaram pelo Prettier | medido em 30/10/2026; a correção é o script rodar `prettier --write src/api/generated` antes do `git diff` |
+| O fechamento do dia é relatório na tela, não é gravado: não há caixa fechado, conferência nem histórico | ADR-077, decisões de 31/10; o marco 6 o resolve |
+| O nome do entregador mora no `order`, porque a equipe do `merchant` não guarda nome — é uma segunda verdade sobre a pessoa | ADR-077, decisão de 31/10; gatilho: a rota do usuário do token (`premissas-do-front.md` §6) |
+| O fuso do "dia" dos pedidos é fixo por configuração (`delivery.pedidos.fuso`), e não o da loja | `PedidosDaLojaService` |
+| Entrar com Google ou Apple: os botões estão na tela de entrada, sem serviço que os atenda | passagem humana de 30/10/2026 |
+| O produto não tem foto nem selo guardados — a tela mostra o ícone padrão | `frontend/README.md` |
+| O aviso ao cliente é o link `wa.me` que o atendente toca; não há mensagem automática | ADR-077 §4; a ADR-075 o resolve |
+
 ---
 
 ## A pergunta de produto que precede o marco 3

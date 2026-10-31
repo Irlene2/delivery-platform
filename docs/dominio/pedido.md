@@ -4,6 +4,11 @@
 **Fontes:** PRD §5 (P1–P6), PRD §6 E4 e E5, **Resposta v1.1 §5.4**, ADR-009, ADR-010, ADR-018, ADR-020
 **Invariantes do `CLAUDE.md` que este documento detalha:** 1, 2, 3, 4, 5, 6
 
+> **Para a entrega de 15/11, o que está em código é um recorte deste documento**, descrito em
+> [`docs/entrega-15-11/pedido.md`](../entrega-15-11/pedido.md) (ADR-077): o pedido nasce no
+> cardápio público, sem `PAGO`, sem `AGUARDANDO_ESTOQUE` e sem os eventos. As regras abaixo
+> continuam sendo as do produto.
+
 > **Correção de 21/08/2026.** A primeira versão deste documento omitia os estados
 > `CONFIRMADO` e `PAGO` e usava `EM_ROTA` e `AGUARDANDO_RETIRADA` no lugar de
 > `SAIU_PARA_ENTREGA` e `AGUARDANDO_CLIENTE`. A figura 2 do documento v1.1 §5.4 é

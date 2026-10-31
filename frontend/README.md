@@ -10,17 +10,21 @@ que este produto **decidiu não ter**, e por qual premissa.
 ## Como rodar
 
     npm install
-    npm run tipos      # gera src/api/generated/ de contracts/openapi/*.json
-    npm run dev        # porta 5173, fixa — é a origem que o gateway aceita
+    npm run tipos                           # gera src/api/generated/ de contracts/openapi/*.json
+    npx prettier --write src/api/generated  # o gerador não formata; sem isto o git acusa diferença
+    npm run dev                             # porta 5173, fixa — é a origem que o gateway aceita
 
-O back precisa estar no ar: `identity-service` em 8081 e o `gateway` em 8080.
+Antes de subir para o Git: `npm run typecheck`, `npm run lint` e `npm test`.
+
+O back precisa estar no ar: o `gateway` em 8080, com `identity`, `merchant` e `catalog` — e o
+`order` para os pedidos (perfil `pedidos`, em `docs/como-subir-local.md`).
 Sem o back, a tela de entrada tem **"Ver as telas em modo demonstração"**: escolha o
 perfil e navegue com os dados de exemplo, sem nenhuma chamada à API.
 
 ## O visual: o protótipo `aki_delivery`, em React
 
-As telas são as do protótipo HTML `frontend/aki_delivery`, reescritas em React com
-**a mesma marcação e as mesmas classes**. As folhas de estilo são cópias fiéis, em
+As telas são as do protótipo HTML `aki_delivery` (que **não** está neste repositório),
+reescritas em React com **a mesma marcação e as mesmas classes**. As folhas de estilo são cópias fiéis, em
 `src/estilos/` (por isso estão no `.prettierignore`):
 
 | Folha                                    | Onde vale                                                                                                             |
@@ -29,24 +33,46 @@ As telas são as do protótipo HTML `frontend/aki_delivery`, reescritas em React
 | `login.css`                              | só nas telas de entrada — ela redefine `.topbar`, `.badge` e `*`; entra e sai com a tela (`src/aki/estiloDoLogin.ts`) |
 
 O `index.css` importa o Tailwind **sem o preflight**: o reset dele mudaria margens,
-títulos e botões das folhas do protótipo. As utilidades continuam disponíveis.
+títulos e botões das folhas do protótipo. As utilidades continuam disponíveis. `pedidos.css`
+é a única folha nova: as telas de pedido, fechamento e entregas, no mesmo vocabulário.
 
-| Rota                                                           | Tela do protótipo                                                                 | Dados                       |
-| -------------------------------------------------------------- | --------------------------------------------------------------------------------- | --------------------------- |
-| `/entrar`, `/cadastrar`, `/convite/:token`                     | `index.html`                                                                      | `identity`, `merchant`      |
-| `/painel`                                                      | escolha da loja, ou "Cadastrar minha loja"                                        | `GET /me/estabelecimentos`  |
-| `/painel/lojas/nova`                                           | formulário no visual do protótipo                                                 | `POST /me/estabelecimentos` |
-| `/painel/lojas/:id`                                            | `administrador.html` ou `colaborador.html`, pelo **papel** que o servidor informa | pedidos: demonstração       |
-| `.../produtos`, `.../produtos/novo`, `.../produtos/:produtoId` | `produtos.html` (lista e editor, com as opções do produto)                        | `catalog`                   |
-| `.../disponibilidade`                                          | Estoque                                                                           | `catalog`                   |
-| `.../equipe`                                                   | convite para a equipe                                                             | `merchant`                  |
-| `.../cardapio`                                                 | `cardapio.html` com os produtos publicados                                        | `catalog`                   |
-| `/cliente`, `/cliente/cardapio`, `/cliente/pedidos`            | `cliente.html`, `cardapio.html`, `pedidos.html`                                   | demonstração                |
-| `/entregador`                                                  | `entregador.html`                                                                 | demonstração                |
+**As fontes moram no `index.html`** (Inter, Material Icons e Material Symbols), e não em
+`@import` dentro do CSS: as telas de entrada usam a classe `material-icons` e as internas
+`material-symbols-outlined`. Sem a fonte certa, o ícone aparece como texto (`light_mode`,
+`visibility`, `lock`).
 
-**O que ainda é demonstração** (sem rota no back): pedidos, carrinho, checkout,
-ticket, vendas, WhatsApp, entregador e a área do cliente. Ficam em `sessionStorage`
-(`src/aki/pedidos.ts`), e os valores são só exibição.
+As rotas, por quem as usa:
+
+| Rota                                                           | Quem usa                                                                      | Tela do protótipo                                                                                                  | Dados                                                 |
+| -------------------------------------------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------- |
+| `/entrar`, `/cadastrar`, `/convite/:token`                     | todos                                                                         | `index.html`                                                                                                       | `identity`, `merchant`                                |
+| `/loja/:id`                                                    | **cliente, sem conta** — é o link que a resposta automática do WhatsApp manda | `cardapio.html` com carrinho e checkout                                                                            | `catalog` (cardápio público), `order` (taxa e pedido) |
+| `/loja/:id/pedidos`                                            | cliente                                                                       | `pedidos.html`, os pedidos feitos neste navegador                                                                  | `order`                                               |
+| `/pedido/:codigo`                                              | cliente                                                                       | acompanhamento do pedido pelo código                                                                               | `order`                                               |
+| `/painel`                                                      | quem tem conta                                                                | "Minhas lojas": escolher a loja ou **cadastrar a primeira**                                                        | `GET /me/estabelecimentos`                            |
+| `/painel/lojas/nova`                                           | dono novo                                                                     | cadastro da loja, do zero                                                                                          | `POST /me/estabelecimentos`                           |
+| `/painel/lojas/:id`                                            | administrador ou colaborador, pelo **papel** que o servidor informa           | `administrador.html` / `colaborador.html` — vendas e pedidos recentes do dia, e os primeiros passos para loja nova | `order`                                               |
+| `.../pedidos`                                                  | quem tem `VER_PEDIDO`                                                         | a fila do dia: aceitar, preparar, despachar com entregador, registrar o pagamento, avisar pelo WhatsApp            | `order`                                               |
+| `.../entregas`                                                 | **entregador** (`VER_ENTREGA`)                                                | as entregas que a loja deu a ele: saiu, entregue, quanto recebeu                                                   | `order`                                               |
+| `.../fechamento`                                               | administrador                                                                 | fechamento do dia: total por forma de pagamento, horário e o **acerto de cada entregador**                         | `order` (calculado na tela)                           |
+| `.../configuracoes`                                            | administrador                                                                 | taxa de entrega fixa, se aceita entrega e se aceita retirada; o link do cardápio para pôr na resposta automática   | `order`                                               |
+| `.../produtos`, `.../produtos/novo`, `.../produtos/:produtoId` | administrador                                                                 | `produtos.html` (lista e editor, com as opções do produto)                                                         | `catalog`                                             |
+| `.../disponibilidade`                                          | quem cuida do estoque                                                         | Estoque                                                                                                            | `catalog`                                             |
+| `.../equipe`                                                   | administrador                                                                 | convite para a equipe, entregador incluído                                                                         | `merchant`                                            |
+| `.../horario`                                                  | administrador                                                                 | horário de funcionamento                                                                                           | `merchant`                                            |
+| `.../cardapio`                                                 | painel                                                                        | `cardapio.html` com os produtos publicados                                                                         | `catalog`                                             |
+| `/cliente`, `/cliente/cardapio`, `/cliente/pedidos`            | modo demonstração                                                             | `cliente.html`, `cardapio.html`, `pedidos.html`                                                                    | demonstração                                          |
+
+`/entregador` não existe mais como tela: redireciona para `/painel`, e o entregador entra na
+loja dele e cai em `.../entregas`.
+
+**O que ainda é demonstração:** só a área `/cliente` e o botão **"Ver as telas em modo
+demonstração"** da entrada, que mostram as telas com dados de exemplo (`src/pedido/demonstracao.ts`)
+sem chamar a API. O carrinho do cliente é estado da tela (`src/aki/pedidos.ts`); o total que vale
+é o que o `order` devolve.
+
+**O que ainda não existe:** entrar com Google ou Apple (os botões estão na tela, sem serviço
+por trás); o fechamento do dia gravado no servidor (hoje é um relatório calculado na tela).
 
 **O que o servidor ainda não sabe**, e a tela diz: alterar nome, tipo, descrição ou
 preço de um produto existente; criar grupos de opções; guardar foto e selo. Os

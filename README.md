@@ -9,8 +9,15 @@ testes, container, contrato e pipeline próprios.
 > nasce numa conversa de WhatsApp. Se uma decisão parecer estranha, confira as
 > premissas em [`docs/PRD.md`](docs/PRD.md) §5 antes de "corrigir".
 
-**Estado: 19/10/2026, em `5208ae6`.** O `PRD.md` §10 define cada marco por uma coluna —
-*"o comerciante consegue"* —, e é por ela que este parágrafo se mede.
+> **Entrega do curso, 15/11/2026 — o que mudou no fluxo (ADR-077, proposta).** Até essa data o
+> pedido **não** nasce dentro da conversa: o cliente chama a loja no WhatsApp, a resposta
+> automática manda o link do cardápio público, e o pedido é montado e confirmado ali. O `order`
+> é o único serviço novo; pagamento na entrega e entregador são campos do pedido. O passo a
+> passo, por etapa, está em [`docs/entrega-15-11/README.md`](docs/entrega-15-11/README.md).
+
+**Estado: 31/10/2026.** O `PRD.md` §10 define cada marco por uma coluna — O `PRD.md` §10 define cada marco por uma coluna —
+*"o comerciante consegue"* —, e é por ela que este parágrafo se mede. A linha dos marcos 1 e
+2 é a de 19/10/2026, em `5208ae6`.
 
 - **Marco 1, *cadastrar a loja e o time*:** a loja, **sim** — cumprida no navegador em
   10/10, com os semeadores desligados, e cadastrada outra vez por uma pessoa no navegador em
@@ -20,13 +27,21 @@ testes, container, contrato e pipeline próprios.
   achados estão em [`docs/operacao/passagem-humana.md`](docs/operacao/passagem-humana.md).
 - **Marco 2, *publicar o cardápio e marcar o que acabou*:** **cumprido**, no navegador,
   em 15/10.
+- **Recorte de 15/11 (ADR-077), *receber o pedido pelo link e acompanhá-lo numa tela*:**
+  exercido no navegador por uma pessoa — pedido feito no cardápio público, aceito no painel,
+  levado até entregue, com o pagamento registrado. O entregador na conta dele e o fechamento do
+  dia passam nos testes de tela e **ainda esperam a passagem humana**. **Não** é o marco 3 do
+  PRD: o pedido ainda não nasce na conversa (ADR-075, adiada).
 
 O `identity` cadastra com verificação por telefone e emite o token. O `merchant` guarda
 estabelecimento, disponibilidade, áreas de entrega, equipe e convite, cria a loja e o
 convite por rota, e publica pelo outbox. O `catalog` tem o cardápio — categoria, produto,
 publicação e a marcação do que acabou —, com persistência em MongoDB e o primeiro
-consumidor deste projeto que escreve em banco. O gateway autentica e roteia, com teste
-para cada rota. Os demais serviços são esqueleto.
+consumidor deste projeto que escreve em banco, e serve o cardápio público. O `order` recebe
+o pedido do cardápio público (preço lido do `catalog` na hora), leva o pedido pelos estados,
+registra entregador e pagamento, e atende o entregador da equipe na conta dele. O gateway
+autentica e roteia, com teste para cada rota. `payment`, `delivery`, `settlement` e
+`conversation` continuam esqueleto.
 
 **Até 15/10 este parágrafo dizia *"marco 1 concluído (26/09/2026)"*, e isso nunca foi
 verdade:** o marco foi declarado medindo o que estava pronto, e não o que a coluna pedia.
@@ -43,7 +58,9 @@ bandeira ligada e sem semeador?*
 
 - JDK 21 **instalado** — o build declara o toolchain, mas não tem resolvedor que o baixe
 - Docker e Docker Compose
-- ~12 GB de RAM se subir tudo — mas o dia a dia usa o perfil `marco2`, ou só o `core`
+- ~12 GB de RAM se subir tudo — mas o dia a dia usa o perfil `marco2` (mais `pedidos`), ou só o `core`
+- No Windows, com Docker Desktop: rode os comandos do Compose no PowerShell — o caminho está em
+  [`docs/como-subir-local.md`](docs/como-subir-local.md)
 
 ## Primeiros passos
 
@@ -73,6 +90,7 @@ docker compose --profile core up -d           # bancos, brokers, storage
 |---|---|
 | `core` | PostgreSQL, MongoDB, Redis, RabbitMQ, MinIO |
 | `marco2` | PostgreSQL, MongoDB e RabbitMQ, e os quatro serviços com código: gateway, `identity`, `merchant` e `catalog` — é o que sobe hoje ([`docs/como-subir-local.md`](docs/como-subir-local.md)) |
+| `pedidos` | o `order-service`, somado ao `marco2` para a entrega de 15/11: `docker compose --profile marco2 --profile pedidos up -d` (ou `scripts/subir-local.sh --com-pedidos`) |
 | `services` | gateway e os oito microsserviços |
 | `full` | tudo |
 
@@ -160,6 +178,7 @@ computador (ADR-050):
 |---|---|
 | merchant-service | `http://127.0.0.1:8082/swagger-ui.html` |
 | catalog-service | `http://127.0.0.1:8083/swagger-ui.html` |
+| order-service | `http://127.0.0.1:8085/swagger-ui.html` |
 
 Não passa pelo gateway, de propósito. O token para as rotas protegidas vem de
 `POST /api/v1/auth/login` no gateway (8080) e vai no botão **Authorize**. O
@@ -200,6 +219,8 @@ ADR-021.
 | [`docs/dominio/`](docs/dominio/README.md) | **As regras vigentes** — agregados, invariantes, tabelas de transição, fórmulas |
 | [`CLAUDE.md`](CLAUDE.md) | Invariantes e convenções — leitura obrigatória antes do primeiro commit |
 | [`docs/architecture/decisions/`](docs/architecture/decisions/README.md) | Por que cada decisão foi tomada, com alternativas e consequências |
+| [`docs/entrega-15-11/`](docs/entrega-15-11/README.md) | **O recorte da entrega de 15/11** — fluxo, etapas, rotas do pedido e como testar |
+| [`docs/como-subir-local.md`](docs/como-subir-local.md) | Como subir tudo no seu computador, e o que fazer quando não sobe |
 | `docs/referencia/*.pdf` | Versões publicadas da arquitetura, do PRD e da revisão de escopo |
 | [`docs/operacao/metodo-das-rodadas.md`](docs/operacao/metodo-das-rodadas.md) | Como uma rodada de trabalho funciona, e onde cada papel erra |
 
@@ -283,10 +304,10 @@ A numeração é a de [`docs/PRD.md`](docs/PRD.md) §10, e é a única que vale.
 | 0 | ✅ Esqueleto: build, módulos, Compose, CI | — |
 | 1 | Conta, estabelecimento, equipe e permissões | Cadastrar a loja e o time, com poderes diferentes |
 | 2 | ✅ Cardápio com opções e disponibilidade qualitativa | Publicar o cardápio e marcar o que acabou |
-| 3 | Painel de pedidos e ciclo de preparo | Receber e acompanhar pedidos numa tela |
+| 3 | 🟡 Painel de pedidos e ciclo de preparo — no recorte de 15/11, o pedido vem do link (ADR-077) | Receber e acompanhar pedidos numa tela |
 | 4 | Liquidação presencial, troco e Pix confirmado | Registrar como cada pedido foi pago de verdade |
 | 5 | Entregadores, vínculo, remuneração e despacho | Despachar e saber quem está com cada pedido |
-| **6** | **Fechamento de expediente** | **Fechar o dia com extrato por entregador** |
+| **6** | **Fechamento de expediente** — no recorte de 15/11, um relatório na tela, não gravado | **Fechar o dia com extrato por entregador** |
 | 7 | Canal WhatsApp determinístico | Receber pedido pelo WhatsApp com menu numerado |
 | 8 | Pagamento online e emissão fiscal | Cobrar antecipado e emitir documento |
 | 9 | Atendimento assistido e escalonamento | Atender sozinho a maior parte dos pedidos |

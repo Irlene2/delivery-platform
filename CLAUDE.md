@@ -457,6 +457,9 @@ Documentos de referência:
 - `docs/dominio/` — as regras vigentes: agregados, invariantes, tabelas de
   transição e fórmulas de apuração. **Leia antes de escrever regra de negócio.**
 - `contracts/` — OpenAPI, AsyncAPI e JSON Schema dos eventos
+- `docs/entrega-15-11/` — o recorte da entrega de 15/11 (ADR-077, proposta): o pedido nasce pelo
+  link do cardápio público, e o `order-service` é o único serviço novo. Leia o `README.md` de lá
+  antes de mexer em pedido, vitrine ou entregador
 
 ---
 

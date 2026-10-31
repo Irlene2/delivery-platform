@@ -48,10 +48,43 @@ docker compose --profile core ...                     # só a infraestrutura, in
 docker compose --profile core --profile services ...  # infraestrutura e os nove serviços
 ```
 
-O `marco2` existe desde a I-B: é o que o marco 2 usa de verdade. Os cinco
-esqueletos (`settlement`, `order`, `payment`, `delivery`, `conversation`) só
-ligam uma JVM, e o `redis` e o `minio` não têm usuário no repositório — o cache
+O `marco2` existe desde a I-B: é o que o marco 2 usa de verdade. Os quatro
+esqueletos (`settlement`, `payment`, `delivery`, `conversation`) só
+ligam uma JVM — o `order` deixou de ser esqueleto na entrega de 15/11 e sobe pelo perfil
+`pedidos`, e o `redis` e o `minio` não têm usuário no repositório — o cache
 de autorização é em processo (ADR-011).
+
+**Para a entrega de 15/11, some o perfil `pedidos`** — ele traz o `order-service`, o único
+serviço novo da ADR-077:
+
+```bash
+docker compose --profile marco2 --profile pedidos ...
+```
+
+### 0.1 O outro caminho: Windows com Docker Desktop
+
+O que está acima é a máquina de quem escreveu este documento: motor Docker **dentro do Ubuntu
+do WSL**, sem Docker Desktop. Quem tem **Docker Desktop** instalado tem `docker` no próprio
+PowerShell, e aí tudo roda no PowerShell — não há Ubuntu para entrar, e a distribuição
+`docker-desktop` do WSL **não tem bash** (`env: can't execute 'bash'`), por isso o
+`scripts/subir-local.sh` não roda nela. Os mesmos grupos da 2.4, no PowerShell, da raiz do
+repositório:
+
+```powershell
+cd backend; .\gradlew.bat bootJar; cd ..                       # os jars (2.2)
+docker compose --profile marco2 --profile pedidos build        # as imagens (2.3)
+docker compose --profile marco2 --profile pedidos up -d --wait --wait-timeout 300 postgres mongodb mongo-init rabbitmq
+docker compose --profile marco2 --profile pedidos up -d --wait --wait-timeout 300 identity-service
+docker compose --profile marco2 --profile pedidos up -d --wait --wait-timeout 300 merchant-service catalog-service
+docker compose --profile marco2 --profile pedidos up -d --wait --wait-timeout 300 order-service
+docker compose --profile marco2 --profile pedidos up -d --wait --wait-timeout 300 gateway
+docker compose --profile marco2 --profile pedidos ps           # todos healthy
+```
+
+O par de chaves do `identity` sai do `openssl` que vem com o Git para Windows
+(`C:\Program Files\Git\usr\bin\openssl.exe`), com os dois comandos do `.env.example`.
+Precisa de **uns 10 GB livres no disco** para as imagens: com o disco cheio, o build falha com
+`read-only file system`.
 
 Pré-requisitos, uma vez:
 
@@ -59,7 +92,10 @@ Pré-requisitos, uma vez:
   `WSL Ubuntu keepalive` em `Running`;
 - JDK 21 **no Windows**;
 - Node 22 para o front;
-- `.env` na raiz, copiado do `.env.example` e preenchido. **O `.env` é
+- `.env` na raiz, copiado do `.env.example` e **preenchido** — copiar não basta: um `.env`
+  com os valores vazios sobe o `postgres` sem senha, e ele fica `unhealthy`. Invente as
+  senhas (são só da sua máquina); `JWT_ISSUER` e `JWT_AUDIENCE` vazios usam o padrão do
+  `docker-compose.yml`; `DELIVERY_DOCS_ABERTAS=true` se quiser o Swagger. **O `.env` é
   gitignorado e nunca entra em relatório, em commit nem em conversa.**
 
 ---
@@ -185,6 +221,13 @@ docker compose --profile marco2 up -d --wait --wait-timeout 300 merchant-service
 docker compose --profile marco2 up -d --wait --wait-timeout 300 gateway                               # 4
 ```
 
+**Com o `order` (entrega de 15/11),** acrescente `--profile pedidos` em todos e um grupo entre o
+3 e o 4 — o `order` pergunta ao `merchant` a permissão e ao `catalog` o preço:
+
+```bash
+docker compose --profile marco2 --profile pedidos up -d --wait --wait-timeout 300 order-service       # 3b
+```
+
 O `identity` sobe sozinho porque todos os outros validam token pelo JWKS dele:
 juntos, "não subiu" e "subiu e não achou o JWKS" chegam misturados.
 `merchant` e `catalog` são os dois lados do circuito do expediente.
@@ -230,7 +273,7 @@ A última linha é a razão de os dois irem juntos: a percentagem sem o limite �
 pior que nada. Nove JVMs a 3 GB cada eram 27 GB de heap possível numa VM de 12.
 
 `restart: "on-failure:3"` nos quatro: o `unless-stopped` foi o que transformou a
-queda de 01/10 num laço (abaixo). Os cinco esqueletos ainda têm `unless-stopped`
+queda de 01/10 num laço (abaixo). Os quatro esqueletos ainda têm `unless-stopped`
 e nenhum limite — não sobem no `marco2`.
 
 #### O que aconteceu em 06/10/2026, com os quinze de uma vez
@@ -260,7 +303,7 @@ Start-ScheduledTask -TaskName "WSL Ubuntu keepalive"
 
 `stop` é respeitado pelo `unless-stopped`: os nove ficam parados nos reinícios
 seguintes, e a infraestrutura continua de pé. **O `profile services` inteiro não
-foi medido de novo** depois dos limites — os cinco esqueletos não os têm.
+foi medido de novo** depois dos limites — os quatro esqueletos não os têm (o `order` tem desde a entrega de 15/11).
 
 ### 2.5 A prova
 
@@ -310,7 +353,9 @@ Confere os jars dos quatro módulos (não os constrói — eles vêm da 2.2, no
 Windows) e a chave em `secrets/jwt-private.pem`, constrói as quatro imagens, sobe
 os quatro grupos da 2.4 com `--wait`, e mostra `ps`, a memória por contêiner, a
 saúde do gateway e o Swagger do `merchant`, parando no primeiro erro.
-`--sem-build` pula jars e imagens; `--so-infra` sobe só o grupo 1.
+`--sem-build` pula jars e imagens; `--so-infra` sobe só o grupo 1; `--com-pedidos` soma o
+perfil `pedidos`, o jar do `order` e o grupo 3b. **Precisa de bash** — no Docker Desktop sem
+Ubuntu, use os comandos da seção 0.1.
 
 **Rodou do começo ao fim em 10/10/2026**, com a pilha já de pé. A prova da 2.5
 não está nele: ela cria um usuário a cada execução.
@@ -420,7 +465,8 @@ npm ci
 npm run dev
 ```
 
-Em `http://localhost:5173`.
+Em `http://localhost:5173`. O que cada rota faz está no `frontend/README.md`; o caminho de
+uma demonstração, em `docs/entrega-15-11/README.md`.
 
 **`CORS_ALLOWED_ORIGINS` no `.env` tem de incluir `http://localhost:5173`.** Um
 `.env` antigo nasceu com `http://localhost:3000`, que é a porta do Create React
@@ -447,6 +493,15 @@ docker compose --profile core exec mongodb mongosh --quiet \
   --eval 'db.getSiblingDB("catalog_db").produtos.countDocuments()'
 ```
 
+Os pedidos (perfil `pedidos`):
+
+```bash
+docker compose --profile marco2 --profile pedidos exec postgres sh -c 'psql -U "$POSTGRES_USER" -d order_db \
+  -c "select numero, status, total, entregador from pedido order by criado_em desc limit 5;"'
+```
+
+As aspas simples funcionam igual no PowerShell: quem expande `$POSTGRES_USER` é o contêiner.
+
 O código de verificação vale dez minutos e aceita cinco tentativas
 (`CodigoDeVerificacao.VALIDADE` e `TENTATIVAS_MAXIMAS`).
 
@@ -464,7 +519,7 @@ credenciais estão no `.env`.
 | `docker compose build` termina em segundos sem construir nada | faltaram os perfis | `--profile marco2`, ou `--profile core --profile services` |
 | `service "…" depends on undefined service "postgres"` | `--profile services` sem o `core` | os dois perfis juntos |
 | `COPY failed: no source files were specified` | faltou o `bootJar` | seção 2.2. É o preço aceito na ADR-051 |
-| a VM cai e volta, e os contêineres sobem de novo a cada `wsl` | o laço da seção 2.4 — hoje só os cinco esqueletos o armam; os quatro do marco 2 desistem depois de três tentativas (`on-failure:3`) | `stop` dos serviços e `Start-ScheduledTask` |
+| a VM cai e volta, e os contêineres sobem de novo a cada `wsl` | o laço da seção 2.4 — hoje só os quatro esqueletos o armam; os quatro do marco 2 e o `order` desistem depois de três tentativas (`on-failure:3`) | `stop` dos serviços e `Start-ScheduledTask` |
 | `vmmemWSL` acima de 10 GB, Docker ou `wsl` sem responder — a VM travou | build pesado em paralelo, ou serviços sem `mem_limit` subindo juntos | `wsl --shutdown` no PowerShell, e **religue a tarefa**: `Start-ScheduledTask -TaskName "WSL Ubuntu keepalive"` — em 01/10 ela morreu junto, e foi isso que fechou o laço. O `systemctl enable docker` e o `restart: unless-stopped` da infraestrutura a trazem de volta no primeiro `wsl`; os serviços sobem pela 2.4 |
 | `Wsl/Service/0x8007274c` | o WSL não consegue mais iniciar a VM | `wsl --shutdown`, espere oito segundos, `wsl` |
 | depois do `--shutdown` ou de uma queda, o Ubuntu volta a parar sozinho | a tarefa `WSL Ubuntu keepalive` morreu junto | `Start-ScheduledTask -TaskName "WSL Ubuntu keepalive"`, e confirme `Running` com `Get-ScheduledTask` |
@@ -474,6 +529,14 @@ credenciais estão no `.env`.
 | o painel carrega e nada responde | CORS em 3000 | seção 3 |
 | o `catalog` não sobe, com `PRECONDITION_FAILED - inequivalent arg` no log | a fila `catalog.expediente-alterado` já existe no broker com outros argumentos — e **argumento de fila é imutável** | apague a fila e suba de novo: `docker compose --profile marco2 exec rabbitmq rabbitmqctl delete_queue catalog.expediente-alterado`. Mensagem que estava nela se perde — confira antes se há alguma (`rabbitmqctl list_queues name messages`). Não mude o nome da fila para contornar |
 | rota protegida dá `500` em contêiner, e o log diz `I/O error on GET request for "http://localhost:8081/.well-known/jwks.json"` | o serviço procura o JWKS em `localhost`, que dentro do contêiner é ele mesmo | `JWT_JWKS_URI` com `http://identity-service:8081/...` no `environment:` do serviço. Não é `401`: falha de busca do JWKS sai como `500` (medido na I-B) |
+| `docker compose build` falha com `read-only file system` | **disco cheio** — o Docker Desktop guarda as imagens num disco virtual dentro do `C:` | libere espaço (uns 10 GB), feche e abra o Docker Desktop, e repita |
+| `postgres` fica `unhealthy` logo na primeira subida | o `.env` foi copiado e não preenchido | preencha (seção 0), e `docker compose --profile marco2 --profile pedidos down -v` para recriar o volume com a senha nova. O `-v` apaga os dados locais |
+| *"O WSL está concluindo uma atualização"*, ou *"Docker Desktop is unable to start"* | atualização do WSL pela metade | no PowerShell: `wsl --update`, `wsl --shutdown`, e reinicie o computador |
+| `env: can't execute 'bash'` ao rodar `scripts/subir-local.sh` | você está na distribuição `docker-desktop`, que não tem bash | seção 0.1 |
+| `Cannot find a Java installation … languageVersion=21` | o JDK instalado é outro (23, por exemplo) | instale o JDK 21 (Temurin) e `.\gradlew.bat --stop` |
+| `Task '.atualizar=true' not found` | o PowerShell partiu o `-Dopenapi.atualizar=true` no ponto | ponha entre aspas: `"-Dopenapi.atualizar=true"` |
+| `.\gradlew.bat` não é reconhecido | você está na raiz, e o Gradle mora em `backend/` | `cd backend` |
+| o `git pull` acusa `src/api/generated/*.ts` alterados depois do `npm run tipos` | o gerador não formata | `npx prettier --write src/api/generated` (ou `git restore` neles) |
 | o `identity` não sobe, e `secrets/jwt-private.pem` virou diretório | o arquivo não existia quando o compose montou o volume, e o Docker criou um diretório com o nome, de `root` (medido em 10/10/2026) | apague o diretório, gere o par como diz o `.env.example`, e suba de novo |
 
 ---

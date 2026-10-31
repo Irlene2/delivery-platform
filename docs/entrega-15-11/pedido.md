@@ -1,6 +1,7 @@
 # O pedido da entrega de 15/11 — rotas, campos e estados
 
-**Depende da ADR-077** (proposta). Este documento é o desenho que a etapa 3 implementa. O
+**Depende da ADR-077** (proposta). Este documento é o desenho que a etapa 3 implementa, e o
+que o código cumpre hoje. O índice das etapas está em [`README.md`](README.md). O
 OpenAPI de `contracts/openapi/` **não é escrito à mão** (ADR-039): ele sai do código, e este
 texto é o que o código precisa cumprir.
 
@@ -198,9 +199,12 @@ cartão); as duas ficam guardadas.
 
 - **Testes de unidade** (sem Docker): `.\gradlew.bat :services:order-service:test` no
   PowerShell, em `backend`. O domínio (`PedidoTest`) e os casos de uso com dublês
-  (`FazerPedidoServiceTest`, `PedidosDaLojaServiceTest`).
-- **Ponta a ponta pela API:** `docs/entrega-15-11/testes-pedido.http`, com a pilha de pé por
-  `./scripts/subir-local.sh --com-pedidos`.
+  (`FazerPedidoServiceTest`, `PedidosDaLojaServiceTest`, `EntregadoresServiceTest`).
+- **Ponta a ponta pela API:** `docs/entrega-15-11/testes-pedido.http` — do cardápio público ao
+  pedido entregue, as recusas, e o entregador na conta dele —, com a pilha de pé por
+  `./scripts/subir-local.sh --com-pedidos` ou, no Docker Desktop, pela seção 0.1 de
+  `docs/como-subir-local.md`.
+- **Pelas telas:** o roteiro de `docs/entrega-15-11/README.md`.
 - **Ainda não há** teste de integração do `order` com banco de verdade (Testcontainers), nem
   contrato em `contracts/openapi/order-service.json`. Gatilho: depois da demonstração, antes de
   propor o merge ao grupo.

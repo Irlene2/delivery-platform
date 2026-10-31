@@ -5,6 +5,7 @@
 # resposta do anterior (token, loja, produto, pedido).
 #
 # Antes: a pilha de pé com o pedido —  ./scripts/subir-local.sh --com-pedidos
+# (no Windows com Docker Desktop, os comandos da seção 0.1 de docs/como-subir-local.md)
 # — e a semeadura ligada (DELIVERY_SEMEADURA=true no .env; docs/como-subir-local.md).
 # Troque @senha pela sua DELIVERY_SEMEADURA_SENHA e NÃO faça commit com ela.
 
@@ -188,3 +189,83 @@ Authorization: Bearer {{token}}
 Content-Type: application/json
 
 { "status": "CANCELADO", "motivo": "teste" }
+
+### ── O ENTREGADOR da equipe, com a conta dele (decisão de 31/10/2026) ──────
+# Para não precisar de uma segunda conta, o próprio administrador faz o papel: ele
+# recebe todas as permissões, VER_ENTREGA incluída. Na demonstração de verdade, o
+# entregador é convidado pela Equipe com "Entregador" e entra com a conta dele.
+
+### 26. Eu como entregador, antes de me apresentar (204, sem corpo)
+GET {{base}}/api/v1/merchants/{{loja}}/orders/couriers/me
+Authorization: Bearer {{token}}
+
+### 27. Apresentar-me com o nome que a loja vai ver (200)
+# @name eu
+PUT {{base}}/api/v1/merchants/{{loja}}/orders/couriers/me
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "nome": "Carlos Moto" }
+
+### 28. A equipe de entregadores, vista pela loja (200, Carlos Moto aparece)
+GET {{base}}/api/v1/merchants/{{loja}}/orders/couriers
+Authorization: Bearer {{token}}
+
+### 29. Um pedido novo, para o entregador levar (201)
+# @name pedido2
+POST {{base}}/api/v1/storefront/{{loja}}/orders
+Content-Type: application/json
+
+{
+  "cliente": { "nome": "Ana", "telefone": "(21) 98888-1111" },
+  "modalidade": "ENTREGA",
+  "endereco": { "logradouro": "Rua B, 20", "bairro": "Centro" },
+  "itens": [{ "produtoId": "{{produto.response.body.id}}", "quantidade": 1 }],
+  "pagamento": { "forma": "DINHEIRO", "trocoPara": 60.00 }
+}
+
+### 30. A loja confirma, prepara e deixa pronto (200; rode três vezes, trocando o status: CONFIRMADO, EM_PREPARO, PRONTO)
+PUT {{base}}/api/v1/merchants/{{loja}}/orders/{{pedido2.response.body.id}}/status
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "status": "CONFIRMADO" }
+
+### 31. A loja entrega o pedido ao Carlos, pela conta dele (200; entregadorId preenchido)
+PUT {{base}}/api/v1/merchants/{{loja}}/orders/{{pedido2.response.body.id}}/courier
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "usuarioId": "{{eu.response.body.usuarioId}}" }
+
+### 32. As MINHAS entregas de hoje (200, só as que estão comigo)
+GET {{base}}/api/v1/merchants/{{loja}}/orders/deliveries
+Authorization: Bearer {{token}}
+
+### 33. Saí para entregar (200)
+PUT {{base}}/api/v1/merchants/{{loja}}/orders/deliveries/{{pedido2.response.body.id}}/status
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "status": "SAIU_PARA_ENTREGA" }
+
+### 34. Recebi R$ 60,00 em dinheiro na porta (200, com o troco calculado)
+PUT {{base}}/api/v1/merchants/{{loja}}/orders/deliveries/{{pedido2.response.body.id}}/settlement
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "formaEfetiva": "DINHEIRO", "valorRecebido": 60.00 }
+
+### 35. Entreguei (200)
+PUT {{base}}/api/v1/merchants/{{loja}}/orders/deliveries/{{pedido2.response.body.id}}/status
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "status": "ENTREGUE" }
+
+### 36. O entregador não registra Pix — é a loja que confere (400, "o Pix cai na conta da loja…")
+PUT {{base}}/api/v1/merchants/{{loja}}/orders/deliveries/{{pedido2.response.body.id}}/settlement
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "formaEfetiva": "PIX" }
