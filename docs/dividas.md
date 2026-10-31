@@ -262,6 +262,7 @@ sem.
 | Entrar com Google ou Apple: os botões estão na tela de entrada, sem serviço que os atenda | passagem humana de 30/10/2026 |
 | O produto não tem foto nem selo guardados — a tela mostra o ícone padrão | `frontend/README.md` |
 | O aviso ao cliente é o link `wa.me` que o atendente toca; não há mensagem automática | ADR-077 §4; a ADR-075 o resolve |
+| As rotas públicas do `identity` (cadastro, código, login, JWKS) não declaram `security: []` no contrato, e o `redocly.yaml` rebaixou `security-defined` a aviso para o workflow `contracts` passar | medido em 31/10/2026; gatilho: a primeira rodada que mexer no `identity` — declara, regenera o contrato e volta a regra a `error` |
 
 ---
 

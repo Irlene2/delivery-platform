@@ -1,0 +1,29 @@
+# Regras do `npm run contracts:openapi` (redocly lint), que o workflow `contracts` roda.
+#
+# Até 31/10/2026 não havia este arquivo, o Redocly usava o conjunto `recommended` inteiro, e o
+# workflow nunca passou: os três contratos reprovavam em regras que não cabem num contrato
+# GERADO pelo springdoc a partir do código (ADR-039). Cada exceção abaixo diz por quê. O que
+# é defeito de verdade fica como aviso e vai para o docs/dividas.md, e não é apagado daqui.
+
+extends:
+  - recommended
+
+rules:
+  # O endereço do serviço depende do ambiente, e quem o publica é o gateway, não o serviço.
+  # O springdoc grava o `servers` da máquina em que o teste rodou; os contratos o omitem de
+  # propósito, para não variar de máquina para máquina.
+  no-empty-servers: off
+
+  # O projeto ainda não escolheu licença para os contratos.
+  info-license: off
+
+  # Resumo de operação só existe com @Operation(summary = …), e nem todo controller o tem.
+  # Aviso, não erro: falta documentação, não sobra defeito.
+  operation-summary: warn
+
+  # DEFEITO REAL, rebaixado a aviso: as rotas públicas do identity (cadastro, login, JWKS)
+  # não declaram `security: []`, e o contrato diz menos do que o código faz. O catalog e o
+  # order já declaram. Volta a `error` quando o identity declarar — docs/dividas.md.
+  security-defined: warn
+
+  operation-4xx-response: warn

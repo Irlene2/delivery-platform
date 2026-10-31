@@ -297,24 +297,55 @@ este parágrafo dizia *"trinta e nove"*, quando já eram sessenta e sete.
 
 ## Marcos
 
-A numeração é a de [`docs/PRD.md`](docs/PRD.md) §10, e é a única que vale.
+A numeração é a de [`docs/PRD.md`](docs/PRD.md) §10, e é a única que vale. A coluna
+*Situação* é a de **31/10/2026**, medida pela coluna do PRD — *o comerciante consegue?* — e
+não pelo código que existe. 🟡 quer dizer: funciona no recorte de 15/11 (ADR-077), mas não é o
+marco inteiro do PRD.
 
-| Marco | Entrega | O comerciante consegue |
-|---|---|---|
-| 0 | ✅ Esqueleto: build, módulos, Compose, CI | — |
-| 1 | Conta, estabelecimento, equipe e permissões | Cadastrar a loja e o time, com poderes diferentes |
-| 2 | ✅ Cardápio com opções e disponibilidade qualitativa | Publicar o cardápio e marcar o que acabou |
-| 3 | 🟡 Painel de pedidos e ciclo de preparo — no recorte de 15/11, o pedido vem do link (ADR-077) | Receber e acompanhar pedidos numa tela |
-| 4 | Liquidação presencial, troco e Pix confirmado | Registrar como cada pedido foi pago de verdade |
-| 5 | Entregadores, vínculo, remuneração e despacho | Despachar e saber quem está com cada pedido |
-| **6** | **Fechamento de expediente** — no recorte de 15/11, um relatório na tela, não gravado | **Fechar o dia com extrato por entregador** |
-| 7 | Canal WhatsApp determinístico | Receber pedido pelo WhatsApp com menu numerado |
-| 8 | Pagamento online e emissão fiscal | Cobrar antecipado e emitir documento |
-| 9 | Atendimento assistido e escalonamento | Atender sozinho a maior parte dos pedidos |
-| 10 | Controle quantitativo e substituição de item | Operar minimercado com contagem de estoque |
-| 11 | Rastreamento e telemetria | Mostrar a entrega no mapa |
+| Marco | Entrega | O comerciante consegue | Situação em 31/10/2026 |
+|---|---|---|---|
+| 0 | Esqueleto: build, módulos, Compose, CI | — | ✅ |
+| 1 | Conta, estabelecimento, equipe e permissões | Cadastrar a loja e o time, com poderes diferentes | ✅ a loja do zero em "Minhas lojas", o convite e as permissões. **Falta:** o código de verificação do cadastro não é enviado (lê-se no banco); a sessão cai em 30 min (ADR-037) |
+| 2 | Cardápio com opções e disponibilidade qualitativa | Publicar o cardápio e marcar o que acabou | ✅ **Falta:** editar nome, preço e descrição de produto já criado; foto |
+| 3 | Painel de pedidos e ciclo de preparo | Receber e acompanhar pedidos numa tela | 🟡 o pedido vem do cardápio público, o painel leva por todos os estados e o cliente acompanha pelo código. **Falta:** recusar pedido com a loja fechada; o pedido nascer na conversa (ADR-075) |
+| 4 | Liquidação presencial, troco e Pix confirmado | Registrar como cada pedido foi pago de verdade | 🟡 dinheiro com troco, cartão e Pix conferido, como campos do pedido; o `payment` continua esqueleto |
+| 5 | Entregadores, vínculo, remuneração e despacho | Despachar e saber quem está com cada pedido | 🟡 o entregador da equipe com conta própria, o despacho e "minhas entregas". **Falta:** as modalidades de remuneração do vínculo (ADR-022); o repasse é a taxa de cada entrega |
+| **6** | **Fechamento de expediente** | **Fechar o dia com extrato por entregador** | 🟡 o fechamento do dia é um relatório na tela, com o acerto por entregador. **Falta:** gravar o fechamento, conferência e histórico (`settlement`) |
+| 7 | Canal WhatsApp determinístico | Receber pedido pelo WhatsApp com menu numerado | ⏳ nesta entrega: a resposta automática do WhatsApp Business manda o link, e o aviso ao cliente é o link `wa.me` (etapa 5) |
+| 8 | Pagamento online e emissão fiscal | Cobrar antecipado e emitir documento | ⏳ |
+| 9 | Atendimento assistido e escalonamento | Atender sozinho a maior parte dos pedidos | ⏳ |
+| 10 | Controle quantitativo e substituição de item | Operar minimercado com contagem de estoque | ⏳ |
+| 11 | Rastreamento e telemetria | Mostrar a entrega no mapa | ⏳ |
 
 **Ao fim do marco 6 existe produto completo e vendável.** A loja cadastra equipe
 e cardápio, recebe e prepara pedidos, despacha com entregador próprio, registra
 como cada pedido foi liquidado e fecha o expediente com extrato. Os marcos 7 a 9
 ampliam o alcance; 10 e 11 abrem segmentos novos.
+
+### O que separa o recorte de hoje de um produto vendável
+
+Além do *Falta* de cada linha acima, uma coisa que não é marco: **hospedagem**. Hoje a pilha
+roda só no computador de quem desenvolve; para o link do cardápio abrir no celular do
+cliente, ela precisa de servidor, domínio e HTTPS. As etapas da entrega de 15/11 e o que cada
+uma já fez estão em [`docs/entrega-15-11/README.md`](docs/entrega-15-11/README.md); as
+dívidas assumidas, em [`docs/dividas.md`](docs/dividas.md).
+
+---
+
+## Como colaborar
+
+1. **Peça acesso** a quem administra o repositório (GitHub → *Settings → Collaborators*).
+2. **Clone e suba local** pelo [`docs/como-subir-local.md`](docs/como-subir-local.md). Leia o
+   [`CLAUDE.md`](CLAUDE.md) antes do primeiro commit: ele tem as regras que quebram o build.
+3. **Uma branch por tarefa**, a partir da `main` atualizada:
+   `git switch main; git pull; git switch -c <tipo>/<assunto>` — por exemplo
+   `feat/editar-produto` ou `fix/loja-fechada`.
+4. **Antes do push**, o que o CI vai rodar:
+   - back: `.\gradlew.bat :services:<servico>:test`, em `backend`;
+   - front: `npm run format`, `npm run lint`, `npm run typecheck` e `npm test`, em `frontend`;
+   - contratos: `npm ci` e `npm run contracts`, na raiz.
+5. **Abra um Pull Request para a `main`** e espere o CI verde e uma revisão. Nada vai direto
+   na `main`.
+6. **Mensagens de commit** no formato do histórico: `feat(order): …`, `fix(front): …`,
+   `docs: …`, em português.
+7. **Nunca suba** `.env`, `secrets/` nem chave `.pem` — o workflow `security` reprova o push.
