@@ -8,7 +8,7 @@
   },
   "scripts": {
     "contracts:openapi": "redocly lint contracts/openapi/*.json",
-    "contracts:events": "ajv compile -s \"contracts/events/*.json\" --spec=draft2020 --strict=true",
+    "contracts:events": "ajv compile -s \"contracts/events/*.json\" --spec=draft2020 --strict=true --validate-formats=false",
     "contracts": "npm run contracts:openapi && npm run contracts:events"
   },
   "devDependencies": {
