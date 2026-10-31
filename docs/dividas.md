@@ -255,7 +255,7 @@ sem.
 | O `order` não tem contrato em `contracts/openapi/order-service.json` nem `ContratoOpenApiIT` / `ContratoDeErrosIT` | `docs/entrega-15-11/pedido.md` §6 |
 | O `order` não tem teste de integração com banco de verdade (Testcontainers) — a numeração por loja (`INSERT … ON CONFLICT`) e a migration V2 só são exercidas subindo a pilha | idem |
 | Os tipos do pedido no front são escritos à mão (`frontend/src/api/pedidos.ts`), porque não há contrato do que gerar | consequência da primeira linha |
-| `npm run tipos:conferir` sempre acusa diferença: o `openapi-typescript` não formata e os arquivos versionados passaram pelo Prettier | medido em 30/10/2026; a correção é o script rodar `prettier --write src/api/generated` antes do `git diff` |
+| ~~`npm run tipos:conferir` sempre acusa diferença~~ — **paga em 31/10/2026:** o `npm run tipos` agora formata com o Prettier. O `--ignore-path=../.gitignore` é obrigatório: o `.prettierignore` do front exclui `src/api/generated/`, e sem ele o Prettier pula a pasta sem avisar | o CI do front vermelho no primeiro push ao repositório pessoal |
 | O fechamento do dia é relatório na tela, não é gravado: não há caixa fechado, conferência nem histórico | ADR-077, decisões de 31/10; o marco 6 o resolve |
 | O nome do entregador mora no `order`, porque a equipe do `merchant` não guarda nome — é uma segunda verdade sobre a pessoa | ADR-077, decisão de 31/10; gatilho: a rota do usuário do token (`premissas-do-front.md` §6) |
 | O fuso do "dia" dos pedidos é fixo por configuração (`delivery.pedidos.fuso`), e não o da loja | `PedidosDaLojaService` |

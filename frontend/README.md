@@ -10,8 +10,7 @@ que este produto **decidiu não ter**, e por qual premissa.
 ## Como rodar
 
     npm install
-    npm run tipos                           # gera src/api/generated/ de contracts/openapi/*.json
-    npx prettier --write src/api/generated  # o gerador não formata; sem isto o git acusa diferença
+    npm run tipos      # gera src/api/generated/ de contracts/openapi/*.json, já formatado
     npm run dev                             # porta 5173, fixa — é a origem que o gateway aceita
 
 Antes de subir para o Git: `npm run typecheck`, `npm run lint` e `npm test`.

@@ -17,7 +17,7 @@
     "format:write": "prettier --write .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "tipos": "openapi-typescript ../contracts/openapi/identity-service.json -o src/api/generated/identity.ts && openapi-typescript ../contracts/openapi/merchant-service.json -o src/api/generated/merchant.ts && openapi-typescript ../contracts/openapi/catalog-service.json -o src/api/generated/catalog.ts",
+    "tipos": "openapi-typescript ../contracts/openapi/identity-service.json -o src/api/generated/identity.ts && openapi-typescript ../contracts/openapi/merchant-service.json -o src/api/generated/merchant.ts && openapi-typescript ../contracts/openapi/catalog-service.json -o src/api/generated/catalog.ts && prettier --write --log-level warn --ignore-path=../.gitignore src/api/generated",
     "tipos:conferir": "npm run tipos && git diff --exit-code --stat src/api/generated"
   },
   "dependencies": {

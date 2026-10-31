@@ -536,7 +536,7 @@ credenciais estão no `.env`.
 | `Cannot find a Java installation … languageVersion=21` | o JDK instalado é outro (23, por exemplo) | instale o JDK 21 (Temurin) e `.\gradlew.bat --stop` |
 | `Task '.atualizar=true' not found` | o PowerShell partiu o `-Dopenapi.atualizar=true` no ponto | ponha entre aspas: `"-Dopenapi.atualizar=true"` |
 | `.\gradlew.bat` não é reconhecido | você está na raiz, e o Gradle mora em `backend/` | `cd backend` |
-| o `git pull` acusa `src/api/generated/*.ts` alterados depois do `npm run tipos` | o gerador não formata | `npx prettier --write src/api/generated` (ou `git restore` neles) |
+| o `git pull` acusa `src/api/generated/*.ts` alterados depois do `npm run tipos` | versão antiga do script, que não formatava | puxe a versão de 31/10/2026 do `package.json` e rode `npm run tipos` de novo (ou `git restore` neles) |
 | o `identity` não sobe, e `secrets/jwt-private.pem` virou diretório | o arquivo não existia quando o compose montou o volume, e o Docker criou um diretório com o nome, de `root` (medido em 10/10/2026) | apague o diretório, gere o par como diz o `.env.example`, e suba de novo |
 
 ---
