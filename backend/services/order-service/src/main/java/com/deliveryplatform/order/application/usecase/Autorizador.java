@@ -29,11 +29,21 @@ public class Autorizador {
 
     /** Sem contexto é 403; sem a permissão também — a mesma recusa. */
     public void exigir(UUID estabelecimentoId, PermissaoDoPedido permissao) {
+        contextoCom(estabelecimentoId, permissao);
+    }
+
+    /**
+     * O mesmo {@link #exigir}, devolvendo o contexto — é dele que sai o {@code usuarioId} de
+     * quem pede, para o entregador ver só as entregas dele. O identificador vem do
+     * {@code merchant}, que o leu do token; nunca do corpo nem da URL.
+     */
+    public ContextoDeAcesso contextoCom(UUID estabelecimentoId, PermissaoDoPedido permissao) {
         ContextoDeAcesso contexto = autorizacao.contexto(estabelecimentoId)
                 .orElseThrow(AcessoNegado::new);
         if (!contexto.pode(permissao)) {
             throw new AcessoNegado();
         }
+        return contexto;
     }
 
     /**

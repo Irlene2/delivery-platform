@@ -78,6 +78,15 @@ public class PedidoRepositorioJpa implements PedidoRepositorio {
     }
 
     @Override
+    public List<Pedido> doEntregador(UUID estabelecimentoId, UUID usuarioId, Instant desde,
+                                     Instant ate, int limite) {
+        return springData
+                .findByEstabelecimentoIdAndEntregadorIdAndCriadoEmGreaterThanEqualAndCriadoEmLessThanOrderByCriadoEmDesc(
+                        estabelecimentoId, usuarioId, desde, ate, PageRequest.of(0, limite))
+                .stream().map(mapper::paraDominio).toList();
+    }
+
+    @Override
     @Transactional(propagation = Propagation.MANDATORY)
     public long proximoNumero(UUID estabelecimentoId) {
         Object numero = em.createNativeQuery(PROXIMO_NUMERO)

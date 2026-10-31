@@ -1,8 +1,10 @@
 package com.deliveryplatform.order.application.usecase;
 
+import com.deliveryplatform.order.application.exception.EntregadorForaDaEquipe;
 import com.deliveryplatform.order.application.port.in.ConsultarPedido;
 import com.deliveryplatform.order.application.port.in.ListarPedidos;
 import com.deliveryplatform.order.application.port.in.OperarPedido;
+import com.deliveryplatform.order.application.port.out.EntregadorRepositorio;
 import com.deliveryplatform.order.application.port.out.PedidoRepositorio;
 import com.deliveryplatform.order.application.port.out.PermissaoDoPedido;
 import com.deliveryplatform.order.domain.model.FormaDePagamento;
@@ -43,13 +45,16 @@ public class PedidosDaLojaService implements ListarPedidos, ConsultarPedido, Ope
 
     private final Autorizador autorizador;
     private final PedidoRepositorio pedidos;
+    private final EntregadorRepositorio entregadores;
     private final Clock relogio;
     private final ZoneId fuso;
 
-    public PedidosDaLojaService(Autorizador autorizador, PedidoRepositorio pedidos, Clock relogio,
+    public PedidosDaLojaService(Autorizador autorizador, PedidoRepositorio pedidos,
+                                EntregadorRepositorio entregadores, Clock relogio,
                                 @Value("${delivery.pedidos.fuso:America/Sao_Paulo}") String fuso) {
         this.autorizador = autorizador;
         this.pedidos = pedidos;
+        this.entregadores = entregadores;
         this.relogio = relogio;
         this.fuso = ZoneId.of(fuso);
     }
@@ -80,9 +85,19 @@ public class PedidosDaLojaService implements ListarPedidos, ConsultarPedido, Ope
 
     @Override
     @Transactional
-    public Pedido informarEntregador(UUID estabelecimentoId, UUID pedidoId, String nome) {
-        return operar(estabelecimentoId, pedidoId,
-                p -> p.informarEntregador(nome, Instant.now(relogio)));
+    public Pedido informarEntregador(UUID estabelecimentoId, UUID pedidoId, UUID usuarioId,
+                                     String nome) {
+        Pedido pedido = autorizador.pedidoDaLoja(
+                estabelecimentoId, pedidoId, PermissaoDoPedido.ALTERAR_STATUS);
+        if (usuarioId == null) {
+            pedido.informarEntregador(nome, Instant.now(relogio));
+        } else {
+            // O nome vem do cadastro, e não do corpo: é o nome com que ele se apresentou.
+            var entregador = entregadores.buscar(estabelecimentoId, usuarioId)
+                    .orElseThrow(EntregadorForaDaEquipe::new);
+            pedido.informarEntregador(usuarioId, entregador.nome(), Instant.now(relogio));
+        }
+        return pedidos.salvar(pedido);
     }
 
     @Override

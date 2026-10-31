@@ -30,6 +30,8 @@ public record PedidoResponse(
         PedidoPublicoResponse.PagamentoDeclaradoResponse pagamentoDeclarado,
         PagamentoRegistrado pagamentoRegistrado,
         String entregador,
+        @Schema(description = "O entregador da equipe, quando tem conta; nulo quando é só o nome.")
+        UUID entregadorId,
         String motivoDoCancelamento,
         Instant criadoEm,
         Instant atualizadoEm
@@ -64,7 +66,8 @@ public record PedidoResponse(
                         r.valorRecebido() == null ? null : r.valorRecebido().valor(),
                         r.trocoDevolvido() == null ? null : r.trocoDevolvido().valor(),
                         r.pixConferido(), r.registradoEm()),
-                p.getEntregador(), p.getMotivoDoCancelamento(), p.getCriadoEm(),
+                p.getEntregador(), p.getEntregadorId(), p.getMotivoDoCancelamento(),
+                p.getCriadoEm(),
                 p.getAtualizadoEm());
     }
 }

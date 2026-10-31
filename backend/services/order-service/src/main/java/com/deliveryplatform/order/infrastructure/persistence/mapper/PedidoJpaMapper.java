@@ -39,6 +39,7 @@ public class PedidoJpaMapper {
                 p.getStatus(),
                 p.getMotivoDoCancelamento(),
                 p.getEntregador(),
+                p.getEntregadorId(),
                 r == null ? null : r.formaEfetiva(),
                 r == null ? null : valor(r.valorRecebido()),
                 r == null ? null : valor(r.trocoDevolvido()),
@@ -82,6 +83,7 @@ public class PedidoJpaMapper {
                 e.getStatus(),
                 e.getMotivoDoCancelamento(),
                 e.getEntregador(),
+                e.getEntregadorId(),
                 registrado,
                 e.getAtualizadoEm(),
                 e.getVersao());

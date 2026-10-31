@@ -28,6 +28,10 @@ public interface PedidoRepositorio {
     List<Pedido> daLoja(UUID estabelecimentoId, StatusDoPedido status, Instant desde, Instant ate,
                         int limite);
 
+    /** Os pedidos do dia que estão com este entregador da equipe, do mais novo para o mais velho. */
+    List<Pedido> doEntregador(UUID estabelecimentoId, UUID usuarioId, Instant desde, Instant ate,
+                              int limite);
+
     /**
      * O próximo número legível da loja (1, 2, 3…). Precisa de transação: a numeração é
      * travada por loja até o fim dela, e dois pedidos simultâneos nunca recebem o mesmo número.

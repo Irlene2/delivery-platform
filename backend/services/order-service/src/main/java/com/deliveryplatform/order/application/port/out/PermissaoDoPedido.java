@@ -15,6 +15,8 @@ public enum PermissaoDoPedido {
 
     VER_PEDIDO,
     ALTERAR_STATUS,
+    /** O entregador da equipe: vê e opera só as entregas dele. */
+    VER_ENTREGA,
     CONFIGURAR_LOJA;
 
     public static Optional<PermissaoDoPedido> de(String nome) {

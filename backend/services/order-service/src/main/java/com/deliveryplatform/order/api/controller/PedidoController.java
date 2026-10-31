@@ -136,7 +136,7 @@ public class PedidoController {
 
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "O pedido com o entregador"),
-            @ApiResponse(responseCode = "400", description = "Nome em branco, pedido de retirada, ou corpo malformado", content = @Content),
+            @ApiResponse(responseCode = "400", description = "Nome em branco, entregador fora da equipe, pedido de retirada, ou corpo malformado", content = @Content),
             @ApiResponse(responseCode = "401", description = "Sem token, ou token inválido", content = @Content),
             @ApiResponse(responseCode = "403", description = "Sem vínculo, sem ALTERAR_STATUS, loja inexistente ou merchant indisponível — a mesma recusa", content = @Content),
             @ApiResponse(responseCode = "404", description = "O pedido não existe nesta loja", content = @Content),
@@ -144,12 +144,14 @@ public class PedidoController {
     })
     @PutMapping(path = "/{pedidoId}/courier", consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Informa quem leva o pedido", description = "Exige ALTERAR_STATUS. Só na entrega.")
+    @Operation(summary = "Informa quem leva o pedido",
+            description = "Exige ALTERAR_STATUS. Só na entrega. Com usuarioId, um entregador da "
+                    + "equipe, que passa a ver o pedido no app dele.")
     public PedidoResponse informarEntregador(@PathVariable UUID estabelecimentoId,
                                              @PathVariable UUID pedidoId,
                                              @RequestBody EntregadorRequest pedido) {
         return PedidoResponse.de(operacao.informarEntregador(estabelecimentoId, pedidoId,
-                pedido.nome()));
+                pedido.usuarioId(), pedido.nome()));
     }
 
     @ApiResponses({

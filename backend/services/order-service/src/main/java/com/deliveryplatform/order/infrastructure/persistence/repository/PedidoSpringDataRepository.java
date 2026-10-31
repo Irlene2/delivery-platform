@@ -19,4 +19,7 @@ interface PedidoSpringDataRepository extends JpaRepository<PedidoJpaEntity, UUID
 
     List<PedidoJpaEntity> findByEstabelecimentoIdAndStatusAndCriadoEmGreaterThanEqualAndCriadoEmLessThanOrderByCriadoEmDesc(
             UUID estabelecimentoId, StatusDoPedido status, Instant desde, Instant ate, Pageable teto);
+
+    List<PedidoJpaEntity> findByEstabelecimentoIdAndEntregadorIdAndCriadoEmGreaterThanEqualAndCriadoEmLessThanOrderByCriadoEmDesc(
+            UUID estabelecimentoId, UUID entregadorId, Instant desde, Instant ate, Pageable teto);
 }

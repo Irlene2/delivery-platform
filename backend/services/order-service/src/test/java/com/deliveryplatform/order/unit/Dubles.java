@@ -5,10 +5,12 @@ import com.deliveryplatform.order.application.port.out.CardapioIndisponivel;
 import com.deliveryplatform.order.application.port.out.CardapioPort;
 import com.deliveryplatform.order.application.port.out.ConfiguracaoDePedidosRepositorio;
 import com.deliveryplatform.order.application.port.out.ContextoDeAcesso;
+import com.deliveryplatform.order.application.port.out.EntregadorRepositorio;
 import com.deliveryplatform.order.application.port.out.PedidoRepositorio;
 import com.deliveryplatform.order.application.port.out.PermissaoDoPedido;
 import com.deliveryplatform.order.application.port.out.ProdutoDoCardapio;
 import com.deliveryplatform.order.domain.model.ConfiguracaoDePedidos;
+import com.deliveryplatform.order.domain.model.EntregadorDaLoja;
 import com.deliveryplatform.order.domain.model.Pedido;
 import com.deliveryplatform.order.domain.model.StatusDoPedido;
 
@@ -71,6 +73,14 @@ final class Dubles {
         }
 
         @Override
+        public List<Pedido> doEntregador(UUID loja, UUID usuarioId, Instant desde, Instant ate,
+                                         int limite) {
+            return daLoja(loja, null, desde, ate, limite).stream()
+                    .filter(p -> p.estaCom(usuarioId))
+                    .toList();
+        }
+
+        @Override
         public long proximoNumero(UUID loja) {
             return numeracao.merge(loja, 1L, Long::sum);
         }
@@ -109,9 +119,33 @@ final class Dubles {
         }
     }
 
-    /** O merchant: responde por loja, com as permissões dadas; loja sem resposta = sem vínculo. */
+    static final class Entregadores implements EntregadorRepositorio {
+        final Map<String, EntregadorDaLoja> gravados = new HashMap<>();
+
+        @Override
+        public Optional<EntregadorDaLoja> buscar(UUID loja, UUID usuarioId) {
+            return Optional.ofNullable(gravados.get(loja + "/" + usuarioId));
+        }
+
+        @Override
+        public List<EntregadorDaLoja> daLoja(UUID loja) {
+            return gravados.values().stream().filter(e -> e.estabelecimentoId().equals(loja)).toList();
+        }
+
+        @Override
+        public EntregadorDaLoja salvar(EntregadorDaLoja e) {
+            gravados.put(e.estabelecimentoId() + "/" + e.usuarioId(), e);
+            return e;
+        }
+    }
+
+    /**
+     * O merchant: responde por loja, com as permissões dadas; loja sem resposta = sem vínculo.
+     * Quem pergunta é sempre {@link #eu} — o portador do token, no teste.
+     */
     static final class Merchant implements AutorizacaoComercialPort {
         final Map<UUID, Set<PermissaoDoPedido>> vinculos = new HashMap<>();
+        UUID eu = UUID.randomUUID();
 
         Merchant permite(UUID loja, PermissaoDoPedido... permissoes) {
             Set<PermissaoDoPedido> conjunto = EnumSet.noneOf(PermissaoDoPedido.class);
@@ -124,7 +158,7 @@ final class Dubles {
         public Optional<ContextoDeAcesso> contexto(UUID loja) {
             Set<PermissaoDoPedido> permissoes = vinculos.get(loja);
             return permissoes == null ? Optional.empty()
-                    : Optional.of(new ContextoDeAcesso(UUID.randomUUID(), loja, permissoes));
+                    : Optional.of(new ContextoDeAcesso(eu, loja, permissoes));
         }
     }
 }

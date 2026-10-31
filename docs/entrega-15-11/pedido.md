@@ -125,6 +125,33 @@ A permissão é resolvida no `merchant` a cada requisição (ADR-011), pelo mesm
 
 O gateway já roteia `/api/v1/merchants/{merchantId}/orders/**` para o `order`.
 
+### 3.1 O entregador da equipe (decisão de 31/10/2026)
+
+O entregador é funcionário da loja e **entra com a conta dele**: a loja o convida pela Equipe com a
+permissão `VER_ENTREGA`. Na primeira vez ele informa o nome com que a loja vai reconhecê-lo — a
+equipe do `merchant` não guarda nome, e esta entrega não mexe nela.
+
+| Rota | Permissão | O que faz |
+| --- | --- | --- |
+| `GET /api/v1/merchants/{id}/orders/couriers` | `VER_PEDIDO` | os entregadores que já se apresentaram |
+| `GET` e `PUT /api/v1/merchants/{id}/orders/couriers/me` | `VER_ENTREGA` | eu, como entregador (`204` se ainda não me apresentei); `{ "nome": "Carlos Moto" }` |
+| `GET /api/v1/merchants/{id}/orders/deliveries?dia=` | `VER_ENTREGA` | **as minhas** entregas do dia — o `usuarioId` sai do token, nunca da URL |
+| `PUT /api/v1/merchants/{id}/orders/deliveries/{pedidoId}/status` | `VER_ENTREGA` | só `SAIU_PARA_ENTREGA` e `ENTREGUE` |
+| `PUT /api/v1/merchants/{id}/orders/deliveries/{pedidoId}/settlement` | `VER_ENTREGA` | só `DINHEIRO` e `CARTAO`; o Pix é conferido pela loja |
+
+`PUT …/{pedidoId}/courier` aceita `{ "usuarioId": "…" }` (alguém da equipe; o nome vem do cadastro)
+ou `{ "nome": "…" }` (o entregador avulso, sem conta). Entrega que não está com quem pede é **404**.
+
+### 3.2 O fechamento do dia e o repasse
+
+**Repasse ao entregador = a taxa de entrega de cada pedido que ele entregou** (decisão de
+31/10/2026). O dinheiro que ele recebeu na porta é da loja, e o acerto é a diferença:
+`acerto = dinheiro recebido − repasse` (positivo: ele devolve à loja; negativo: a loja paga).
+
+Para 15/11 o fechamento é um **relatório** calculado na tela a partir dos pedidos do dia (caixa
+por forma de pagamento e acerto por entregador), com impressão. Fechar o caixa com registro,
+conferência e histórico é o marco 6 (`settlement`).
+
 ## 4. Estados
 
 O recorte do `docs/dominio/pedido.md` §2. **Fora desta entrega:** `PAGO` (marco 8),

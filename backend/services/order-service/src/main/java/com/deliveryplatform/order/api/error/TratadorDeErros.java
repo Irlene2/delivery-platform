@@ -1,6 +1,8 @@
 package com.deliveryplatform.order.api.error;
 
 import com.deliveryplatform.order.application.exception.AcessoNegado;
+import com.deliveryplatform.order.application.exception.EntregadorForaDaEquipe;
+import com.deliveryplatform.order.application.exception.RecusaAoEntregador;
 import com.deliveryplatform.order.application.exception.ItemForaDoCardapio;
 import com.deliveryplatform.order.application.exception.PedidoNaoEncontrado;
 import com.deliveryplatform.order.application.port.out.AutorizacaoIndisponivel;
@@ -61,6 +63,24 @@ public class TratadorDeErros {
             case NAO_PUBLICADO -> "um dos produtos do carrinho não está mais no cardápio; "
                     + "atualize a página e monte o pedido de novo";
             case ACABOU -> "«" + excecao.nome() + "» acabou; tire do carrinho para continuar";
+        };
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, frase);
+    }
+
+    @ExceptionHandler(EntregadorForaDaEquipe.class)
+    public ProblemDetail entregadorForaDaEquipe(EntregadorForaDaEquipe excecao) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
+                "este entregador não está na equipe da loja; peça para ele abrir a área de "
+                        + "entregas uma vez e informar o nome");
+    }
+
+    @ExceptionHandler(RecusaAoEntregador.class)
+    public ProblemDetail recusaAoEntregador(RecusaAoEntregador excecao) {
+        String frase = switch (excecao.motivo()) {
+            case STATUS -> "pelo app de entregas você marca só a saída e a entrega; o resto é "
+                    + "com a loja";
+            case PIX -> "o Pix cai na conta da loja e é conferido por ela; registre só dinheiro "
+                    + "ou cartão";
         };
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, frase);
     }

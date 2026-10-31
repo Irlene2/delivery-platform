@@ -90,6 +90,9 @@ public class PedidoJpaEntity {
     @Column(name = "entregador", length = 80)
     private String entregador;
 
+    @Column(name = "entregador_id")
+    private UUID entregadorId;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "forma_efetiva", length = 16)
     private FormaDePagamento formaEfetiva;
@@ -141,6 +144,7 @@ public class PedidoJpaEntity {
             StatusDoPedido status,
             String motivoDoCancelamento,
             String entregador,
+            UUID entregadorId,
             FormaDePagamento formaEfetiva,
             BigDecimal valorRecebido,
             BigDecimal trocoDevolvido,
@@ -168,6 +172,7 @@ public class PedidoJpaEntity {
         this.status = status;
         this.motivoDoCancelamento = motivoDoCancelamento;
         this.entregador = entregador;
+        this.entregadorId = entregadorId;
         this.formaEfetiva = formaEfetiva;
         this.valorRecebido = valorRecebido;
         this.trocoDevolvido = trocoDevolvido;
@@ -249,6 +254,10 @@ public class PedidoJpaEntity {
 
     public String getEntregador() {
         return entregador;
+    }
+
+    public UUID getEntregadorId() {
+        return entregadorId;
     }
 
     public FormaDePagamento getFormaEfetiva() {

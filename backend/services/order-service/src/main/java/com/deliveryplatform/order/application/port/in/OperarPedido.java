@@ -15,7 +15,12 @@ public interface OperarPedido {
 
     Pedido avancar(UUID estabelecimentoId, UUID pedidoId, StatusDoPedido destino, String motivo);
 
-    Pedido informarEntregador(UUID estabelecimentoId, UUID pedidoId, String nome);
+    /**
+     * @param usuarioId o entregador da equipe ({@code EntregadoresDaLoja}); nulo para um
+     *                  entregador sem conta, só pelo {@code nome}
+     * @param nome      ignorado quando há {@code usuarioId}: vale o nome com que ele se apresentou
+     */
+    Pedido informarEntregador(UUID estabelecimentoId, UUID pedidoId, UUID usuarioId, String nome);
 
     Pedido registrarPagamento(UUID estabelecimentoId, UUID pedidoId, FormaDePagamento forma,
                               Money valorRecebido, boolean pixConferido);

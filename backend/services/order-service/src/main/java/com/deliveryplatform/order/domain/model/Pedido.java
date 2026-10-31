@@ -79,6 +79,8 @@ public final class Pedido {
     private StatusDoPedido status;
     private String motivoDoCancelamento;
     private String entregador;
+    /** Quem tem conta: o entregador da equipe que vê o pedido no app dele. Nulo = só o nome. */
+    private UUID entregadorId;
     private PagamentoRegistrado pagamentoRegistrado;
     private Instant atualizadoEm;
     private final Long versao;
@@ -87,7 +89,7 @@ public final class Pedido {
                    Cliente cliente, Modalidade modalidade, Endereco endereco,
                    List<ItemDoPedido> itens, Money subtotal, Money taxaDeEntrega, Money total,
                    PagamentoDeclarado pagamentoDeclarado, Instant criadoEm, StatusDoPedido status,
-                   String motivoDoCancelamento, String entregador,
+                   String motivoDoCancelamento, String entregador, UUID entregadorId,
                    PagamentoRegistrado pagamentoRegistrado, Instant atualizadoEm, Long versao) {
         this.id = Objects.requireNonNull(id, "id");
         this.estabelecimentoId = Objects.requireNonNull(estabelecimentoId, "estabelecimentoId");
@@ -105,6 +107,7 @@ public final class Pedido {
         this.status = Objects.requireNonNull(status, "status");
         this.motivoDoCancelamento = motivoDoCancelamento;
         this.entregador = entregador;
+        this.entregadorId = entregadorId;
         this.pagamentoRegistrado = pagamentoRegistrado;
         this.atualizadoEm = atualizadoEm;
         this.versao = versao;
@@ -159,7 +162,7 @@ public final class Pedido {
 
         return new Pedido(id, configuracao.getEstabelecimentoId(), numero, codigoDeAcompanhamento,
                 cliente, modalidade, endereco, itens, subtotal, taxa, total, pagamento, agora,
-                RECEBIDO, null, null, null, agora, null);
+                RECEBIDO, null, null, null, null, agora, null);
     }
 
     /** Para o repositório: o pedido como foi gravado, sem refazer as regras de nascimento. */
@@ -170,12 +173,13 @@ public final class Pedido {
                                       Money taxaDeEntrega, Money total,
                                       PagamentoDeclarado pagamentoDeclarado, Instant criadoEm,
                                       StatusDoPedido status, String motivoDoCancelamento,
-                                      String entregador, PagamentoRegistrado pagamentoRegistrado,
+                                      String entregador, UUID entregadorId,
+                                      PagamentoRegistrado pagamentoRegistrado,
                                       Instant atualizadoEm, Long versao) {
         return new Pedido(id, estabelecimentoId, numero, codigoDeAcompanhamento, cliente,
                 modalidade, endereco, itens, subtotal, taxaDeEntrega, total, pagamentoDeclarado,
-                criadoEm, status, motivoDoCancelamento, entregador, pagamentoRegistrado,
-                atualizadoEm, versao);
+                criadoEm, status, motivoDoCancelamento, entregador, entregadorId,
+                pagamentoRegistrado, atualizadoEm, versao);
     }
 
     /**
@@ -209,8 +213,16 @@ public final class Pedido {
         this.atualizadoEm = Objects.requireNonNull(agora, "agora");
     }
 
-    /** O entregador que leva o pedido — o nome, nesta entrega (o vínculo é o marco 5). */
+    /** O entregador sem conta — só o nome (um motoboy avulso, por exemplo). */
     public void informarEntregador(String nome, Instant agora) {
+        informarEntregador(null, nome, agora);
+    }
+
+    /**
+     * O entregador que leva o pedido. Com {@code usuarioId}, é alguém da equipe com conta, e o
+     * pedido aparece no app dele; sem, é só o nome.
+     */
+    public void informarEntregador(UUID usuarioId, String nome, Instant agora) {
         if (modalidade != Modalidade.ENTREGA) {
             throw new RegraDoPedidoViolada(Motivo.ENTREGADOR_NA_RETIRADA, "entregador numa retirada");
         }
@@ -218,6 +230,7 @@ public final class Pedido {
             throw new TransicaoInvalida(TransicaoInvalida.Motivo.PEDIDO_ENCERRADO, status, null);
         }
         this.entregador = Textos.obrigatorio(nome, "nome do entregador", MAXIMO_DO_ENTREGADOR);
+        this.entregadorId = usuarioId;
         this.atualizadoEm = Objects.requireNonNull(agora, "agora");
     }
 
@@ -336,6 +349,15 @@ public final class Pedido {
 
     public String getEntregador() {
         return entregador;
+    }
+
+    public UUID getEntregadorId() {
+        return entregadorId;
+    }
+
+    /** Se este pedido está com este entregador da equipe. */
+    public boolean estaCom(UUID usuarioId) {
+        return usuarioId != null && usuarioId.equals(entregadorId);
     }
 
     public PagamentoRegistrado getPagamentoRegistrado() {

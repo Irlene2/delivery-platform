@@ -41,8 +41,9 @@ class PedidosDaLojaServiceTest {
     final Clock relogio = Clock.fixed(AGORA, ZoneOffset.UTC);
     final Autorizador autorizador = new Autorizador(merchant, pedidos);
 
-    final PedidosDaLojaService servico =
-            new PedidosDaLojaService(autorizador, pedidos, relogio, "America/Sao_Paulo");
+    final Dubles.Entregadores entregadores = new Dubles.Entregadores();
+    final PedidosDaLojaService servico = new PedidosDaLojaService(autorizador, pedidos,
+            entregadores, relogio, "America/Sao_Paulo");
 
     Pedido umPedido() {
         var cardapio = new Dubles.Cardapio()
