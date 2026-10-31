@@ -394,6 +394,23 @@ ampliação: ele é a entrada de pedido do produto, como a P4 do §5 já dizia. 
 existe produto completo"* continua verdadeiro — e passa a incluir o 7a e a H4.5, o lançamento
 manual. *"Os marcos 7 a 9 ampliam o alcance"* vale para o 7b, o 8 e o 9.
 
+**Emenda de 31/10/2026 — proposta, para o grupo aprovar junto com a ADR-077.** Decisões de
+produto tomadas na entrega de 15/11:
+
+- **Marco 4:** o pagamento é sempre presencial — dinheiro, cartão na maquininha da loja ou Pix
+  conferido pela loja — e fica registrado no pedido.
+- **Marco 5:** o entregador recebe **por entrega**, e o valor é **a taxa de entrega cobrada do
+  cliente** naquele pedido. Isso fixa uma modalidade só no lugar das que a ADR-022 deixava em
+  aberto.
+- **Marco 8 sai do produto:** não haverá pagamento online, e a nota fiscal a loja emite no
+  sistema que já usa.
+- **Marco 9:** atendimento com inteligência artificial no WhatsApp, como melhoria futura.
+- **Marco 10:** ao cadastrar o produto, a loja diz se ele pode acabar e, se pode, a quantidade
+  em estoque. Convive com a P6: o produto sem quantidade continua na disponibilidade
+  qualitativa.
+- **Marco 11:** até lá, o cliente acompanha pelo status — a cada mudança, o aviso pelo WhatsApp
+  e o link do pedido. A melhoria seguinte é o aviso sair automático, antes de qualquer mapa.
+
 ---
 
 ## 11. Riscos de produto

@@ -64,8 +64,8 @@ em [`docs/entrega-15-11/pedido.md`](../../entrega-15-11/pedido.md).
 - **31/10/2026 — o repasse é a taxa de entrega de cada pedido entregue**, e o acerto do dia é
   `dinheiro recebido − repasse`. O **fechamento do dia é um relatório** calculado na tela a
   partir dos pedidos, com impressão; fechar o caixa com registro e histórico continua sendo o
-  marco 6, no `settlement`. A ADR-022 (a remuneração pertence ao vínculo) não é revogada: a taxa como
-  repasse é a regra única desta entrega, no lugar das modalidades de remuneração.
+  marco 6, no `settlement`. Confirmado como regra do produto em 31/10/2026 (emenda ao PRD §10): o entregador
+  recebe por entrega, a taxa cobrada do cliente, no lugar das modalidades da ADR-022.
 
 ## Alternativas consideradas
 

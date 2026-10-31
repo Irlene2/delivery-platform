@@ -308,14 +308,14 @@ marco inteiro do PRD.
 | 1 | Conta, estabelecimento, equipe e permissões | Cadastrar a loja e o time, com poderes diferentes | ✅ a loja do zero em "Minhas lojas", o convite e as permissões. **Falta:** o código de verificação do cadastro não é enviado (lê-se no banco); a sessão cai em 30 min (ADR-037) |
 | 2 | Cardápio com opções e disponibilidade qualitativa | Publicar o cardápio e marcar o que acabou | ✅ **Falta:** editar nome, preço e descrição de produto já criado; foto |
 | 3 | Painel de pedidos e ciclo de preparo | Receber e acompanhar pedidos numa tela | 🟡 o pedido vem do cardápio público, o painel leva por todos os estados e o cliente acompanha pelo código. **Falta:** recusar pedido com a loja fechada; o pedido nascer na conversa (ADR-075) |
-| 4 | Liquidação presencial, troco e Pix confirmado | Registrar como cada pedido foi pago de verdade | 🟡 dinheiro com troco, cartão e Pix conferido, como campos do pedido; o `payment` continua esqueleto |
-| 5 | Entregadores, vínculo, remuneração e despacho | Despachar e saber quem está com cada pedido | 🟡 o entregador da equipe com conta própria, o despacho e "minhas entregas". **Falta:** as modalidades de remuneração do vínculo (ADR-022); o repasse é a taxa de cada entrega |
-| **6** | **Fechamento de expediente** | **Fechar o dia com extrato por entregador** | 🟡 o fechamento do dia é um relatório na tela, com o acerto por entregador. **Falta:** gravar o fechamento, conferência e histórico (`settlement`) |
-| 7 | Canal WhatsApp determinístico | Receber pedido pelo WhatsApp com menu numerado | ⏳ nesta entrega: a resposta automática do WhatsApp Business manda o link, e o aviso ao cliente é o link `wa.me` (etapa 5) |
-| 8 | Pagamento online e emissão fiscal | Cobrar antecipado e emitir documento | ⏳ |
-| 9 | Atendimento assistido e escalonamento | Atender sozinho a maior parte dos pedidos | ⏳ |
-| 10 | Controle quantitativo e substituição de item | Operar minimercado com contagem de estoque | ⏳ |
-| 11 | Rastreamento e telemetria | Mostrar a entrega no mapa | ⏳ |
+| 4 | Liquidação presencial, troco e Pix confirmado | Registrar como cada pedido foi pago de verdade | ✅ dinheiro com troco, cartão (na maquininha da loja) e Pix conferido pela loja, registrados no pedido. O pagamento é sempre presencial, então o `payment-service` não é necessário para este marco |
+| 5 | Entregadores, vínculo, remuneração e despacho | Despachar e saber quem está com cada pedido | ✅ o entregador da equipe com conta própria, o despacho e "minhas entregas". **Remuneração decidida em 31/10/2026: por entrega, igual à taxa de entrega cobrada do cliente** |
+| **6** | **Fechamento de expediente** | **Fechar o dia com extrato por entregador** | 🟡 o fechamento do dia é um relatório na tela, com o acerto por entregador. **Falta:** gravar o fechamento, conferência e histórico |
+| 7 | Canal WhatsApp determinístico | Receber pedido pelo WhatsApp com menu numerado | ⏳ nesta entrega: a resposta automática do WhatsApp Business manda o link do cardápio, e o aviso ao cliente é o link `wa.me` (etapa 5) |
+| 8 | ~~Pagamento online e emissão fiscal~~ | — | **Fora do produto (31/10/2026).** O pagamento é na maquininha da loja, sem pagamento online; a nota fiscal a loja emite no sistema que já usa |
+| 9 | Atendimento assistido e escalonamento | Atender sozinho a maior parte dos pedidos | ⏳ melhoria futura: inteligência artificial no atendimento pelo WhatsApp |
+| 10 | Controle quantitativo e substituição de item | Operar com contagem de estoque | ⏳ planejado: ao cadastrar o produto, a loja diz se ele **pode acabar**; se pode, informa a **quantidade** em estoque, que baixa a cada pedido |
+| 11 | Rastreamento e telemetria | Mostrar a entrega no mapa | ⏳ melhoria futura. Hoje o cliente acompanha pelo **status**: a cada mudança, a loja manda o aviso pelo WhatsApp e o cliente consulta o link do pedido. Próximo passo: o aviso sair automático |
 
 **Ao fim do marco 6 existe produto completo e vendável.** A loja cadastra equipe
 e cardápio, recebe e prepara pedidos, despacha com entregador próprio, registra
