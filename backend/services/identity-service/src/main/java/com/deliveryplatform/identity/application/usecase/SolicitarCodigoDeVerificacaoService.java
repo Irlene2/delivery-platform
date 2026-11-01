@@ -9,6 +9,7 @@ import com.deliveryplatform.identity.domain.model.Telefone;
 import org.springframework.stereotype.Service;
 
 import java.time.Clock;
+import java.util.Optional;
 
 @Service
 public class SolicitarCodigoDeVerificacaoService implements SolicitarCodigoDeVerificacao {
@@ -44,14 +45,15 @@ public class SolicitarCodigoDeVerificacaoService implements SolicitarCodigoDeVer
      * um número malformado não podia estar cadastrado de forma nenhuma.
      */
     @Override
-    public void solicitar(String telefoneBruto) {
+    public Optional<String> solicitar(String telefoneBruto) {
         Telefone telefone = Telefone.de(telefoneBruto);
 
         if (usuarios.existeComTelefone(telefone)) {
-            return;
+            return Optional.empty();
         }
 
-        codigos.substituir(
-                CodigoDeVerificacao.novo(telefone, gerador.gerar(), relogio.instant()));
+        String codigo = gerador.gerar();
+        codigos.substituir(CodigoDeVerificacao.novo(telefone, codigo, relogio.instant()));
+        return Optional.of(codigo);
     }
 }

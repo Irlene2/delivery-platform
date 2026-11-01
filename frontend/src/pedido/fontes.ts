@@ -24,7 +24,7 @@ import {
   type StatusDoPedido,
   type VitrineDaLoja,
 } from '../api/pedidos';
-import { chamar } from '../api/cliente';
+import { chamar, urlDaApi } from '../api/cliente';
 import { estadoConhecido } from '../api/disponibilidade';
 import type { components } from '../api/generated/catalog';
 import { ID_DA_LOJA_DEMO } from '../aki/demo';
@@ -99,7 +99,7 @@ function cardapioPublico(estabelecimentoId: string): FonteDoCatalogo {
           situacao: 'ATIVO',
           disponibilidade: estadoConhecido(produto.disponibilidade) ?? 'DISPONIVEL',
           vendavel: produto.vendavel === true,
-          imagem: '',
+          imagem: urlDaApi(produto.imagem),
           selo: '',
           grupos: [],
         };

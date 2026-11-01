@@ -37,6 +37,8 @@ export function CadastrarPage() {
   const [passo, definirPasso] = useState<'telefone' | 'dados'>('telefone');
   const [telefone, definirTelefone] = useState('');
   const [codigo, definirCodigo] = useState('');
+  // Só com a bandeira de desenvolvimento do identity (ADR-042, emenda de 01/11/2026).
+  const [codigoDeTeste, definirCodigoDeTeste] = useState<string | null>(null);
   const [nome, definirNome] = useState('');
   const [senha, definirSenha] = useState('');
   const [erro, definirErro] = useState<string | null>(null);
@@ -51,7 +53,9 @@ export function CadastrarPage() {
     }
     definirOcupado(true);
     try {
-      await pedirCodigo(telefone.trim());
+      const devolvido = await pedirCodigo(telefone.trim());
+      definirCodigoDeTeste(devolvido);
+      if (devolvido !== null) definirCodigo(devolvido);
       definirPasso('dados');
     } catch (causa) {
       definirErro(traduzir(causa));
@@ -130,6 +134,11 @@ export function CadastrarPage() {
             Pedido aceito. Se este telefone puder receber um código, ele foi pedido. O código vale
             por dez minutos e aceita cinco tentativas.
           </AvisoDoCartao>
+          {codigoDeTeste !== null && (
+            <AvisoDoCartao>
+              Ambiente de teste: o código é <b>{codigoDeTeste}</b> e já foi preenchido.
+            </AvisoDoCartao>
+          )}
           <CampoDoCartao
             id="cadastroCodigo"
             rotulo="Código de verificação"

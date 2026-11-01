@@ -230,7 +230,7 @@ Achadas nas rodadas, sem condição que as reabra. **Sem gatilho, ninguém olha.
 
 | Dívida | De onde |
 | --- | --- |
-| O refresh token, com a baixa do TTL de 30 min | ADR-037:203 |
+| O refresh token, com a baixa do TTL — hoje 12 horas, desde a emenda de 01/11/2026 | ADR-037:203 e a emenda da §3 |
 | O login com hash sem prefixo de cifrador responde **500**, não 401 (`IllegalArgumentException` do `DelegatingPasswordEncoder`) | medido na W-D |
 | A rota que marca a opção devolve o resumo, sem os grupos | W-D; `CLAUDE.md`, armadilha "Vai mexer numa opção" |
 | A falha de busca do JWKS responde 500 com o corpo do `/error`, e não `ProblemDetail` | I-B; ADR-055, emenda de 10/10 |

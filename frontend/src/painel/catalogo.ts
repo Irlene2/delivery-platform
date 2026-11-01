@@ -1,5 +1,12 @@
-import { criarProduto, criarSecao, fraseDaRecusa, publicarProduto } from '../api/cardapio';
-import { chamar } from '../api/cliente';
+import {
+  alterarProduto,
+  criarProduto,
+  criarSecao,
+  enviarFoto,
+  fraseDaRecusa,
+  publicarProduto,
+} from '../api/cardapio';
+import { chamar, urlDaApi } from '../api/cliente';
 import {
   estadoConhecido,
   MarcacaoRecusada,
@@ -11,6 +18,7 @@ import type { components } from '../api/generated/catalog';
 import { PRODUTOS_DE_EXEMPLO, TIPOS_DE_EXEMPLO } from '../aki/exemplos';
 import { gravar, ler } from '../aki/guardado';
 import { caminhoDasSecoes, TAMANHO_DO_CARDAPIO } from './cardapio';
+import { partesDaFoto } from './foto';
 import { caminhoDoProduto, regraDoGrupo } from './produtoInteiro';
 import { caminhoDosProdutos } from './produtos';
 import type { Permissao } from './tipos';
@@ -266,26 +274,28 @@ export function fonteDoServidor(
       let itens = catalogo.itens;
       let item = original;
 
+      // A seção nova nasce antes do produto — na criação e na correção do cadastro.
+      let categoriaId = dados.tipoId;
+      if (categoriaId === NOVO_TIPO) {
+        const nova = await criarSecao(
+          estabelecimentoId,
+          { nome: dados.tipoNovo, ordem: tipos.length },
+          token,
+        );
+        categoriaId = String(nova.id ?? '');
+        tipos = [
+          ...tipos,
+          {
+            id: categoriaId,
+            nome: nova.nome ?? dados.tipoNovo,
+            ordem: nova.ordem ?? 0,
+            icone: 'restaurant_menu',
+          },
+        ];
+      }
+      const descricao = juntarDescricao(dados.descricao, dados.ingredientes);
+
       if (item === null) {
-        let categoriaId = dados.tipoId;
-        if (categoriaId === NOVO_TIPO) {
-          const nova = await criarSecao(
-            estabelecimentoId,
-            { nome: dados.tipoNovo, ordem: tipos.length },
-            token,
-          );
-          categoriaId = String(nova.id ?? '');
-          tipos = [
-            ...tipos,
-            {
-              id: categoriaId,
-              nome: nova.nome ?? dados.tipoNovo,
-              ordem: nova.ordem ?? 0,
-              icone: 'restaurant_menu',
-            },
-          ];
-        }
-        const descricao = juntarDescricao(dados.descricao, dados.ingredientes);
         const criado = await criarProduto(
           estabelecimentoId,
           {
@@ -300,13 +310,35 @@ export function fonteDoServidor(
         );
         item = doContrato(criado, tipos);
         itens = [...itens, item];
+      } else {
+        const mudou =
+          categoriaId !== item.tipoId ||
+          dados.nome !== item.nome ||
+          dados.preco !== item.preco ||
+          descricao !== juntarDescricao(item.descricao, item.ingredientes);
+        if (mudou) {
+          // Correção do cadastro (ADR-077, emenda de 01/11/2026). A recusa aqui é do produto
+          // inteiro: ela sobe, e a tela mostra a frase sem perder o que foi digitado.
+          const alterado = await alterarProduto(
+            estabelecimentoId,
+            item.id,
+            { categoriaId, nome: dados.nome, descricao, precoBase: dados.preco },
+            token,
+          );
+          item = { ...doContrato(alterado, tipos), grupos: item.grupos };
+        }
       }
 
-      // Publicar e marcar têm rota própria. Se um falhar, o produto já existe:
+      // Publicar, marcar e a foto têm rota própria. Se um falhar, o produto já existe:
       // avisamos sem perder nada, e a tela reabre como edição para não duplicar.
       let atual: ItemDoCatalogo = item;
       let aviso: string | null = null;
       try {
+        const foto = partesDaFoto(dados.imagem);
+        if (foto !== null) {
+          const ilustrado = await enviarFoto(estabelecimentoId, atual.id, foto, token);
+          atual = { ...atual, imagem: urlDaApi(ilustrado.imagem) };
+        }
         if (dados.situacao === 'ATIVO' && atual.situacao !== 'ATIVO') {
           const publicado = await publicarProduto(estabelecimentoId, atual.id, token);
           atual = {
@@ -321,12 +353,13 @@ export function fonteDoServidor(
       } catch (erro) {
         aviso = `O produto foi salvo, mas uma parte não: ${mensagemDoErro(erro)}`;
       }
+      const salvo = atual;
       itens = itens.map((um) =>
-        um.id === atual.id
-          ? { ...um, ...atual, grupos: um.grupos.length > 0 ? um.grupos : atual.grupos }
+        um.id === salvo.id
+          ? { ...um, ...salvo, grupos: um.grupos.length > 0 ? um.grupos : salvo.grupos }
           : um,
       );
-      return { item: atual, catalogo: { tipos, itens }, aviso };
+      return { item: salvo, catalogo: { tipos, itens }, aviso };
     },
 
     async marcar(item, estado) {

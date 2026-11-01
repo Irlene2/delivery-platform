@@ -105,7 +105,8 @@ class MongockIT extends Infraestrutura {
 
         assertThat(registros)
                 .extracting(r -> r.getString("changeId"))
-                .containsOnlyOnce("001-cria-indices-do-produto", "002-cria-indice-da-categoria");
+                .containsOnlyOnce("001-cria-indices-do-produto", "002-cria-indice-da-categoria",
+                        "003-cria-colecao-de-imagens");
     }
 
     private Document indiceChamado(String nome) {

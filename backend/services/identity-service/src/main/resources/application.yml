@@ -29,13 +29,20 @@ spring:
 delivery:
   # A fixture de desenvolvimento (ADR-059): o usuário que entra na loja da
   # fixture. Falsa por padrão; ligada, exige a senha, que vem só do ambiente.
+  # Só na máquina de quem desenvolve e na demonstração: o 202 do pedido de código traz o
+  # código, porque não há canal que entregue SMS (emenda de 01/11/2026 à ADR-042). Falsa por
+  # padrão; esquecer fecha.
+  cadastro:
+    codigo-na-resposta: ${DELIVERY_CODIGO_NA_TELA:false}
   semeadura:
     ligada: ${DELIVERY_SEMEADURA:false}
     senha: ${DELIVERY_SEMEADURA_SENHA:}
   jwt:
     issuer: ${JWT_ISSUER:http://localhost:8081}
     audience: ${JWT_AUDIENCE:delivery-platform}
-    access-token-ttl: ${JWT_ACCESS_TOKEN_TTL:PT30M}
+    # 12 horas: um expediente inteiro (emenda de 01/11/2026 à ADR-037). Sem refresh token,
+    # o access token é a sessão, e 30 minutos derrubava o atendente no meio do serviço.
+    access-token-ttl: ${JWT_ACCESS_TOKEN_TTL:PT12H}
     private-key-path: ${JWT_PRIVATE_KEY_PATH:}
 
 management:

@@ -67,6 +67,12 @@ spring:
               predicates:
                 - Path=/api/v1/storefront/{merchantId}/menu
 
+            # A foto do produto (ADR-077, emenda de 01/11/2026), do catalog.
+            - id: storefront-product-image
+              uri: ${SERVICE_CATALOG_URI:http://localhost:8083}
+              predicates:
+                - Path=/api/v1/storefront/{merchantId}/produtos/{produtoId}/imagem
+
             - id: storefront-orders
               uri: ${SERVICE_ORDER_URI:http://localhost:8085}
               predicates:

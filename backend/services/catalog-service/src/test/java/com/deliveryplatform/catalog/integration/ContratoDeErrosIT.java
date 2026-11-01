@@ -93,6 +93,11 @@ class ContratoDeErrosIT extends Infraestrutura {
     private static final String PUBLICAR = BASE + "/{produtoId}/publicacao";
     private static final String CATEGORIAS = "/api/v1/merchants/{estabelecimentoId}/catalog/categorias";
     private static final String MENU = "/api/v1/storefront/{estabelecimentoId}/menu";
+    private static final String ILUSTRAR = BASE + "/{produtoId}/imagem";
+    private static final String FOTO = "/api/v1/storefront/{estabelecimentoId}/produtos/{produtoId}/imagem";
+    private static final String CORPO_DA_ALTERACAO =
+            "{\"categoriaId\":\"%s\",\"nome\":\"Pizza\",\"precoBase\":%s}";
+    private static final String CORPO_DA_FOTO = "{\"tipo\":\"%s\",\"conteudo\":\"AQID\"}";
 
     /**
      * O que o contrato declara e nenhum caso provoca, cada item com o motivo.
@@ -262,6 +267,66 @@ class ContratoDeErrosIT extends Infraestrutura {
                             MERCHANT.expedienteEstoura();
                             return marcarOpcao(c, c.tamanho().id(), c.pequena(), "ACABANDO");
                         }),
+
+                // Corrigir o cadastro (ADR-077, emenda de 01/11/2026): 200, 400, 401, 403, 404.
+                new Provocacao("PUT", CONSULTAR, 400, "seção que não está nesta loja — ADR-066",
+                        () -> {
+                            Cena c = cena("ALTERAR_PRODUTO");
+                            return putJson(produto(c, c.pizza().getId().toString()), c.token(),
+                                    CORPO_DA_ALTERACAO.formatted(ProdutoDeTeste.CATEGORIA, "0.00"));
+                        }),
+                new Provocacao("PUT", CONSULTAR, 401, "sem token",
+                        () -> {
+                            Cena c = cena("ALTERAR_PRODUTO");
+                            return putJson(produto(c, c.pizza().getId().toString()), null,
+                                    CORPO_DA_ALTERACAO.formatted(ProdutoDeTeste.CATEGORIA, "10.00"));
+                        }),
+                new Provocacao("PUT", CONSULTAR, 403, "vínculo sem ALTERAR_PRODUTO",
+                        () -> {
+                            Cena c = cena("VER_PRODUTO");
+                            return putJson(produto(c, c.pizza().getId().toString()), c.token(),
+                                    CORPO_DA_ALTERACAO.formatted(ProdutoDeTeste.CATEGORIA, "10.00"));
+                        }),
+                new Provocacao("PUT", CONSULTAR, 404, "produto que não existe nesta loja — ADR-056",
+                        () -> {
+                            Cena c = cena("ALTERAR_PRODUTO");
+                            return putJson(produto(c, UUID.randomUUID().toString()), c.token(),
+                                    CORPO_DA_ALTERACAO.formatted(ProdutoDeTeste.CATEGORIA, "10.00"));
+                        }),
+
+                // A foto (ADR-077, emenda de 01/11/2026): 200, 400, 401, 403, 404.
+                new Provocacao("PUT", ILUSTRAR, 400, "arquivo que não é imagem",
+                        () -> {
+                            Cena c = cena("ALTERAR_PRODUTO");
+                            return putJson(produto(c, c.pizza().getId() + "/imagem"), c.token(),
+                                    CORPO_DA_FOTO.formatted("application/pdf"));
+                        }),
+                new Provocacao("PUT", ILUSTRAR, 401, "sem token",
+                        () -> {
+                            Cena c = cena("ALTERAR_PRODUTO");
+                            return putJson(produto(c, c.pizza().getId() + "/imagem"), null,
+                                    CORPO_DA_FOTO.formatted("image/png"));
+                        }),
+                new Provocacao("PUT", ILUSTRAR, 403, "vínculo sem ALTERAR_PRODUTO",
+                        () -> {
+                            Cena c = cena("VER_PRODUTO");
+                            return putJson(produto(c, c.pizza().getId() + "/imagem"), c.token(),
+                                    CORPO_DA_FOTO.formatted("image/png"));
+                        }),
+                new Provocacao("PUT", ILUSTRAR, 404, "produto que não existe nesta loja — ADR-056",
+                        () -> {
+                            Cena c = cena("ALTERAR_PRODUTO");
+                            return putJson(produto(c, UUID.randomUUID() + "/imagem"), c.token(),
+                                    CORPO_DA_FOTO.formatted("image/png"));
+                        }),
+                new Provocacao("GET", FOTO, 400, "identificador que não é UUID",
+                        () -> cliente().get().uri("/api/v1/storefront/nao-e-uuid/produtos/"
+                                        + UUID.randomUUID() + "/imagem")
+                                .exchange().returnResult(String.class).getStatus().value()),
+                new Provocacao("GET", FOTO, 404, "produto sem foto",
+                        () -> cliente().get().uri("/api/v1/storefront/" + UUID.randomUUID()
+                                        + "/produtos/" + UUID.randomUUID() + "/imagem")
+                                .exchange().returnResult(String.class).getStatus().value()),
 
                 new Provocacao("PUT", PUBLICAR, 400, "rascunho com preço zero — C1 na publicação",
                         () -> {
@@ -511,6 +576,20 @@ class ContratoDeErrosIT extends Infraestrutura {
     private int marcarOpcao(Cena c, UUID grupoId, UUID opcaoId, String estado) {
         return put("/api/v1/merchants/" + c.loja() + "/catalog/produtos/" + c.pizza().getId()
                 + "/grupos/" + grupoId + "/opcoes/" + opcaoId + "/disponibilidade", c.token(), estado);
+    }
+
+    private static String produto(Cena c, String resto) {
+        return "/api/v1/merchants/" + c.loja() + "/catalog/produtos/" + resto;
+    }
+
+    private int putJson(String uri, String token, String corpo) {
+        var requisicao = cliente().put().uri(uri)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(corpo);
+        if (token != null) {
+            requisicao = requisicao.header("Authorization", "Bearer " + token);
+        }
+        return requisicao.exchange().returnResult(String.class).getStatus().value();
     }
 
     private int put(String uri, String token, String estado) {

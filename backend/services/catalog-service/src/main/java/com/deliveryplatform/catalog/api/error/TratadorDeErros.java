@@ -179,6 +179,8 @@ public class TratadorDeErros {
                     + "loja; escolha uma das seções da lista";
             case MODO_SEM_CONTROLE -> "«" + d.get(1) + "» não tem controle de disponibilidade e não "
                     + "aceita a marcação «" + estado(d.get(0)) + "»";
+            case IMAGEM_INVALIDA -> "a foto precisa ser JPG, PNG ou WebP, com até 600 KB; "
+                    + "escolha outra imagem";
             case INTEGRIDADE -> "não foi possível completar a operação";
         };
     }

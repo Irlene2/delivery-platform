@@ -2,14 +2,19 @@ package com.deliveryplatform.catalog.api.controller;
 
 import com.deliveryplatform.catalog.api.dto.MarcacaoRequest;
 import com.deliveryplatform.catalog.api.dto.PaginaResponse;
+import com.deliveryplatform.catalog.api.dto.ImagemRequest;
+import com.deliveryplatform.catalog.api.dto.ProdutoAlteracaoRequest;
 import com.deliveryplatform.catalog.api.dto.ProdutoRequest;
 import com.deliveryplatform.catalog.api.dto.ProdutoResponse;
 import com.deliveryplatform.catalog.api.dto.ProdutoResumoResponse;
+import com.deliveryplatform.catalog.application.port.in.AlterarProduto;
 import com.deliveryplatform.catalog.application.port.in.ConsultarProduto;
+import com.deliveryplatform.catalog.application.port.in.IlustrarProduto;
 import com.deliveryplatform.catalog.application.port.in.CriarProduto;
 import com.deliveryplatform.catalog.application.port.in.ListarProdutos;
 import com.deliveryplatform.catalog.application.port.in.MarcarDisponibilidade;
 import com.deliveryplatform.catalog.application.port.in.PublicarProduto;
+import com.deliveryplatform.catalog.domain.exception.RegraDoCatalogoViolada;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -30,6 +35,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
+import java.util.Base64;
 import java.util.UUID;
 
 /**
@@ -70,15 +76,82 @@ public class ProdutoController {
     private final MarcarDisponibilidade marcacoes;
     private final CriarProduto criacao;
     private final PublicarProduto publicacao;
+    private final AlterarProduto alteracao;
+    private final IlustrarProduto ilustracao;
 
     public ProdutoController(ListarProdutos produtos, ConsultarProduto consultas,
                              MarcarDisponibilidade marcacoes, CriarProduto criacao,
-                             PublicarProduto publicacao) {
+                             PublicarProduto publicacao, AlterarProduto alteracao,
+                             IlustrarProduto ilustracao) {
         this.produtos = produtos;
         this.consultas = consultas;
         this.marcacoes = marcacoes;
         this.criacao = criacao;
         this.publicacao = publicacao;
+        this.alteracao = alteracao;
+        this.ilustracao = ilustracao;
+    }
+
+    /**
+     * Corrige o cadastro (ADR-077, emenda de 01/11/2026): seção, nome, descrição e preço,
+     * inteiros. Publicado continua publicado, e o agregado recusa o que a publicação recusaria
+     * (C1, C2). Grupos, opções, modo e ordem não mudam por aqui.
+     *
+     * <p>Sem 409 declarado pelo mesmo motivo da publicação: o do {@code @Version} (ADR-052) só
+     * é provocável com costura no código de produção.
+     */
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "O produto com o cadastro corrigido"),
+            @ApiResponse(responseCode = "400", description = "Corpo malformado, preço negativo, preço zero num produto publicado (C1, C2), ou seção que não existe nesta loja", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Sem token, ou token inválido", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Sem vínculo, sem ALTERAR_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa", content = @Content),
+            @ApiResponse(responseCode = "404", description = "O produto não existe nesta loja — inexistente ou de outra loja, a mesma resposta (ADR-056)", content = @Content)
+    })
+    @PutMapping(path = "/{produtoId}", consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Corrige o nome, o preço, a descrição e a seção do produto",
+            description = "Exige ALTERAR_PRODUTO. Os quatro campos vêm inteiros. Num produto "
+                    + "publicado, as regras da publicação continuam valendo.")
+    public ProdutoResponse alterar(
+            @PathVariable UUID estabelecimentoId,
+            @PathVariable UUID produtoId,
+            @Valid @RequestBody ProdutoAlteracaoRequest pedido) {
+
+        return ProdutoResponse.de(alteracao.alterar(estabelecimentoId, produtoId,
+                new AlterarProduto.Alteracao(pedido.categoriaId(), pedido.nome(),
+                        pedido.descricao(), Money.de(pedido.precoBase()))));
+    }
+
+    /**
+     * Põe ou troca a foto (ADR-077, emenda de 01/11/2026). A foto fica fora do documento do
+     * produto, e o produto passa a apontar para a rota pública dela.
+     */
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "O produto, com o caminho da foto nova"),
+            @ApiResponse(responseCode = "400", description = "Corpo malformado, Base64 inválido, tipo que não é JPG, PNG ou WebP, ou foto maior que 600 KB", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Sem token, ou token inválido", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Sem vínculo, sem ALTERAR_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa", content = @Content),
+            @ApiResponse(responseCode = "404", description = "O produto não existe nesta loja — inexistente ou de outra loja, a mesma resposta (ADR-056)", content = @Content)
+    })
+    @PutMapping(path = "/{produtoId}/imagem", consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Põe ou troca a foto do produto",
+            description = "Exige ALTERAR_PRODUTO. O arquivo vai em Base64; JPG, PNG ou WebP, "
+                    + "até 600 KB.")
+    public ProdutoResponse ilustrar(
+            @PathVariable UUID estabelecimentoId,
+            @PathVariable UUID produtoId,
+            @Valid @RequestBody ImagemRequest pedido) {
+
+        byte[] conteudo;
+        try {
+            conteudo = Base64.getDecoder().decode(pedido.conteudo());
+        } catch (IllegalArgumentException base64Invalido) {
+            throw new RegraDoCatalogoViolada(RegraDoCatalogoViolada.Motivo.IMAGEM_INVALIDA,
+                    "Base64 inválido");
+        }
+        return ProdutoResponse.de(
+                ilustracao.ilustrar(estabelecimentoId, produtoId, pedido.tipo(), conteudo));
     }
 
     /**

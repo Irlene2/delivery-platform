@@ -543,6 +543,50 @@ public final class Produto {
     }
 
     /**
+     * Corrige o cadastro: a seção, o nome, o preço e a descrição (ADR-077, emenda de
+     * 01/11/2026). O que nasceu errado no cadastro não exige produto novo — produto nunca é
+     * apagado (C9), e um segundo produto com o nome certo deixaria o errado para sempre na
+     * lista.
+     *
+     * <p><b>Publicado continua obedecendo às regras da publicação.</b> Preço zero num produto
+     * {@code ATIVO} é o C1 que {@link #publicar()} recusaria, e o mínimo possível não positivo
+     * é o C2: a edição não é um caminho para pôr no cardápio o que a publicação barraria. Em
+     * rascunho, como na criação, só o preço negativo é recusado. Nada é alterado se a regra
+     * recusar.
+     *
+     * <p>Grupos, opções, modo de controle e ordem ficam como estão: cada um tem o seu ato.
+     */
+    public void alterarCadastro(UUID novaCategoriaId, String novoNome, Money novoPreco,
+                                String novaDescricao) {
+        if (novaCategoriaId == null) {
+            throw RegraDoCatalogoViolada.integridade("produto sem categoria");
+        }
+        String nomeValido = Textos.exigirPreenchido(novoNome, "nome do produto");
+        exigirPrecoValido(novoPreco);
+
+        Money precoAnterior = this.precoBase;
+        if (estadoDePublicacao == EstadoDePublicacao.ATIVO) {
+            if (novoPreco.ehZero()) {
+                throw new RegraDoCatalogoViolada(RegraDoCatalogoViolada.Motivo.PUBLICACAO_SEM_PRECO,
+                        "C1: preço base zero num produto publicado — " + nomeValido, nomeValido);
+            }
+            this.precoBase = novoPreco;
+            Money minimo = precoMinimoPossivel();
+            if (minimo.ehNegativo() || minimo.ehZero()) {
+                this.precoBase = precoAnterior;
+                throw new RegraDoCatalogoViolada(RegraDoCatalogoViolada.Motivo.PUBLICACAO_PRECO_NAO_POSITIVO,
+                        "C2: com o preço novo existe combinação sem preço positivo — mínimo "
+                                + minimo.valor(),
+                        minimo.valor().toPlainString());
+            }
+        }
+        this.categoriaId = novaCategoriaId;
+        this.nome = nomeValido;
+        this.precoBase = novoPreco;
+        descreverCom(novaDescricao);
+    }
+
+    /**
      * Descrição é opcional, e "em branco" é o mesmo que "não tem".
      *
      * <p>Sem esta normalização o cardápio ganharia produtos com descrição de

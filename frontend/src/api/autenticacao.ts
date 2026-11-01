@@ -42,12 +42,17 @@ export type RespostaDeCadastro = components['schemas']['SignupResponse'];
 export type PedidoDeLogin = components['schemas']['LoginRequest'];
 export type RespostaDeLogin = components['schemas']['LoginResponse'];
 
-/** 202 e nada mais — nem para telefone novo, nem para telefone que já existe. */
-export async function pedirCodigo(telefone: string): Promise<void> {
-  await chamar<void>('/api/v1/auth/verification-code', {
-    metodo: 'POST',
-    corpo: { telefone } satisfies PedidoDeCodigo,
-  });
+/**
+ * 202, normalmente sem corpo — nem para telefone novo, nem para telefone que já existe. Com a
+ * bandeira de desenvolvimento do `identity` ligada (ADR-042, emenda de 01/11/2026), o corpo traz
+ * o código, e esta função o devolve; em qualquer outro caso, `null`.
+ */
+export async function pedirCodigo(telefone: string): Promise<string | null> {
+  const resposta = await chamar<{ codigoDeDemonstracao?: string | null } | undefined>(
+    '/api/v1/auth/verification-code',
+    { metodo: 'POST', corpo: { telefone } satisfies PedidoDeCodigo },
+  );
+  return resposta?.codigoDeDemonstracao ?? null;
 }
 
 /** 201 com o identificador do usuário criado. Não devolve token: o login é o passo seguinte. */

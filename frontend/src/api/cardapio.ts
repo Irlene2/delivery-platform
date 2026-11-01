@@ -13,6 +13,8 @@ export type NovaSecao = components['schemas']['CategoriaRequest'];
 export type SecaoCriada = components['schemas']['CategoriaResponse'];
 export type NovoProduto = components['schemas']['ProdutoRequest'];
 export type ProdutoCriado = components['schemas']['ProdutoResponse'];
+export type AlteracaoDeProduto = components['schemas']['ProdutoAlteracaoRequest'];
+export type FotoDoProduto = components['schemas']['ImagemRequest'];
 
 export function criarSecao(
   estabelecimentoId: string,
@@ -47,6 +49,35 @@ export function publicarProduto(
   return chamar<ProdutoCriado>(
     `/api/v1/merchants/${estabelecimentoId}/catalog/produtos/${produtoId}/publicacao`,
     { metodo: 'PUT', token },
+  );
+}
+
+/**
+ * Corrige o cadastro de um produto existente: seção, nome, descrição e preço, inteiros
+ * (ADR-077, emenda de 01/11/2026).
+ */
+export function alterarProduto(
+  estabelecimentoId: string,
+  produtoId: string,
+  corpo: AlteracaoDeProduto,
+  token: string,
+): Promise<ProdutoCriado> {
+  return chamar<ProdutoCriado>(
+    `/api/v1/merchants/${estabelecimentoId}/catalog/produtos/${produtoId}`,
+    { metodo: 'PUT', corpo, token },
+  );
+}
+
+/** Põe ou troca a foto do produto. O conteúdo vai em Base64, sem o prefixo `data:`. */
+export function enviarFoto(
+  estabelecimentoId: string,
+  produtoId: string,
+  corpo: FotoDoProduto,
+  token: string,
+): Promise<ProdutoCriado> {
+  return chamar<ProdutoCriado>(
+    `/api/v1/merchants/${estabelecimentoId}/catalog/produtos/${produtoId}/imagem`,
+    { metodo: 'PUT', corpo, token },
   );
 }
 

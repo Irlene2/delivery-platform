@@ -190,6 +190,8 @@ services:
       JWT_PRIVATE_KEY_PATH: /run/segredos/jwt-private.pem
       DELIVERY_SEMEADURA: ${DELIVERY_SEMEADURA:-false}
       DELIVERY_SEMEADURA_SENHA: ${DELIVERY_SEMEADURA_SENHA:-}
+      # O código do cadastro na própria tela — só local e na demonstração (ADR-042, 01/11/2026).
+      DELIVERY_CODIGO_NA_TELA: ${DELIVERY_CODIGO_NA_TELA:-false}
     volumes:
       # O arquivo, e não a pasta, e somente leitura. A chave fica em secrets/,
       # gitignorada; gere com o comando do .env.example.

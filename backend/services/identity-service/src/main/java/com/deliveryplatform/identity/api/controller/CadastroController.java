@@ -1,13 +1,16 @@
 package com.deliveryplatform.identity.api.controller;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.deliveryplatform.identity.api.dto.CodigoDeDemonstracaoResponse;
 import com.deliveryplatform.identity.api.dto.SignupRequest;
 import com.deliveryplatform.identity.api.dto.SignupResponse;
 import com.deliveryplatform.identity.api.dto.VerificationCodeRequest;
@@ -37,11 +40,19 @@ public class CadastroController {
 
     private final SolicitarCodigoDeVerificacao codigos;
     private final CadastrarUsuario cadastros;
+    private final boolean codigoNaResposta;
 
+    /**
+     * {@code delivery.cadastro.codigo-na-resposta}: falsa por padrão, e esquecer fecha — como a
+     * documentação aberta (ADR-050) e a semeadura (ADR-059). Ligada só no {@code .env} de quem
+     * desenvolve e na demonstração.
+     */
     public CadastroController(
-            SolicitarCodigoDeVerificacao codigos, CadastrarUsuario cadastros) {
+            SolicitarCodigoDeVerificacao codigos, CadastrarUsuario cadastros,
+            @Value("${delivery.cadastro.codigo-na-resposta:false}") boolean codigoNaResposta) {
         this.codigos = codigos;
         this.cadastros = cadastros;
+        this.codigoNaResposta = codigoNaResposta;
     }
 
     /**
@@ -53,11 +64,22 @@ public class CadastroController {
      * faz o onboarding. É a semântica exata do código de status, e ela deixa de
      * ser verdade no dia em que houver adaptador de canal: aí vira 202 por
      * assincronia de verdade.
+     *
+     * <p><b>A exceção, e só com a bandeira ligada</b> (emenda de 01/11/2026 à ADR-042): na
+     * máquina de quem desenvolve e na demonstração, o 202 traz o código, para um dono novo se
+     * cadastrar sem alguém ler a tabela. Ligada, ela também diz se o telefone já tem conta
+     * (código vazio) — o oráculo do §5 —, e por isso nunca sai do ambiente local.
      */
-    @PostMapping(path = "/verification-code", consumes = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseStatus(HttpStatus.ACCEPTED)
-    public void solicitarCodigo(@Valid @RequestBody VerificationCodeRequest requisicao) {
-        codigos.solicitar(requisicao.telefone());
+    @PostMapping(path = "/verification-code", consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<CodigoDeDemonstracaoResponse> solicitarCodigo(
+            @Valid @RequestBody VerificationCodeRequest requisicao) {
+        var codigo = codigos.solicitar(requisicao.telefone());
+        if (!codigoNaResposta) {
+            return ResponseEntity.accepted().build();
+        }
+        return ResponseEntity.accepted()
+                .body(new CodigoDeDemonstracaoResponse(codigo.orElse(null)));
     }
 
     @PostMapping(path = "/signup", produces = MediaType.APPLICATION_JSON_VALUE)

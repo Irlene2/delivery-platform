@@ -24,7 +24,8 @@ import type { EstadoDaSessao } from './contexto';
  *
  * ## A expiração é contada, não esperada
  *
- * O `expiresIn` do login são 1800 segundos, e **não há refresh**. Um temporizador
+ * O `expiresIn` do login são 43200 segundos — 12 horas, um expediente (emenda de 01/11/2026 à
+ * ADR-037) —, e **não há refresh**. Um temporizador
  * derruba a sessão no instante certo, em vez de deixar a pessoa descobrir pelo
  * primeiro 401 depois de escrever um formulário inteiro. Os dois caminhos
  * existem: o temporizador é a cortesia, o 401 do cliente HTTP é a rede.

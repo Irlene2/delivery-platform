@@ -81,6 +81,8 @@ class RoteamentoIT extends GatewayNoAr {
             new Caso("/api/v1/convites/um-token-qualquer", "merchant", "convites"),
             // A vitrine (ADR-077): o cardápio é do catalog; pedido e acompanhamento, do order.
             new Caso("/api/v1/storefront/{loja}/menu", "catalog", "storefront-menu"),
+            new Caso("/api/v1/storefront/{loja}/produtos/a1b2c3d4-0000-4000-8000-000000000001/imagem",
+                    "catalog", "storefront-product-image"),
             new Caso("/api/v1/storefront/{loja}/orders", "order", "storefront-orders"),
             new Caso("/api/v1/storefront/{loja}/orders/settings", "order", "storefront-orders"),
             new Caso("/api/v1/storefront/orders/c3f9a1d0-0000-4000-8000-000000000001", "order",

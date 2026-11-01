@@ -73,6 +73,19 @@ class CadeiaDeFiltrosIT extends GatewayNoAr {
     }
 
     @Test
+    void a_foto_do_produto_passa_sem_token() {
+        cliente().get().uri(VITRINE + "/produtos/a1b2c3d4-0000-4000-8000-000000000001/imagem")
+                .exchange().expectStatus().isOk();
+    }
+
+    @Test
+    void trocar_a_foto_continua_exigindo_token() {
+        cliente().put().uri("/api/v1/merchants/7b1f0c22-9d3e-4a51-8f6b-2c0d7e5a1934/catalog/produtos/"
+                        + "a1b2c3d4-0000-4000-8000-000000000001/imagem")
+                .exchange().expectStatus().isUnauthorized();
+    }
+
+    @Test
     void a_taxa_da_loja_passa_sem_token() {
         cliente().get().uri(VITRINE + "/orders/settings").exchange().expectStatus().isOk();
     }

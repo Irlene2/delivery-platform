@@ -115,6 +115,14 @@ muda o id, sem ninguém lembrar de mudar.
 
 ### 3. O access token vale 30 minutos
 
+> **Emenda de 01/11/2026 — agora vale 12 horas** (`access-token-ttl: PT12H`, entrega de 15/11,
+> ADR-077). Medido na passagem humana: o atendente perdia a sessão no meio do expediente, com
+> pedido aberto na tela. O raciocínio abaixo continua de pé e é ele que autoriza a troca — o
+> token **não carrega permissão**, e a revogação de acesso a uma loja segue em segundos pelo
+> evento e em um minuto pelo TTL da ADR-011, com o token ainda válido. O que doze horas
+> prolongam é o uso de um token **roubado**. **Gatilho para baixar de novo:** a ADR do refresh
+> token, como o parágrafo "Quando esta decisão cai" já manda.
+
 E o raciocínio importa mais que o número, porque o número vai mudar.
 
 **Por que não é mais curto.** Não há refresh token neste marco (§ "o que não

@@ -66,6 +66,8 @@ public class RegraDoCatalogoViolada extends RuntimeException {
          * agregado</b>: pelo caso de uso que cria produto (ADR-066).
          */
         CATEGORIA_NAO_ENCONTRADA,
+        /** A foto do produto: tipo que não é imagem aceita, ou grande demais. dados: nenhum. */
+        IMAGEM_INVALIDA,
         /** Nulo onde o nosso código deveria ter posto valor. Só um defeito o produz. */
         INTEGRIDADE
     }

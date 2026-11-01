@@ -190,3 +190,23 @@ mensagem. Hoje custa um `INSERT` que substitui o anterior.
 Passa a apontar para cá: nasce verificado **porque um código de seis dígitos,
 válido por dez minutos e com cinco tentativas, foi confirmado** — e o carimbo é
 o instante da confirmação, não o do cadastro.
+
+## Emenda de 01/11/2026 — o código na tela, só com a bandeira de desenvolvimento
+
+**Por quê.** Na entrega de 15/11 (ADR-077) o dono novo precisa se cadastrar sozinho, e não há
+canal que entregue o código — nem operador lendo a tabela durante a demonstração.
+
+**O que muda.** Com `delivery.cadastro.codigo-na-resposta=true` (`DELIVERY_CODIGO_NA_TELA` no
+`.env`), o `202` do `POST /api/v1/auth/verification-code` traz `{ "codigoDeDemonstracao": "…" }`,
+e a tela de cadastro o mostra e preenche. **Falsa por padrão**, como a documentação aberta
+(ADR-050) e a semeadura (ADR-059): esquecer fecha.
+
+**O que não muda, e onde a guarda foi morar.** Sem a bandeira, o `202` sai sem corpo, para
+telefone novo e para telefone que já tem conta — o §5 inteiro. Ligada, ela devolve código vazio
+para telefone que já tem conta, que é exatamente o oráculo que o §5 recusa: por isso ela é de
+desenvolvimento e demonstração, e nunca de um ambiente com dados de verdade. O caso de uso passou
+a devolver o código gerado (`Optional<String>`) para a borda poder mostrá-lo; a guarda saiu da
+assinatura e foi para a borda, e o `CadastroIT` a afirma com a bandeira desligada.
+
+**Quando ela sai.** No dia em que houver adaptador de canal (SMS ou WhatsApp) entregando o código
+— a mesma condição de término desta ADR.

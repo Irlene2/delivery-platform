@@ -37,6 +37,15 @@ import { esquecer } from '../auth/armazenamento';
 /** De onde a API responde. Vem do ambiente, e não tem valor embutido no código. */
 const BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
 
+/**
+ * O endereço completo de um caminho que o servidor devolveu relativo ao gateway — a foto do
+ * produto, por exemplo (`/api/v1/storefront/…/imagem`). Vazio continua vazio.
+ */
+export function urlDaApi(caminho: string | null | undefined): string {
+  if (caminho == null || caminho === '') return '';
+  return caminho.startsWith('/') ? `${BASE}${caminho}` : caminho;
+}
+
 /** Assinado quando qualquer requisição recebe 401. A raiz da aplicação escuta. */
 type OuvinteDeSessaoPerdida = () => void;
 let aoPerderSessao: OuvinteDeSessaoPerdida | null = null;

@@ -106,7 +106,7 @@ class AutenticacaoIT {
         String corpo = postarLogin(
                 "{\"telefone\":\"" + TELEFONE + "\",\"senha\":\"" + SENHA + "\"}", HttpStatus.OK);
 
-        assertThat(corpo).contains("\"tokenType\":\"Bearer\"", "\"expiresIn\":1800");
+        assertThat(corpo).contains("\"tokenType\":\"Bearer\"", "\"expiresIn\":43200");
         assertThat(corpo)
                 .as("o token já carrega o sub; nome e e-mail no corpo do login espalhariam dado pessoal")
                 .doesNotContain("Marli", "hashDaSenha", "bcrypt");

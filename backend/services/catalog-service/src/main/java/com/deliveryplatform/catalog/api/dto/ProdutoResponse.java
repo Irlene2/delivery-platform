@@ -7,6 +7,8 @@ import com.deliveryplatform.catalog.domain.model.ModoDeControle;
 import com.deliveryplatform.catalog.domain.model.Opcao;
 import com.deliveryplatform.catalog.domain.model.Produto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
@@ -40,7 +42,10 @@ public record ProdutoResponse(
         EstadoDePublicacao estadoDePublicacao,
         EstadoDeDisponibilidade disponibilidade,
         boolean vendavel,
-        List<GrupoResponse> gruposDeOpcoes) {
+        List<GrupoResponse> gruposDeOpcoes,
+        @Schema(description = "O caminho público da foto, relativo ao gateway; nulo sem foto.",
+                nullable = true)
+        String imagem) {
 
     public static ProdutoResponse de(Produto produto) {
         return new ProdutoResponse(
@@ -54,7 +59,8 @@ public record ProdutoResponse(
                 produto.getEstadoDePublicacao(),
                 produto.getDisponibilidade().estado(),
                 produto.vendavel(),
-                produto.getGruposDeOpcoes().stream().map(GrupoResponse::de).toList());
+                produto.getGruposDeOpcoes().stream().map(GrupoResponse::de).toList(),
+                produto.getImagemRef());
     }
 
     /** O grupo, com as opções na ordem em que o comerciante as pôs. */

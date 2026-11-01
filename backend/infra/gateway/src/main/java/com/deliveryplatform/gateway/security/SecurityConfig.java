@@ -99,6 +99,7 @@ public class SecurityConfig {
                         // asterisco — o painel de pedidos, sob /merchants, continua com token,
                         // e qualquer outra rota sob /storefront cai no authenticated().
                         .requestMatchers(HttpMethod.GET, "/api/v1/storefront/*/menu").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/storefront/*/produtos/*/imagem").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/storefront/*/orders/settings").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/storefront/*/orders").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/storefront/orders/*").permitAll()

@@ -29,7 +29,7 @@ public record JwtProperties(
         if (accessTokenTtl == null || accessTokenTtl.isZero() || accessTokenTtl.isNegative()) {
             throw new IllegalStateException(
                     "delivery.jwt.access-token-ttl precisa ser uma duração positiva — "
-                            + "a ADR-037 decidiu PT30M, e o valor mora no yml, não no código");
+                            + "a ADR-037 decidiu PT12H (emenda de 01/11/2026), e o valor mora no yml, não no código");
         }
     }
 

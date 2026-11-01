@@ -15,6 +15,7 @@ import {
 } from './catalogo';
 import { CascaDaLoja } from './CascaDaLoja';
 import { caminhoDaSecao } from './caminhos';
+import { reduzirFoto } from './foto';
 import { useLojaAtual } from './lojaAtual';
 import { useCatalogo } from './useCatalogo';
 
@@ -132,15 +133,31 @@ export function EditorDeProduto() {
   // ---------- travas ----------
   const doServidor = !fonte.editaTudo;
   const semPermissao = doServidor && (item === null ? !fonte.podeCriar : !fonte.podeAlterar);
+  // A posição e o "pode acabar" são do cadastro inicial: a correção do cadastro (ADR-077,
+  // emenda de 01/11/2026) muda seção, nome, descrição, ingredientes e preço.
   const travarDados = doServidor && item !== null;
   const travarTudo = semPermissao;
   const nota = semPermissao
     ? item === null
       ? 'Você não tem permissão para criar produtos nesta loja.'
       : 'Você pode ver este produto, mas não tem a permissão para alterá-lo nesta loja.'
-    : travarDados
-      ? 'O servidor ainda não tem a rota para alterar nome, tipo, descrição, ingredientes ou preço de um produto que já existe. Aqui dá para publicar e marcar a disponibilidade. Os outros campos voltam a ser editáveis quando a rota existir.'
-      : null;
+    : null;
+  const [preparandoFoto, definirPreparandoFoto] = useState(false);
+
+  async function escolherFoto(arquivo: File | undefined) {
+    if (arquivo === undefined) return;
+    definirPreparandoFoto(true);
+    try {
+      alterar('imagem', await reduzirFoto(arquivo));
+    } catch (erro) {
+      definirMensagem({
+        tom: 'erro',
+        texto: erro instanceof Error ? erro.message : 'Não foi possível usar esta foto.',
+      });
+    } finally {
+      definirPreparandoFoto(false);
+    }
+  }
   const situacaoFixa = doServidor && item?.situacao === 'ATIVO';
 
   const alterar = <K extends keyof Campos>(campo: K, valor: Campos[K]) => {
@@ -276,7 +293,7 @@ export function EditorDeProduto() {
   if (campos.controle === 'QUALITATIVO' && campos.disponibilidade !== 'DISPONIVEL') {
     seloDaPrevia = ROTULO[campos.disponibilidade];
   }
-  const imagemDaPrevia = (fonte.editaTudo && campos.imagem.trim()) || IMAGEM_PADRAO;
+  const imagemDaPrevia = campos.imagem.trim() || IMAGEM_PADRAO;
 
   const titulo = item === null ? 'Novo produto' : `Editar: ${item.nome}`;
 
@@ -331,7 +348,7 @@ export function EditorDeProduto() {
               noValidate
               onSubmit={(evento) => void salvar(evento)}
             >
-              <fieldset className="prod-grupo" disabled={travarDados || travarTudo}>
+              <fieldset className="prod-grupo" disabled={travarTudo}>
                 <legend>O produto</legend>
                 <label className="prod-campo">
                   Nome do produto *
@@ -452,7 +469,7 @@ export function EditorDeProduto() {
                 </div>
               </fieldset>
 
-              <fieldset className="prod-grupo" disabled={travarDados || travarTudo}>
+              <fieldset className="prod-grupo" disabled={travarTudo}>
                 <legend>Preço e controle</legend>
                 <div className="prod-linha">
                   <label className="prod-campo">
@@ -475,6 +492,7 @@ export function EditorDeProduto() {
                       type="number"
                       min={0}
                       step={1}
+                      disabled={travarDados}
                       value={campos.ordem}
                       onChange={(evento) => alterar('ordem', evento.target.value)}
                     />
@@ -487,6 +505,7 @@ export function EditorDeProduto() {
                       type="radio"
                       name="fControle"
                       value="QUALITATIVO"
+                      disabled={travarDados}
                       checked={campos.controle === 'QUALITATIVO'}
                       onChange={() => alterar('controle', 'QUALITATIVO')}
                     />{' '}
@@ -503,6 +522,7 @@ export function EditorDeProduto() {
                       type="radio"
                       name="fControle"
                       value="SEM_CONTROLE"
+                      disabled={travarDados}
                       checked={campos.controle === 'SEM_CONTROLE'}
                       onChange={() => alterar('controle', 'SEM_CONTROLE')}
                     />{' '}
@@ -610,33 +630,32 @@ export function EditorDeProduto() {
                 </fieldset>
               )}
 
-              <fieldset
-                className="prod-grupo"
-                id="grupoVitrine"
-                disabled={!fonte.editaTudo || travarTudo}
-              >
+              <fieldset className="prod-grupo" id="grupoVitrine" disabled={travarTudo}>
                 <legend>Vitrine</legend>
-                {!fonte.editaTudo && (
-                  <p className="prod-dica" id="vitrineNota">
-                    O servidor ainda não guarda foto nem selo. Estes campos valem só na
-                    demonstração.
-                  </p>
-                )}
                 <label className="prod-campo">
-                  Endereço da foto
+                  Foto do produto
                   <input
                     id="fImagem"
-                    type="url"
-                    autoComplete="off"
-                    placeholder="https://…"
-                    value={campos.imagem}
-                    onChange={(evento) => alterar('imagem', evento.target.value)}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={(evento) => void escolherFoto(evento.target.files?.[0])}
                   />
+                  <small className="prod-dica">
+                    {preparandoFoto
+                      ? 'Preparando a foto…'
+                      : 'JPG, PNG ou WebP. A foto é reduzida antes de enviar.'}
+                  </small>
                 </label>
+                {!fonte.editaTudo && (
+                  <p className="prod-dica" id="vitrineNota">
+                    O selo vale só na demonstração.
+                  </p>
+                )}
                 <label className="prod-campo">
                   Selo
                   <select
                     id="fSelo"
+                    disabled={!fonte.editaTudo}
                     value={campos.selo}
                     onChange={(evento) => alterar('selo', evento.target.value)}
                   >

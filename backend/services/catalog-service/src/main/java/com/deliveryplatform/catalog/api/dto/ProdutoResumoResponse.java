@@ -4,6 +4,8 @@ import com.deliveryplatform.catalog.domain.model.EstadoDeDisponibilidade;
 import com.deliveryplatform.catalog.domain.model.EstadoDePublicacao;
 import com.deliveryplatform.catalog.domain.model.Produto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.math.BigDecimal;
 import java.util.UUID;
 
@@ -42,7 +44,10 @@ public record ProdutoResumoResponse(
         int ordem,
         EstadoDeDisponibilidade disponibilidade,
         boolean vendavel,
-        EstadoDePublicacao estadoDePublicacao
+        EstadoDePublicacao estadoDePublicacao,
+        @Schema(description = "O caminho público da foto, relativo ao gateway; nulo sem foto.",
+                nullable = true)
+        String imagem
 ) {
 
     public static ProdutoResumoResponse de(Produto produto) {
@@ -54,6 +59,7 @@ public record ProdutoResumoResponse(
                 produto.getOrdem(),
                 produto.getDisponibilidade().estado(),
                 produto.vendavel(),
-                produto.getEstadoDePublicacao());
+                produto.getEstadoDePublicacao(),
+                produto.getImagemRef());
     }
 }

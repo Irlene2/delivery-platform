@@ -210,6 +210,18 @@ class CadastroIT {
     }
 
     @Test
+    void sem_a_bandeira_de_desenvolvimento_o_202_vem_sem_corpo() {
+        // A emenda de 01/11/2026 à ADR-042 só vale com a bandeira ligada; o padrão é fechado.
+        byte[] corpo = cliente().post().uri("/api/v1/auth/verification-code")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new VerificationCodeRequest("11911110008"))
+                .exchange()
+                .expectStatus().isAccepted()
+                .expectBody(byte[].class).returnResult().getResponseBody();
+        assertThat(corpo == null || corpo.length == 0).isTrue();
+    }
+
+    @Test
     void as_duas_rotas_do_cadastro_sao_publicas() {
         // Sem esta garantia o cadastro exigiria token para criar a conta que
         // emite o primeiro token — o mesmo nó que a ADR-037 §1 desatou no login.

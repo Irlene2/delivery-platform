@@ -89,13 +89,16 @@ class SolicitarCodigoDeVerificacaoServiceTest {
     }
 
     @Test
-    void a_resposta_e_a_mesma_nos_dois_casos_porque_nao_ha_resposta() {
-        // A assinatura devolve void, e isso é a decisão, não uma economia: um
-        // boolean aqui viraria um oráculo de cadastro na borda, e a varredura
-        // de DDDs sairia de graça (ADR-042 §5).
-        assertThat(SolicitarCodigoDeVerificacaoService.class.getMethods())
-                .filteredOn(metodo -> metodo.getName().equals("solicitar"))
-                .allMatch(metodo -> metodo.getReturnType() == void.class);
+    void o_codigo_volta_ao_chamador_so_quando_foi_gerado() {
+        // Até 01/11/2026 a assinatura devolvia void, para que a borda não virasse um oráculo de
+        // cadastro (ADR-042 §5). O código agora volta ao chamador para a borda mostrá-lo com a
+        // bandeira de desenvolvimento ligada; a guarda do §5 mudou de lugar e mora na borda,
+        // fechada por padrão — o CadastroIT a afirma: sem a bandeira, o 202 vem sem corpo.
+        when(gerador.gerar()).thenReturn("482913");
+        assertThat(servico.solicitar("11987654321")).contains("482913");
+
+        when(usuarios.existeComTelefone(Telefone.de("11912345678"))).thenReturn(true);
+        assertThat(servico.solicitar("11912345678")).isEmpty();
     }
 
     @Test

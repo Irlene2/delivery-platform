@@ -90,6 +90,9 @@ public class SecurityConfig {
                     // O cardápio público, e só ele (ADR-077). Padrão exato, um nível por
                     // asterisco: uma rota nova debaixo de /storefront nasce fechada.
                     rotas.requestMatchers(HttpMethod.GET, "/api/v1/storefront/*/menu").permitAll();
+                    // A foto do produto (ADR-077, emenda de 01/11/2026), pública como o cardápio.
+                    rotas.requestMatchers(HttpMethod.GET, "/api/v1/storefront/*/produtos/*/imagem")
+                            .permitAll();
                     if (docs.abertas()) {
                         // ADR-050: só no computador de quem desenvolve, e o
                         // padrão da propriedade é false — esquecer fecha.

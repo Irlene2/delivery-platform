@@ -156,6 +156,27 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
+    /** @description O cadastro corrigido: seção, nome, descrição e preço. */
+    ProdutoAlteracaoRequest: {
+      /**
+       * Format: uuid
+       * @description A seção do cardápio, que tem de ser desta loja.
+       */
+      categoriaId: string;
+      /** @description O nome como o cliente o lê. */
+      nome: string;
+      /** @description Opcional; vazio apaga a descrição. */
+      descricao?: string;
+      /** @description Em reais, duas casas. Num produto publicado, zero é recusado (C1). */
+      precoBase: number;
+    };
+    /** @description A foto do produto: o tipo e o conteúdo em Base64. */
+    ImagemRequest: {
+      /** @description image/jpeg, image/png ou image/webp. */
+      tipo: string;
+      /** @description O arquivo em Base64, sem o prefixo data:. */
+      conteudo: string;
+    };
     GrupoResponse: {
       /** Format: uuid */
       id?: string;
@@ -196,6 +217,8 @@ export interface components {
       disponibilidade?: 'DISPONIVEL' | 'ACABANDO' | 'ESGOTADO_HOJE' | 'ESGOTADO_INDETERMINADO';
       vendavel?: boolean;
       gruposDeOpcoes?: components['schemas']['GrupoResponse'][];
+      /** @description O caminho público da foto, relativo ao gateway; nulo sem foto. */
+      imagem?: string | null;
     };
     /** @description O novo estado de disponibilidade. O carimbo é do servidor. */
     MarcacaoRequest: {
@@ -220,6 +243,8 @@ export interface components {
       vendavel?: boolean;
       /** @enum {string} */
       estadoDePublicacao?: 'RASCUNHO' | 'ATIVO' | 'INATIVO';
+      /** @description O caminho público da foto, relativo ao gateway; nulo sem foto. */
+      imagem?: string | null;
     };
     /** @description Um produto novo. Nasce rascunho; vai ao cardápio pela publicação. */
     ProdutoRequest: {
@@ -301,6 +326,8 @@ export interface components {
       disponibilidade?: 'DISPONIVEL' | 'ACABANDO' | 'ESGOTADO_HOJE' | 'ESGOTADO_INDETERMINADO';
       /** @description Falso quando acabou: aparece, mas não se pede. */
       vendavel?: boolean;
+      /** @description O caminho público da foto, relativo ao gateway; nulo sem foto. */
+      imagem?: string | null;
     };
     Secao: {
       /** Format: uuid */

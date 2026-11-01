@@ -6,7 +6,7 @@
  * - **memória só**: o mais seguro contra XSS, e recarregar a página desloga. O
  *   painel de um comerciante é aberto e recarregado o dia todo.
  * - **localStorage**: sobrevive a fechar o navegador — o que aqui só significa
- *   guardar um token morto, porque ele expira em 30 minutos e **não há
+ *   guardar um token morto, porque ele expira em 12 horas e **não há
  *   refresh**. Paga o risco clássico de XSS por nada.
  * - **sessionStorage**: sobrevive ao F5, morre ao fechar a aba, não vaza para
  *   outra aba.
