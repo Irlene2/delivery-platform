@@ -132,6 +132,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/storefront/{estabelecimentoId}/status': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Se a loja está recebendo pedidos agora
+     * @description Público. Compõe horário, pausa e o fuso da loja. Fechada, diz a próxima abertura; nula quando a loja não abre por horário.
+     */
+    get: operations['status'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/merchants/{estabelecimentoId}/team': {
     parameters: {
       query?: never;
@@ -363,6 +383,22 @@ export interface components {
        * @example 2026-09-30
        */
       expedienteDeReferencia?: string;
+    };
+    /** @description Se a loja está recebendo pedidos agora. */
+    SituacaoDaLojaResponse: {
+      /**
+       * @description O nome da loja, para o topo do cardápio.
+       * @example Pizzaria da Marli
+       */
+      nome?: string;
+      /** @description Dentro do horário e sem pausa: aceita pedido agora. */
+      aberta?: boolean;
+      /**
+       * Format: date-time
+       * @description Com a loja fechada, o próximo instante em que ela abre. Nulo quando está aberta, ou quando a loja não abre por horário (ainda não definiu o horário).
+       * @example 2026-11-01T21:00:00Z
+       */
+      proximaAbertura?: string | null;
     };
     EquipeResponse: {
       /** Format: uuid */
@@ -745,6 +781,42 @@ export interface operations {
       };
       /** @description A loja não abre por horário (ADR-049 §5) */
       409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  status: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        estabelecimentoId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description O nome, se está aberta agora e quando abre */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SituacaoDaLojaResponse'];
+        };
+      };
+      /** @description Identificador da loja malformado */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Nenhuma loja com este identificador */
+      404: {
         headers: {
           [name: string]: unknown;
         };

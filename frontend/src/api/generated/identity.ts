@@ -75,6 +75,14 @@ export interface components {
     VerificationCodeRequest: {
       telefone: string;
     };
+    /** @description Só no ambiente de desenvolvimento e na demonstração: o código que o cadastro pede. Em qualquer outro lugar o 202 vem sem corpo. */
+    CodigoDeDemonstracaoResponse: {
+      /**
+       * @description Vazio quando o telefone já tem conta.
+       * @example 482913
+       */
+      codigoDeDemonstracao?: string | null;
+    };
     SignupRequest: {
       telefone: string;
       codigo: string;
@@ -117,12 +125,14 @@ export interface operations {
       };
     };
     responses: {
-      /** @description Accepted */
-      202: {
+      /** @description OK */
+      200: {
         headers: {
           [name: string]: unknown;
         };
-        content?: never;
+        content: {
+          'application/json': components['schemas']['CodigoDeDemonstracaoResponse'];
+        };
       };
     };
   };

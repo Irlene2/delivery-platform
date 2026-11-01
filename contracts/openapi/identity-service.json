@@ -21,8 +21,15 @@
           "required" : true
         },
         "responses" : {
-          "202" : {
-            "description" : "Accepted"
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CodigoDeDemonstracaoResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -114,6 +121,17 @@
           }
         },
         "required" : [ "telefone" ]
+      },
+      "CodigoDeDemonstracaoResponse" : {
+        "type" : "object",
+        "description" : "Só no ambiente de desenvolvimento e na demonstração: o código que o cadastro pede. Em qualquer outro lugar o 202 vem sem corpo.",
+        "properties" : {
+          "codigoDeDemonstracao" : {
+            "type" : [ "string", "null" ],
+            "description" : "Vazio quando o telefone já tem conta.",
+            "example" : "482913"
+          }
+        }
       },
       "SignupRequest" : {
         "type" : "object",

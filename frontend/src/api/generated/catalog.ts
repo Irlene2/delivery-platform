@@ -4,6 +4,30 @@
  */
 
 export interface paths {
+  '/api/v1/merchants/{estabelecimentoId}/catalog/produtos/{produtoId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Um produto do estabelecimento, com os grupos e as opções
+     * @description Exige VER_PRODUTO. Devolve o produto em qualquer estado de publicação. 404 para produto inexistente ou de outra loja, com o mesmo corpo.
+     */
+    get: operations['consultar'];
+    /**
+     * Corrige o nome, o preço, a descrição e a seção do produto
+     * @description Exige ALTERAR_PRODUTO. Os quatro campos vêm inteiros. Num produto publicado, as regras da publicação continuam valendo.
+     */
+    put: operations['alterar'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/merchants/{estabelecimentoId}/catalog/produtos/{produtoId}/publicacao': {
     parameters: {
       query?: never;
@@ -17,6 +41,26 @@ export interface paths {
      * @description Exige ALTERAR_PRODUTO. Idempotente: publicar o que já está publicado responde 200. As invariantes C1, C5, C4 e C2 são cobradas aqui.
      */
     put: operations['publicar'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/merchants/{estabelecimentoId}/catalog/produtos/{produtoId}/imagem': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /**
+     * Põe ou troca a foto do produto
+     * @description Exige ALTERAR_PRODUTO. O arquivo vai em Base64; JPG, PNG ou WebP, até 600 KB.
+     */
+    put: operations['ilustrar'];
     post?: never;
     delete?: never;
     options?: never;
@@ -112,6 +156,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/storefront/{estabelecimentoId}/produtos/{produtoId}/imagem': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * A foto do produto
+     * @description Sem token.
+     */
+    get: operations['imagem'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/storefront/{estabelecimentoId}/menu': {
     parameters: {
       query?: never;
@@ -132,26 +196,6 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/v1/merchants/{estabelecimentoId}/catalog/produtos/{produtoId}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * Um produto do estabelecimento, com os grupos e as opções
-     * @description Exige VER_PRODUTO. Devolve o produto em qualquer estado de publicação. 404 para produto inexistente ou de outra loja, com o mesmo corpo.
-     */
-    get: operations['consultar'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -163,19 +207,21 @@ export interface components {
        * @description A seção do cardápio, que tem de ser desta loja.
        */
       categoriaId: string;
-      /** @description O nome como o cliente o lê. */
+      /**
+       * @description O nome como o cliente o lê.
+       * @example Pizza margherita
+       */
       nome: string;
-      /** @description Opcional; vazio apaga a descrição. */
+      /**
+       * @description Opcional; vazio apaga a descrição.
+       * @example Molho, mussarela e manjericão
+       */
       descricao?: string;
-      /** @description Em reais, duas casas. Num produto publicado, zero é recusado (C1). */
+      /**
+       * @description Em reais, duas casas. Num produto publicado, zero é recusado (C1).
+       * @example 52.9
+       */
       precoBase: number;
-    };
-    /** @description A foto do produto: o tipo e o conteúdo em Base64. */
-    ImagemRequest: {
-      /** @description image/jpeg, image/png ou image/webp. */
-      tipo: string;
-      /** @description O arquivo em Base64, sem o prefixo data:. */
-      conteudo: string;
     };
     GrupoResponse: {
       /** Format: uuid */
@@ -219,6 +265,16 @@ export interface components {
       gruposDeOpcoes?: components['schemas']['GrupoResponse'][];
       /** @description O caminho público da foto, relativo ao gateway; nulo sem foto. */
       imagem?: string | null;
+    };
+    /** @description A foto do produto: o tipo e o conteúdo em Base64. */
+    ImagemRequest: {
+      /**
+       * @description image/jpeg, image/png ou image/webp.
+       * @example image/jpeg
+       */
+      tipo: string;
+      /** @description O arquivo em Base64, sem o prefixo data:. */
+      conteudo: string;
     };
     /** @description O novo estado de disponibilidade. O carimbo é do servidor. */
     MarcacaoRequest: {
@@ -354,6 +410,112 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+  consultar: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        estabelecimentoId: string;
+        produtoId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description O produto, com grupos e opções */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ProdutoResponse'];
+        };
+      };
+      /** @description Identificador malformado */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Sem token, ou token inválido */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Sem vínculo, sem VER_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description O produto não existe nesta loja — inexistente ou de outra loja, a mesma resposta */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  alterar: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        estabelecimentoId: string;
+        produtoId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ProdutoAlteracaoRequest'];
+      };
+    };
+    responses: {
+      /** @description O produto com o cadastro corrigido */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ProdutoResponse'];
+        };
+      };
+      /** @description Corpo malformado, preço negativo, preço zero num produto publicado (C1, C2), ou seção que não existe nesta loja */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Sem token, ou token inválido */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Sem vínculo, sem ALTERAR_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description O produto não existe nesta loja — inexistente ou de outra loja, a mesma resposta (ADR-056) */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
   publicar: {
     parameters: {
       query?: never;
@@ -376,6 +538,61 @@ export interface operations {
         };
       };
       /** @description A publicação recusada (C1, C5, C4, C2), com a frase que diz o que corrigir; ou identificador malformado */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Sem token, ou token inválido */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Sem vínculo, sem ALTERAR_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description O produto não existe nesta loja — inexistente ou de outra loja, a mesma resposta (ADR-056) */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  ilustrar: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        estabelecimentoId: string;
+        produtoId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ImagemRequest'];
+      };
+    };
+    responses: {
+      /** @description O produto, com o caminho da foto nova */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ProdutoResponse'];
+        };
+      };
+      /** @description Corpo malformado, Base64 inválido, tipo que não é JPG, PNG ou WebP, ou foto maior que 600 KB */
       400: {
         headers: {
           [name: string]: unknown;
@@ -732,6 +949,43 @@ export interface operations {
       };
     };
   };
+  imagem: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        estabelecimentoId: string;
+        produtoId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description A foto, no tipo em que foi enviada */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          '*/*': string;
+        };
+      };
+      /** @description Identificador malformado */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description O produto não tem foto, ou não é desta loja */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
   cardapio: {
     parameters: {
       query?: never;
@@ -754,57 +1008,6 @@ export interface operations {
       };
       /** @description Identificador da loja malformado */
       400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  consultar: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        estabelecimentoId: string;
-        produtoId: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description O produto, com grupos e opções */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ProdutoResponse'];
-        };
-      };
-      /** @description Identificador malformado */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Sem token, ou token inválido */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Sem vínculo, sem VER_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description O produto não existe nesta loja — inexistente ou de outra loja, a mesma resposta */
-      404: {
         headers: {
           [name: string]: unknown;
         };

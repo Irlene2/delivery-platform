@@ -12,6 +12,9 @@
     "name" : "eu",
     "description" : "O que o portador do token é, neste serviço."
   }, {
+    "name" : "vitrine",
+    "description" : "Público, sem token: a loja vista de quem compra pelo link."
+  }, {
     "name" : "interno",
     "description" : "Consumido por outro serviço, com o token de quem pediu encaminhado. Não roteado pelo gateway — ADR-045."
   } ],
@@ -322,6 +325,42 @@
             "description" : "A loja não abre por horário (ADR-049 §5)"
           }
         }
+      }
+    },
+    "/api/v1/storefront/{estabelecimentoId}/status" : {
+      "get" : {
+        "tags" : [ "vitrine" ],
+        "summary" : "Se a loja está recebendo pedidos agora",
+        "description" : "Público. Compõe horário, pausa e o fuso da loja. Fechada, diz a próxima abertura; nula quando a loja não abre por horário.",
+        "operationId" : "status",
+        "parameters" : [ {
+          "name" : "estabelecimentoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "O nome, se está aberta agora e quando abre",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SituacaoDaLojaResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Identificador da loja malformado"
+          },
+          "404" : {
+            "description" : "Nenhuma loja com este identificador"
+          }
+        },
+        "security" : [ ]
       }
     },
     "/api/v1/merchants/{estabelecimentoId}/team" : {
@@ -654,6 +693,27 @@
             "format" : "date",
             "description" : "O dia operacional a gravar como expedienteDeReferencia.",
             "example" : "2026-09-30"
+          }
+        }
+      },
+      "SituacaoDaLojaResponse" : {
+        "type" : "object",
+        "description" : "Se a loja está recebendo pedidos agora.",
+        "properties" : {
+          "nome" : {
+            "type" : "string",
+            "description" : "O nome da loja, para o topo do cardápio.",
+            "example" : "Pizzaria da Marli"
+          },
+          "aberta" : {
+            "type" : "boolean",
+            "description" : "Dentro do horário e sem pausa: aceita pedido agora."
+          },
+          "proximaAbertura" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time",
+            "description" : "Com a loja fechada, o próximo instante em que ela abre. Nulo quando está aberta, ou quando a loja não abre por horário (ainda não definiu o horário).",
+            "example" : "2026-11-01T21:00:00Z"
           }
         }
       },

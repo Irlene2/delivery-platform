@@ -13,6 +13,112 @@
     "description" : "Público, sem token: o cardápio pelo link da loja."
   } ],
   "paths" : {
+    "/api/v1/merchants/{estabelecimentoId}/catalog/produtos/{produtoId}" : {
+      "get" : {
+        "tags" : [ "produto-controller" ],
+        "summary" : "Um produto do estabelecimento, com os grupos e as opções",
+        "description" : "Exige VER_PRODUTO. Devolve o produto em qualquer estado de publicação. 404 para produto inexistente ou de outra loja, com o mesmo corpo.",
+        "operationId" : "consultar",
+        "parameters" : [ {
+          "name" : "estabelecimentoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "produtoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "O produto, com grupos e opções",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProdutoResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Identificador malformado"
+          },
+          "401" : {
+            "description" : "Sem token, ou token inválido"
+          },
+          "403" : {
+            "description" : "Sem vínculo, sem VER_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa"
+          },
+          "404" : {
+            "description" : "O produto não existe nesta loja — inexistente ou de outra loja, a mesma resposta"
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "produto-controller" ],
+        "summary" : "Corrige o nome, o preço, a descrição e a seção do produto",
+        "description" : "Exige ALTERAR_PRODUTO. Os quatro campos vêm inteiros. Num produto publicado, as regras da publicação continuam valendo.",
+        "operationId" : "alterar",
+        "parameters" : [ {
+          "name" : "estabelecimentoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "produtoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ProdutoAlteracaoRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "O produto com o cadastro corrigido",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProdutoResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Corpo malformado, preço negativo, preço zero num produto publicado (C1, C2), ou seção que não existe nesta loja"
+          },
+          "401" : {
+            "description" : "Sem token, ou token inválido"
+          },
+          "403" : {
+            "description" : "Sem vínculo, sem ALTERAR_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa"
+          },
+          "404" : {
+            "description" : "O produto não existe nesta loja — inexistente ou de outra loja, a mesma resposta (ADR-056)"
+          }
+        }
+      }
+    },
     "/api/v1/merchants/{estabelecimentoId}/catalog/produtos/{produtoId}/publicacao" : {
       "put" : {
         "tags" : [ "produto-controller" ],
@@ -49,6 +155,65 @@
           },
           "400" : {
             "description" : "A publicação recusada (C1, C5, C4, C2), com a frase que diz o que corrigir; ou identificador malformado"
+          },
+          "401" : {
+            "description" : "Sem token, ou token inválido"
+          },
+          "403" : {
+            "description" : "Sem vínculo, sem ALTERAR_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa"
+          },
+          "404" : {
+            "description" : "O produto não existe nesta loja — inexistente ou de outra loja, a mesma resposta (ADR-056)"
+          }
+        }
+      }
+    },
+    "/api/v1/merchants/{estabelecimentoId}/catalog/produtos/{produtoId}/imagem" : {
+      "put" : {
+        "tags" : [ "produto-controller" ],
+        "summary" : "Põe ou troca a foto do produto",
+        "description" : "Exige ALTERAR_PRODUTO. O arquivo vai em Base64; JPG, PNG ou WebP, até 600 KB.",
+        "operationId" : "ilustrar",
+        "parameters" : [ {
+          "name" : "estabelecimentoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "produtoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ImagemRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "O produto, com o caminho da foto nova",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProdutoResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Corpo malformado, Base64 inválido, tipo que não é JPG, PNG ou WebP, ou foto maior que 600 KB"
           },
           "401" : {
             "description" : "Sem token, ou token inválido"
@@ -410,6 +575,51 @@
         }
       }
     },
+    "/api/v1/storefront/{estabelecimentoId}/produtos/{produtoId}/imagem" : {
+      "get" : {
+        "tags" : [ "vitrine" ],
+        "summary" : "A foto do produto",
+        "description" : "Sem token.",
+        "operationId" : "imagem",
+        "parameters" : [ {
+          "name" : "estabelecimentoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "produtoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "A foto, no tipo em que foi enviada",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "byte"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Identificador malformado"
+          },
+          "404" : {
+            "description" : "O produto não tem foto, ou não é desta loja"
+          }
+        },
+        "security" : [ ]
+      }
+    },
     "/api/v1/storefront/{estabelecimentoId}/menu" : {
       "get" : {
         "tags" : [ "vitrine" ],
@@ -442,59 +652,38 @@
         },
         "security" : [ ]
       }
-    },
-    "/api/v1/merchants/{estabelecimentoId}/catalog/produtos/{produtoId}" : {
-      "get" : {
-        "tags" : [ "produto-controller" ],
-        "summary" : "Um produto do estabelecimento, com os grupos e as opções",
-        "description" : "Exige VER_PRODUTO. Devolve o produto em qualquer estado de publicação. 404 para produto inexistente ou de outra loja, com o mesmo corpo.",
-        "operationId" : "consultar",
-        "parameters" : [ {
-          "name" : "estabelecimentoId",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string",
-            "format" : "uuid"
-          }
-        }, {
-          "name" : "produtoId",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string",
-            "format" : "uuid"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "O produto, com grupos e opções",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProdutoResponse"
-                }
-              }
-            }
-          },
-          "400" : {
-            "description" : "Identificador malformado"
-          },
-          "401" : {
-            "description" : "Sem token, ou token inválido"
-          },
-          "403" : {
-            "description" : "Sem vínculo, sem VER_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa"
-          },
-          "404" : {
-            "description" : "O produto não existe nesta loja — inexistente ou de outra loja, a mesma resposta"
-          }
-        }
-      }
     }
   },
   "components" : {
     "schemas" : {
+      "ProdutoAlteracaoRequest" : {
+        "type" : "object",
+        "description" : "O cadastro corrigido: seção, nome, descrição e preço.",
+        "properties" : {
+          "categoriaId" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "A seção do cardápio, que tem de ser desta loja."
+          },
+          "nome" : {
+            "type" : "string",
+            "description" : "O nome como o cliente o lê.",
+            "example" : "Pizza margherita",
+            "minLength" : 1
+          },
+          "descricao" : {
+            "type" : "string",
+            "description" : "Opcional; vazio apaga a descrição.",
+            "example" : "Molho, mussarela e manjericão"
+          },
+          "precoBase" : {
+            "type" : "number",
+            "description" : "Em reais, duas casas. Num produto publicado, zero é recusado (C1).",
+            "example" : 52.9
+          }
+        },
+        "required" : [ "categoriaId", "nome", "precoBase" ]
+      },
       "GrupoResponse" : {
         "type" : "object",
         "properties" : {
@@ -592,8 +781,30 @@
             "items" : {
               "$ref" : "#/components/schemas/GrupoResponse"
             }
+          },
+          "imagem" : {
+            "type" : [ "string", "null" ],
+            "description" : "O caminho público da foto, relativo ao gateway; nulo sem foto."
           }
         }
+      },
+      "ImagemRequest" : {
+        "type" : "object",
+        "description" : "A foto do produto: o tipo e o conteúdo em Base64.",
+        "properties" : {
+          "tipo" : {
+            "type" : "string",
+            "description" : "image/jpeg, image/png ou image/webp.",
+            "example" : "image/jpeg",
+            "minLength" : 1
+          },
+          "conteudo" : {
+            "type" : "string",
+            "description" : "O arquivo em Base64, sem o prefixo data:.",
+            "minLength" : 1
+          }
+        },
+        "required" : [ "conteudo", "tipo" ]
       },
       "MarcacaoRequest" : {
         "type" : "object",
@@ -639,6 +850,10 @@
           "estadoDePublicacao" : {
             "type" : "string",
             "enum" : [ "RASCUNHO", "ATIVO", "INATIVO" ]
+          },
+          "imagem" : {
+            "type" : [ "string", "null" ],
+            "description" : "O caminho público da foto, relativo ao gateway; nulo sem foto."
           }
         }
       },
@@ -771,6 +986,10 @@
           "vendavel" : {
             "type" : "boolean",
             "description" : "Falso quando acabou: aparece, mas não se pede."
+          },
+          "imagem" : {
+            "type" : [ "string", "null" ],
+            "description" : "O caminho público da foto, relativo ao gateway; nulo sem foto."
           }
         }
       },
