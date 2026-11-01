@@ -5,6 +5,7 @@ import com.deliveryplatform.order.application.exception.PedidoNaoEncontrado;
 import com.deliveryplatform.order.application.port.in.FazerPedido.ItemSolicitado;
 import com.deliveryplatform.order.application.port.in.FazerPedido.Solicitacao;
 import com.deliveryplatform.order.application.port.out.PermissaoDoPedido;
+import com.deliveryplatform.order.application.port.out.SituacaoDaLojaPort;
 import com.deliveryplatform.order.application.port.out.ProdutoDoCardapio;
 import com.deliveryplatform.order.application.usecase.Autorizador;
 import com.deliveryplatform.order.application.usecase.ConfiguracaoDePedidosService;
@@ -48,7 +49,7 @@ class PedidosDaLojaServiceTest {
     Pedido umPedido() {
         var cardapio = new Dubles.Cardapio()
                 .com(new ProdutoDoCardapio(PIZZA, "Pizza", Money.de("40"), true));
-        return new FazerPedidoService(cardapio, configuracoes, pedidos, relogio).fazer(LOJA,
+        return new FazerPedidoService(new Dubles.Lojas(), cardapio, configuracoes, pedidos, relogio).fazer(LOJA,
                 new Solicitacao("Maria", "21999990000", Modalidade.RETIRADA, null,
                         List.of(new ItemSolicitado(PIZZA, 1, null)), FormaDePagamento.PIX, null));
     }
@@ -118,7 +119,8 @@ class PedidosDaLojaServiceTest {
     @Test
     @DisplayName("a configuração pública não pede token; a do painel pede CONFIGURAR_LOJA")
     void configuracao() {
-        var config = new ConfiguracaoDePedidosService(autorizador, configuracoes);
+        var lojas = new Dubles.Lojas();
+        var config = new ConfiguracaoDePedidosService(autorizador, configuracoes, lojas);
 
         assertThat(config.daLoja(LOJA).getTaxaDeEntrega()).isEqualTo(Money.ZERO);
         assertThatThrownBy(() -> config.definir(LOJA, Money.de("5"), true, true))
@@ -129,5 +131,22 @@ class PedidosDaLojaServiceTest {
 
         assertThat(config.daLoja(LOJA).getTaxaDeEntrega()).isEqualTo(Money.de("5"));
         assertThat(config.daLoja(LOJA).aceita(Modalidade.RETIRADA)).isFalse();
+    }
+
+    @Test
+    @DisplayName("a vitrine diz se a loja está aberta; sem o merchant, abre com 'aberta' nula")
+    void vitrine() {
+        var lojas = new Dubles.Lojas();
+        var config = new ConfiguracaoDePedidosService(autorizador, configuracoes, lojas);
+        Instant abre = Instant.parse("2026-11-05T21:00:00Z");
+
+        lojas.situacao = SituacaoDaLojaPort.SituacaoDaLoja.fechada(abre);
+        var fechada = config.vitrine(LOJA);
+        assertThat(fechada.aberta()).isFalse();
+        assertThat(fechada.proximaAbertura()).isEqualTo(abre);
+        assertThat(fechada.configuracao().getTaxaDeEntrega()).isEqualTo(Money.ZERO);
+
+        lojas.foraDoAr = true;
+        assertThat(config.vitrine(LOJA).aberta()).isNull();
     }
 }

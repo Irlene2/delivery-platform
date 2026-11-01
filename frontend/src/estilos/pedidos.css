@@ -20,6 +20,9 @@
 .link-do-cardapio{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .link-do-cardapio code{flex:1;min-width:220px;padding:11px 12px;border:1px dashed var(--line);border-radius:10px;background:var(--bg);font-size:12px;overflow-wrap:anywhere}
 
+/* A loja fechada (ADR-077, 01/11/2026): o botão de finalizar fica visivelmente inativo. */
+.checkout-btn:disabled{opacity:.55;cursor:not-allowed}
+
 @media (max-width:700px){
   .pedido-campo .select,.pedido-campo .btn{width:100%;flex:1 1 100%}
 }

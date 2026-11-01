@@ -157,3 +157,29 @@ export function hojeLocal(agora: Date = new Date()): string {
   const doisDigitos = (n: number) => String(n).padStart(2, '0');
   return `${agora.getFullYear()}-${doisDigitos(agora.getMonth() + 1)}-${doisDigitos(agora.getDate())}`;
 }
+
+const DIAS = [
+  'domingo',
+  'segunda-feira',
+  'terça-feira',
+  'quarta-feira',
+  'quinta-feira',
+  'sexta-feira',
+  'sábado',
+];
+
+/**
+ * Quando a loja abre, no relógio de quem olha: "hoje às 18:00", "amanhã às 11:00", "no sábado às
+ * 18:00". É a mesma conta da frase que o `order` devolve ao recusar o pedido.
+ */
+export function quandoAbre(proximaAbertura: string, agora: Date = new Date()): string {
+  const abre = new Date(proximaAbertura);
+  const doisDigitos = (n: number) => String(n).padStart(2, '0');
+  const hora = ` às ${doisDigitos(abre.getHours())}:${doisDigitos(abre.getMinutes())}`;
+  const amanha = new Date(agora);
+  amanha.setDate(agora.getDate() + 1);
+  if (hojeLocal(abre) === hojeLocal(agora)) return `hoje${hora}`;
+  if (hojeLocal(abre) === hojeLocal(amanha)) return `amanhã${hora}`;
+  const dia = abre.getDay();
+  return `${dia === 0 || dia === 6 ? 'no' : 'na'} ${DIAS[dia] ?? ''}${hora}`;
+}

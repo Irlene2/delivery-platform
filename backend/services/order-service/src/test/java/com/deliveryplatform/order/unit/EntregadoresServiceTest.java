@@ -54,7 +54,7 @@ class EntregadoresServiceTest {
         var configuracoes = new Dubles.Configuracoes();
         configuracoes.salvar(com.deliveryplatform.order.domain.model.ConfiguracaoDePedidos
                 .reconstituir(LOJA, Money.de("5"), true, true));
-        Pedido pedido = new FazerPedidoService(cardapio, configuracoes, pedidos, relogio).fazer(LOJA,
+        Pedido pedido = new FazerPedidoService(new Dubles.Lojas(), cardapio, configuracoes, pedidos, relogio).fazer(LOJA,
                 new Solicitacao("Maria", "21999990000", Modalidade.ENTREGA,
                         new EnderecoInformado("Rua A, 1", "Centro", null),
                         List.of(new ItemSolicitado(PIZZA, 1, null)), FormaDePagamento.DINHEIRO, null));

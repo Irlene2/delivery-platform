@@ -179,6 +179,14 @@ public final class Estabelecimento {
     }
 
     /**
+     * O próximo instante em que a loja abre, no fuso dela — vazio quando ela não abre por
+     * horário. Para a vitrine dizer "abre às 18h" (ADR-077, emenda de 01/11/2026).
+     */
+    public Optional<Instant> proximaAberturaApos(Instant agora) {
+        return disponibilidade.proximaAberturaApos(agora, identificacao.fusoHorario());
+    }
+
+    /**
      * O dia operacional a gravar como {@code expedienteDeReferencia} numa
      * marcação de disponibilidade — ADR-049.
      *

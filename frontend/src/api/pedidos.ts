@@ -101,6 +101,16 @@ export interface ConfiguracaoDePedidos {
   readonly aceitaRetirada: boolean;
 }
 
+/**
+ * O que a vitrine lê antes do carrinho: a configuração e se a loja está aberta (ADR-077, emenda
+ * de 01/11/2026). `aberta` nulo quando o servidor não conseguiu confirmar — o pedido decide.
+ * `proximaAbertura` nula com a loja aberta, ou quando ela ainda não definiu o horário.
+ */
+export interface VitrineDaLoja extends ConfiguracaoDePedidos {
+  readonly aberta?: boolean | null;
+  readonly proximaAbertura?: string | null;
+}
+
 /** O carrinho fechado. **Sem preço**: o servidor lê o preço no cardápio. */
 export interface NovoPedido {
   readonly cliente: { readonly nome: string; readonly telefone: string };
@@ -128,8 +138,8 @@ export interface PagamentoInformado {
 // Um token vencido numa rota pública faria o gateway responder 401 a quem só quer
 // pedir uma pizza. Por isso estas quatro funções não aceitam token.
 
-export function lerConfiguracaoPublica(estabelecimentoId: string): Promise<ConfiguracaoDePedidos> {
-  return chamar<ConfiguracaoDePedidos>(`/api/v1/storefront/${estabelecimentoId}/orders/settings`);
+export function lerConfiguracaoPublica(estabelecimentoId: string): Promise<VitrineDaLoja> {
+  return chamar<VitrineDaLoja>(`/api/v1/storefront/${estabelecimentoId}/orders/settings`);
 }
 
 export function fazerPedido(estabelecimentoId: string, corpo: NovoPedido): Promise<PedidoPublico> {

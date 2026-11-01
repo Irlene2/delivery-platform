@@ -1,11 +1,14 @@
 package com.deliveryplatform.order.unit;
 
 import com.deliveryplatform.order.application.exception.ItemForaDoCardapio;
+import com.deliveryplatform.order.application.exception.LojaFechada;
 import com.deliveryplatform.order.application.port.in.FazerPedido.EnderecoInformado;
 import com.deliveryplatform.order.application.port.in.FazerPedido.ItemSolicitado;
 import com.deliveryplatform.order.application.port.in.FazerPedido.Solicitacao;
 import com.deliveryplatform.order.application.port.out.CardapioIndisponivel;
 import com.deliveryplatform.order.application.port.out.ProdutoDoCardapio;
+import com.deliveryplatform.order.application.port.out.SituacaoDaLojaPort.SituacaoDaLoja;
+import com.deliveryplatform.order.application.port.out.SituacaoIndisponivel;
 import com.deliveryplatform.order.application.usecase.FazerPedidoService;
 import com.deliveryplatform.order.domain.exception.RegraDoPedidoViolada;
 import com.deliveryplatform.order.domain.model.ConfiguracaoDePedidos;
@@ -38,8 +41,10 @@ class FazerPedidoServiceTest {
             .com(new ProdutoDoCardapio(PIZZA, "Pizza margherita", Money.de("49.90"), true))
             .com(new ProdutoDoCardapio(SUCO, "Suco de laranja", Money.de("9.00"), false));
 
-    final FazerPedidoService servico = new FazerPedidoService(cardapio, configuracoes, pedidos,
-            Clock.fixed(AGORA, ZoneOffset.UTC));
+    final Dubles.Lojas lojas = new Dubles.Lojas();
+
+    final FazerPedidoService servico = new FazerPedidoService(lojas, cardapio, configuracoes,
+            pedidos, Clock.fixed(AGORA, ZoneOffset.UTC));
 
     static Solicitacao entrega(UUID produto, int quantidade) {
         return new Solicitacao("Maria", "21999990000", Modalidade.ENTREGA,
@@ -117,6 +122,29 @@ class FazerPedidoServiceTest {
 
         assertThatThrownBy(() -> servico.fazer(LOJA, ruim))
                 .isInstanceOf(RegraDoPedidoViolada.class);
+    }
+
+    @Test
+    @DisplayName("loja fechada: o pedido não nasce, nem consome número, e a recusa diz quando abre")
+    void loja_fechada() {
+        Instant abre = Instant.parse("2026-11-05T22:00:00Z");
+        lojas.situacao = SituacaoDaLoja.fechada(abre);
+
+        assertThatThrownBy(() -> servico.fazer(LOJA, entrega(PIZZA, 1)))
+                .isInstanceOfSatisfying(LojaFechada.class,
+                        e -> assertThat(e.proximaAbertura()).contains(abre));
+        assertThat(pedidos.gravados.isEmpty()).isTrue();
+        assertThat(pedidos.numeracao.isEmpty()).isTrue();
+    }
+
+    @Test
+    @DisplayName("sem resposta do merchant, falha fechado: não dá para saber se a loja está aberta")
+    void merchant_fora_do_ar() {
+        lojas.foraDoAr = true;
+
+        assertThatThrownBy(() -> servico.fazer(LOJA, entrega(PIZZA, 1)))
+                .isInstanceOf(SituacaoIndisponivel.class);
+        assertThat(pedidos.gravados.isEmpty()).isTrue();
     }
 
     @Test

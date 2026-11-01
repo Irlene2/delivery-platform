@@ -4,6 +4,8 @@ import com.deliveryplatform.order.application.port.in.ConfigurarPedidos;
 import com.deliveryplatform.order.application.port.in.ConsultarConfiguracaoPublica;
 import com.deliveryplatform.order.application.port.out.ConfiguracaoDePedidosRepositorio;
 import com.deliveryplatform.order.application.port.out.PermissaoDoPedido;
+import com.deliveryplatform.order.application.port.out.SituacaoDaLojaPort;
+import com.deliveryplatform.order.application.port.out.SituacaoIndisponivel;
 import com.deliveryplatform.order.domain.model.ConfiguracaoDePedidos;
 import com.deliveryplatform.valuetypes.Money;
 import org.springframework.stereotype.Service;
@@ -20,11 +22,29 @@ public class ConfiguracaoDePedidosService implements ConfigurarPedidos, Consulta
 
     private final Autorizador autorizador;
     private final ConfiguracaoDePedidosRepositorio configuracoes;
+    private final SituacaoDaLojaPort situacoes;
 
     public ConfiguracaoDePedidosService(Autorizador autorizador,
-                                        ConfiguracaoDePedidosRepositorio configuracoes) {
+                                        ConfiguracaoDePedidosRepositorio configuracoes,
+                                        SituacaoDaLojaPort situacoes) {
         this.autorizador = autorizador;
         this.configuracoes = configuracoes;
+        this.situacoes = situacoes;
+    }
+
+    /**
+     * A ida ao {@code merchant} fica fora da transação: segurar conexão de banco durante uma
+     * chamada HTTP é o que a ADR-011 manda não fazer.
+     */
+    @Override
+    public Vitrine vitrine(UUID estabelecimentoId) {
+        ConfiguracaoDePedidos configuracao = daLoja(estabelecimentoId);
+        try {
+            SituacaoDaLojaPort.SituacaoDaLoja s = situacoes.daLoja(estabelecimentoId);
+            return new Vitrine(configuracao, s.aberta(), s.proximaAbertura().orElse(null));
+        } catch (SituacaoIndisponivel semResposta) {
+            return new Vitrine(configuracao, null, null);
+        }
     }
 
     @Override

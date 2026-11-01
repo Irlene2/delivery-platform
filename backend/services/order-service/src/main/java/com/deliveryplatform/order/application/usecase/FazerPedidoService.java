@@ -1,8 +1,10 @@
 package com.deliveryplatform.order.application.usecase;
 
 import com.deliveryplatform.order.application.exception.ItemForaDoCardapio;
+import com.deliveryplatform.order.application.exception.LojaFechada;
 import com.deliveryplatform.order.application.port.in.FazerPedido;
 import com.deliveryplatform.order.application.port.out.CardapioPort;
+import com.deliveryplatform.order.application.port.out.SituacaoDaLojaPort;
 import com.deliveryplatform.order.application.port.out.ConfiguracaoDePedidosRepositorio;
 import com.deliveryplatform.order.application.port.out.PedidoRepositorio;
 import com.deliveryplatform.order.application.port.out.ProdutoDoCardapio;
@@ -30,7 +32,8 @@ import java.util.UUID;
  * <h2>A ordem</h2>
  *
  * <p>Primeiro o que é barato e não depende de ninguém (nome, telefone, carrinho vazio) — o
- * domínio cobra ao montar o cliente. Depois o {@code catalog}, que é uma ida à rede. Só então
+ * domínio cobra ao montar o cliente. Depois o {@code merchant}, que diz se a loja está aberta
+ * (ADR-077, emenda de 01/11/2026), e o {@code catalog} — duas idas à rede. Só então
  * o número, que trava a numeração da loja até o fim da transação: pegá-lo antes da ida ao
  * {@code catalog} seria segurar a trava durante uma chamada HTTP.
  *
@@ -42,13 +45,16 @@ import java.util.UUID;
 @Service
 public class FazerPedidoService implements FazerPedido {
 
+    private final SituacaoDaLojaPort situacoes;
     private final CardapioPort cardapio;
     private final ConfiguracaoDePedidosRepositorio configuracoes;
     private final PedidoRepositorio pedidos;
     private final Clock relogio;
 
-    public FazerPedidoService(CardapioPort cardapio, ConfiguracaoDePedidosRepositorio configuracoes,
+    public FazerPedidoService(SituacaoDaLojaPort situacoes, CardapioPort cardapio,
+                              ConfiguracaoDePedidosRepositorio configuracoes,
                               PedidoRepositorio pedidos, Clock relogio) {
+        this.situacoes = situacoes;
         this.cardapio = cardapio;
         this.configuracoes = configuracoes;
         this.pedidos = pedidos;
@@ -70,6 +76,11 @@ public class FazerPedidoService implements FazerPedido {
         if (s.itens().size() > Pedido.ITENS_MAXIMOS) {
             throw new RegraDoPedidoViolada(RegraDoPedidoViolada.Motivo.ITENS_DEMAIS,
                     s.itens().size() + " itens", String.valueOf(Pedido.ITENS_MAXIMOS));
+        }
+
+        SituacaoDaLojaPort.SituacaoDaLoja situacao = situacoes.daLoja(estabelecimentoId);
+        if (!situacao.aberta()) {
+            throw new LojaFechada(situacao.proximaAbertura());
         }
 
         ConfiguracaoDePedidos configuracao = configuracoes.daLoja(estabelecimentoId)

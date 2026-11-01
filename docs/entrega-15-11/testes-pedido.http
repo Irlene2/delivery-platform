@@ -269,3 +269,16 @@ Authorization: Bearer {{token}}
 Content-Type: application/json
 
 { "formaEfetiva": "PIX" }
+
+### ── A LOJA FECHADA (decisão de 01/11/2026) ─────────────────────────────
+# A situação vem do merchant (porta 8082, não passa pelo gateway). Loja sem horário
+# definido fica fechada: defina o horário no painel (Horário) para ela abrir.
+
+### 37. A situação da loja, direto no merchant (200: nome, aberta, proximaAbertura)
+GET http://localhost:8082/api/v1/storefront/{{loja}}/status
+
+### 38. A vitrine traz a mesma situação junto com a taxa (200: aberta, proximaAbertura)
+GET {{base}}/api/v1/storefront/{{loja}}/orders/settings
+
+### 39. Com a loja fora do horário: o pedido é recusado (409, "a loja está fechada agora e abre …")
+# Para ver este 409, ponha um horário que não inclua agora e repita o passo 9.

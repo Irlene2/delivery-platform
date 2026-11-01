@@ -4,22 +4,34 @@ import com.deliveryplatform.order.application.exception.AcessoNegado;
 import com.deliveryplatform.order.application.exception.EntregadorForaDaEquipe;
 import com.deliveryplatform.order.application.exception.RecusaAoEntregador;
 import com.deliveryplatform.order.application.exception.ItemForaDoCardapio;
+import com.deliveryplatform.order.application.exception.LojaFechada;
 import com.deliveryplatform.order.application.exception.PedidoNaoEncontrado;
 import com.deliveryplatform.order.application.port.out.AutorizacaoIndisponivel;
 import com.deliveryplatform.order.application.port.out.CardapioIndisponivel;
+import com.deliveryplatform.order.application.port.out.SituacaoIndisponivel;
 import com.deliveryplatform.order.domain.exception.RegraDoPedidoViolada;
 import com.deliveryplatform.order.domain.exception.TransicaoInvalida;
 import com.deliveryplatform.order.domain.model.Modalidade;
 import com.deliveryplatform.order.domain.model.StatusDoPedido;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.time.Clock;
+import java.time.DayOfWeek;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.TextStyle;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Exceção carrega motivo e dados; a frase é escrita aqui (ADR-063). Toda frase de 400 e 409
@@ -32,6 +44,56 @@ public class TratadorDeErros {
     private static final Logger log = LoggerFactory.getLogger(TratadorDeErros.class);
 
     private static final String RECUSA = "sem acesso a este estabelecimento";
+
+    private static final Locale PORTUGUES = Locale.forLanguageTag("pt-BR");
+    private static final DateTimeFormatter HORA = DateTimeFormatter.ofPattern("HH:mm");
+
+    private final ZoneId fuso;
+    private final Clock relogio;
+
+    /** O fuso das frases é o mesmo do "hoje" da lista do painel ({@code delivery.pedidos.fuso}). */
+    public TratadorDeErros(@Value("${delivery.pedidos.fuso:America/Sao_Paulo}") String fuso,
+                           Clock relogio) {
+        this.fuso = ZoneId.of(fuso);
+        this.relogio = relogio;
+    }
+
+    /**
+     * 409: a loja está fechada (ADR-077, emenda de 01/11/2026). Estado do mundo, não erro de
+     * quem pede — a frase diz quando voltar.
+     */
+    @ExceptionHandler(LojaFechada.class)
+    public ProblemDetail lojaFechada(LojaFechada excecao) {
+        String frase = excecao.proximaAbertura()
+                .map(quando -> "a loja está fechada agora e abre " + quando(quando)
+                        + "; volte nesse horário para fazer o pedido")
+                .orElse("a loja não está recebendo pedidos agora");
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, frase);
+    }
+
+    @ExceptionHandler(SituacaoIndisponivel.class)
+    public ProblemDetail situacaoIndisponivel(SituacaoIndisponivel excecao) {
+        log.warn("situação da loja indisponível: {}", excecao.getMessage(), excecao);
+        return ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE,
+                "não foi possível confirmar se a loja está aberta agora; o pedido não foi feito. "
+                        + "Tente de novo em instantes");
+    }
+
+    /** "hoje às 18:00", "amanhã às 11:00", "na segunda-feira às 18:00". */
+    String quando(Instant instante) {
+        ZonedDateTime local = instante.atZone(fuso);
+        LocalDate hoje = LocalDate.now(relogio.withZone(fuso));
+        String hora = " às " + HORA.format(local);
+        if (local.toLocalDate().equals(hoje)) {
+            return "hoje" + hora;
+        }
+        if (local.toLocalDate().equals(hoje.plusDays(1))) {
+            return "amanhã" + hora;
+        }
+        DayOfWeek dia = local.getDayOfWeek();
+        String artigo = dia == DayOfWeek.SATURDAY || dia == DayOfWeek.SUNDAY ? "no " : "na ";
+        return artigo + dia.getDisplayName(TextStyle.FULL, PORTUGUES) + hora;
+    }
 
     @ExceptionHandler(AcessoNegado.class)
     public ProblemDetail acessoNegado(AcessoNegado excecao) {

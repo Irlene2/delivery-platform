@@ -1,9 +1,10 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { carrinhoDaLoja, lembrarPedido, limparCarrinho } from '../aki/pedidos';
 import { toast } from '../aki/toast';
-import type { PedidoPublico } from '../api/pedidos';
+import type { PedidoPublico, VitrineDaLoja } from '../api/pedidos';
 import { vitrineDe } from '../pedido/fontes';
+import { AvisoDeLojaFechada } from './AvisoDeLojaFechada';
 import { ConteudoDoCardapio } from './Cardapio';
 import { CascaDaVitrine } from './CascaDaVitrine';
 
@@ -17,7 +18,23 @@ export function LojaPublica() {
   const navegar = useNavigate();
   const vitrine = useMemo(() => vitrineDe(estabelecimentoId), [estabelecimentoId]);
 
+  const [situacao, definirSituacao] = useState<VitrineDaLoja | null>(null);
+
   useEffect(() => carrinhoDaLoja(estabelecimentoId), [estabelecimentoId]);
+
+  useEffect(() => {
+    let atual = true;
+    vitrine
+      .configuracao()
+      .then((lida) => {
+        if (atual) definirSituacao(lida);
+      })
+      // Sem a situação, a vitrine abre normalmente; quem decide é o pedido.
+      .catch(() => undefined);
+    return () => {
+      atual = false;
+    };
+  }, [vitrine]);
 
   function criado(pedido: PedidoPublico) {
     lembrarPedido({
@@ -39,6 +56,7 @@ export function LojaPublica() {
       titulo="Cardápio"
       subtitulo="Escolha seus favoritos e monte seu pedido."
     >
+      <AvisoDeLojaFechada vitrine={situacao} />
       <ConteudoDoCardapio
         fonte={vitrine.cardapio}
         linkDoCardapio={`/loja/${estabelecimentoId}`}

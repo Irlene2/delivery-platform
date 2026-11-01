@@ -1,6 +1,6 @@
 package com.deliveryplatform.order.api.controller;
 
-import com.deliveryplatform.order.api.dto.ConfiguracaoDePedidosDto;
+import com.deliveryplatform.order.api.dto.VitrineDaLojaResponse;
 import com.deliveryplatform.order.api.dto.PedidoPublicoResponse;
 import com.deliveryplatform.order.api.dto.PedidoRequest;
 import com.deliveryplatform.order.application.port.in.AcompanharPedido;
@@ -46,20 +46,22 @@ public class VitrineController {
     }
 
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Taxa e modalidades; o padrão quando a loja nunca configurou"),
+            @ApiResponse(responseCode = "200", description = "Taxa e modalidades (o padrão quando a loja nunca configurou), e se a loja está aberta agora"),
             @ApiResponse(responseCode = "400", description = "Identificador da loja malformado", content = @Content)
     })
     @GetMapping(path = "/{estabelecimentoId}/orders/settings", produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Taxa de entrega e modalidades, para o checkout",
-            description = "Loja que nunca configurou: taxa 0,00 e as duas modalidades.")
-    public ConfiguracaoDePedidosDto configuracao(@PathVariable UUID estabelecimentoId) {
-        return ConfiguracaoDePedidosDto.de(configuracoes.daLoja(estabelecimentoId));
+    @Operation(summary = "Taxa de entrega, modalidades e se a loja está aberta, para o checkout",
+            description = "Loja que nunca configurou: taxa 0,00 e as duas modalidades. A situação "
+                    + "vem do merchant; sem resposta dele, aberta é nula.")
+    public VitrineDaLojaResponse configuracao(@PathVariable UUID estabelecimentoId) {
+        return VitrineDaLojaResponse.de(configuracoes.vitrine(estabelecimentoId));
     }
 
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "O pedido criado, com o código de acompanhamento"),
             @ApiResponse(responseCode = "400", description = "Recusado, com a frase que diz o que corrigir: produto fora do cardápio ou que acabou, endereço na entrega, troco menor que o total, modalidade que a loja não aceita, campo obrigatório", content = @Content),
-            @ApiResponse(responseCode = "503", description = "O catálogo não respondeu; o pedido não foi criado", content = @Content)
+            @ApiResponse(responseCode = "409", description = "A loja está fechada agora; a frase diz quando abre", content = @Content),
+            @ApiResponse(responseCode = "503", description = "O catálogo ou a loja não responderam; o pedido não foi criado", content = @Content)
     })
     @PostMapping(path = "/{estabelecimentoId}/orders",
             consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)

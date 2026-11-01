@@ -70,6 +70,7 @@ class ContratoDeErrosIT extends Infraestrutura {
     private static final String CONVITE = "/api/v1/convites/{token}";
     private static final String ACEITE = "/api/v1/convites/{token}/aceite";
     private static final String HORARIO = "/api/v1/merchants/{estabelecimentoId}/settings/horario";
+    private static final String VITRINE = "/api/v1/storefront/{estabelecimentoId}/status";
 
     /** O que o contrato declara e nenhum caso provoca. Hoje: nada. */
     private static final Map<String, String> NAO_PROVOCAVEIS = Map.of();
@@ -181,6 +182,12 @@ class ContratoDeErrosIT extends Infraestrutura {
                             return post("/api/v1/convites/" + token + "/aceite", "",
                                     IDENTITY.tokenDe(dono));
                         }),
+
+                // A vitrine (ADR-077, emenda de 01/11/2026): pública, 200, 400 e 404.
+                new Provocacao("GET", VITRINE, 400, "identificador da loja que não é UUID",
+                        () -> get("/api/v1/storefront/nao-e-uuid/status", null)),
+                new Provocacao("GET", VITRINE, 404, "identificador que não é de loja nenhuma",
+                        () -> get("/api/v1/storefront/" + UUID.randomUUID() + "/status", null)),
 
                 // O horário (ADR-073): 200, 400, 401, 403.
                 new Provocacao("PUT", HORARIO, 400, "faixa com início igual ao fim",

@@ -5,6 +5,7 @@ import com.deliveryplatform.merchant.application.exception.CadastroDeLojaRecusad
 import com.deliveryplatform.merchant.application.exception.ConviteRecusado;
 import com.deliveryplatform.merchant.application.exception.ConviteSemAutoridade;
 import com.deliveryplatform.merchant.application.exception.HorarioRecusado;
+import com.deliveryplatform.merchant.application.exception.LojaNaoEncontrada;
 import com.deliveryplatform.merchant.domain.exception.ConviteInvalido;
 import com.deliveryplatform.merchant.domain.exception.JaPertenceAEquipe;
 import com.deliveryplatform.merchant.application.exception.SemExpedientePorHorario;
@@ -58,6 +59,13 @@ public class TratadorDeErros {
      * <i>estado do mundo</i>, não erro do chamador: a loja existe, e o que não
      * existe é um expediente para carimbar.
      */
+    /** 404 só na vitrine, que é pública — ver {@link LojaNaoEncontrada}. */
+    @ExceptionHandler(LojaNaoEncontrada.class)
+    public ProblemDetail lojaNaoEncontrada(LojaNaoEncontrada excecao) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND,
+                "este link não é de nenhuma loja; confira o endereço com a loja");
+    }
+
     @ExceptionHandler(SemExpedientePorHorario.class)
     public ProblemDetail semExpedientePorHorario(SemExpedientePorHorario excecao) {
         return ProblemDetail.forStatusAndDetail(

@@ -67,6 +67,15 @@ em [`docs/entrega-15-11/pedido.md`](../../entrega-15-11/pedido.md).
   marco 6, no `settlement`. Confirmado como regra do produto em 31/10/2026 (emenda ao PRD §10): o entregador
   recebe por entrega, a taxa cobrada do cliente, no lugar das modalidades da ADR-022.
 
+- **01/11/2026 — loja fora do horário não recebe pedido.** O `merchant` ganha uma rota pública,
+  `GET /api/v1/storefront/{id}/status`, que devolve o que o agregado da loja já sabia calcular
+  (`estaAberta`, com horário, pausa e fuso) e a próxima abertura. O `order` a consulta ao montar
+  a vitrine e ao receber o pedido: fechada é **409** com a frase de quando abre; sem resposta do
+  `merchant` é **503**, falha fechada. Loja sem horário fica fechada. Pública porque a situação
+  da loja é o que ela mesma divulga; sem credencial entre serviços, como a ADR-045 manda. Com
+  ela, o identificador que não é de loja passa a ter resposta própria (**404**) — o gatilho que
+  o `pedido.md` §2.1 deixou para o cardápio vazio.
+
 ## Alternativas consideradas
 
 - **A ADR-075 completa antes de 15/11.** Recusada pelo prazo.

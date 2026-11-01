@@ -5,6 +5,7 @@ import {
   linkDoWhatsApp,
   mensagemDoWhatsApp,
   proximoPasso,
+  quandoAbre,
 } from './regras';
 
 describe('o próximo passo do pedido', () => {
@@ -77,5 +78,27 @@ describe('cores e datas', () => {
 
   it('o dia de hoje no formato do ?dia=', () => {
     expect(hojeLocal(new Date(2026, 10, 5, 23, 30))).toBe('2026-11-05');
+  });
+});
+
+describe('quando a loja abre', () => {
+  // 01/11/2026 é um domingo; as datas são do relógio local, como a tela as mostra.
+  const agora = new Date(2026, 10, 1, 15, 0);
+
+  it('mais tarde, hoje', () => {
+    expect(quandoAbre(new Date(2026, 10, 1, 18, 0).toISOString(), agora)).toBe('hoje às 18:00');
+  });
+
+  it('amanhã de manhã', () => {
+    expect(quandoAbre(new Date(2026, 10, 2, 11, 30).toISOString(), agora)).toBe('amanhã às 11:30');
+  });
+
+  it('mais adiante na semana, pelo nome do dia', () => {
+    expect(quandoAbre(new Date(2026, 10, 7, 18, 0).toISOString(), agora)).toBe(
+      'no sábado às 18:00',
+    );
+    expect(quandoAbre(new Date(2026, 10, 4, 18, 0).toISOString(), agora)).toBe(
+      'na quarta-feira às 18:00',
+    );
   });
 });

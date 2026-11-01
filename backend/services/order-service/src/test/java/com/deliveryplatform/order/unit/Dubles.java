@@ -9,6 +9,8 @@ import com.deliveryplatform.order.application.port.out.EntregadorRepositorio;
 import com.deliveryplatform.order.application.port.out.PedidoRepositorio;
 import com.deliveryplatform.order.application.port.out.PermissaoDoPedido;
 import com.deliveryplatform.order.application.port.out.ProdutoDoCardapio;
+import com.deliveryplatform.order.application.port.out.SituacaoDaLojaPort;
+import com.deliveryplatform.order.application.port.out.SituacaoIndisponivel;
 import com.deliveryplatform.order.domain.model.ConfiguracaoDePedidos;
 import com.deliveryplatform.order.domain.model.EntregadorDaLoja;
 import com.deliveryplatform.order.domain.model.Pedido;
@@ -116,6 +118,20 @@ final class Dubles {
                 throw new CardapioIndisponivel("fora do ar", null);
             }
             return Map.copyOf(publicados);
+        }
+    }
+
+    /** A loja aberta, salvo quando o teste diz outra coisa. */
+    static final class Lojas implements SituacaoDaLojaPort {
+        SituacaoDaLoja situacao = SituacaoDaLoja.abertaAgora();
+        boolean foraDoAr;
+
+        @Override
+        public SituacaoDaLoja daLoja(UUID loja) {
+            if (foraDoAr) {
+                throw new SituacaoIndisponivel("fora do ar", null);
+            }
+            return situacao;
         }
     }
 

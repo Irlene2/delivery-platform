@@ -438,7 +438,7 @@ function PrimeirosPassos({ base, link }: { base: string; link: string }) {
         <div>
           <h2>Primeiros passos da sua loja</h2>
           <p className="admin-muted">
-            Quatro passos e a loja está pronta para receber pedidos pelo link.
+            Cinco passos e a loja está pronta para receber pedidos pelo link.
           </p>
         </div>
       </div>
@@ -457,17 +457,26 @@ function PrimeirosPassos({ base, link }: { base: string; link: string }) {
             <small>E se a loja faz entrega, retirada ou as duas.</small>
           </div>
         </Link>
+        <Link className="quick-card" to={`${base}/horario`}>
+          <span className="material-symbols-outlined">schedule</span>
+          <div>
+            <strong>3. Defina o horário de funcionamento</strong>
+            <small>
+              Fora do horário, o cardápio avisa que a loja está fechada e não aceita pedido.
+            </small>
+          </div>
+        </Link>
         <Link className="quick-card" to={`${base}/equipe`}>
           <span className="material-symbols-outlined">group_add</span>
           <div>
-            <strong>3. Convide a equipe e os entregadores</strong>
+            <strong>4. Convide a equipe e os entregadores</strong>
             <small>Entregador recebe a permissão de entregas e usa o app dele.</small>
           </div>
         </Link>
         <Link className="quick-card" to={`${base}/configuracoes`}>
           <span className="material-symbols-outlined">link</span>
           <div>
-            <strong>4. Mande o link do cardápio</strong>
+            <strong>5. Mande o link do cardápio</strong>
             <small>{link}</small>
           </div>
         </Link>

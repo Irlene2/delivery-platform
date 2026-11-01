@@ -1,7 +1,12 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { Link } from 'react-router';
 import { emDemonstracao, ID_DA_LOJA_DEMO } from '../aki/demo';
 import { toast } from '../aki/toast';
+import type { VitrineDaLoja } from '../api/pedidos';
+import { vitrineDe } from '../pedido/fontes';
+import { quandoAbre } from '../pedido/regras';
 import { lerPreco, mensagemDoErro } from './catalogo';
+import { caminhoDaLoja } from './caminhos';
 import { CascaDaLoja } from './CascaDaLoja';
 import { useLojaAtual } from './lojaAtual';
 import { linkDoCardapio, useFonteDePedidos } from './useFonteDePedidos';
@@ -23,6 +28,25 @@ export function ConfiguracoesDaLoja() {
   const [carregado, definirCarregado] = useState(false);
   const [salvando, definirSalvando] = useState(false);
   const [mensagem, definirMensagem] = useState<{ ok: boolean; texto: string } | null>(null);
+  const [situacao, definirSituacao] = useState<VitrineDaLoja | null>(null);
+  const vitrine = useMemo(
+    () => vitrineDe(emDemonstracao() ? ID_DA_LOJA_DEMO : estabelecimentoId),
+    [estabelecimentoId],
+  );
+
+  // O que o cliente vê agora pelo link: aberta, ou fechada e quando abre (ADR-077, 01/11/2026).
+  useEffect(() => {
+    let atual = true;
+    vitrine
+      .configuracao()
+      .then((lida) => {
+        if (atual) definirSituacao(lida);
+      })
+      .catch(() => undefined);
+    return () => {
+      atual = false;
+    };
+  }, [vitrine]);
 
   useEffect(() => {
     if (!podeConfigurar) return;
@@ -108,6 +132,20 @@ export function ConfiguracoesDaLoja() {
             <span className="material-symbols-outlined">open_in_new</span>Abrir
           </a>
         </div>
+        {situacao?.aberta === true && (
+          <p className="prod-nota">
+            Agora a loja está <b>aberta</b> e o link aceita pedidos.
+          </p>
+        )}
+        {situacao?.aberta === false && (
+          <p className="prod-nota">
+            Agora a loja está <b>fechada</b> e o link não aceita pedidos
+            {situacao.proximaAbertura != null
+              ? ` — abre ${quandoAbre(situacao.proximaAbertura)}`
+              : ' — o horário de funcionamento ainda não foi definido'}
+            . <Link to={`${caminhoDaLoja(estabelecimentoId)}/horario`}>Ajustar o horário</Link>
+          </p>
+        )}
       </section>
 
       <section className="panel prod-panel">

@@ -86,6 +86,9 @@ public class SecurityConfig {
                     // ADR-069 §2: a leitura do convite é de quem ainda não tem sessão. Só o
                     // GET de um segmento — o aceite, embaixo do mesmo prefixo, exige sessão.
                     rotas.requestMatchers(HttpMethod.GET, "/api/v1/convites/*").permitAll();
+                    // ADR-077, emenda de 01/11/2026: se a loja está aberta, para a vitrine. Só
+                    // este GET; nada mais debaixo de /storefront existe neste serviço.
+                    rotas.requestMatchers(HttpMethod.GET, "/api/v1/storefront/*/status").permitAll();
                     if (docs.abertas()) {
                         // ADR-050: só no computador de quem desenvolve, e o
                         // padrão da propriedade é false — esquecer fecha.

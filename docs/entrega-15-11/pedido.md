@@ -20,6 +20,7 @@ cliente (cardápio público) ──► gateway ──► catalog   GET  cardápi
 painel (com token)        ──► gateway ──► order     lista, status, entregador, pagamento, taxa
 order                     ──► catalog   GET cardápio publicado (preço e vendável, na hora do pedido)
 order                     ──► merchant  GET /internal/merchants/{id}/me (permissão, como o catalog faz)
+order                     ──► merchant  GET /api/v1/storefront/{id}/status (a loja está aberta? — §2.5)
 ```
 
 **O preço nunca vem do navegador.** O `order` lê o produto no `catalog` no momento de criar o
@@ -53,17 +54,26 @@ Rascunho e inativo não aparecem; produto publicado em **seção desativada** ta
 **Loja inexistente: cardápio vazio (200), e não 404** — mudança de 27/10 em relação ao desenho
 original. O `catalog` não conhece lojas, só produtos de uma loja, e o `merchant` não tem rota
 pública que diga se uma loja existe. A tela mostra "esta loja ainda não tem cardápio". Gatilho
-para o 404: o `merchant` ganhar essa rota.
+para o 404: o `merchant` ganhar essa rota. **Disparou em 01/11/2026** (§2.5), e a vitrine já
+avisa que a loja não recebe pedidos; o `catalog` continua devolvendo o cardápio vazio, e a
+troca dele pelo 404 fica para depois da demonstração.
 
 ### 2.2 `GET /api/v1/storefront/{merchantId}/orders/settings` → `order`
 
 ```json
-{ "taxaDeEntrega": 5.00, "aceitaEntrega": true, "aceitaRetirada": true }
+{ "taxaDeEntrega": 5.00, "aceitaEntrega": true, "aceitaRetirada": true,
+  "aberta": false, "proximaAbertura": "2026-11-01T21:00:00Z" }
 ```
 
-Loja que nunca configurou: taxa **0,00**, as duas modalidades aceitas.
+Loja que nunca configurou: taxa **0,00**, as duas modalidades aceitas. `aberta` e
+`proximaAbertura` vêm do `merchant` (§2.5): `aberta` nulo quando ele não respondeu — a vitrine
+abre assim mesmo, e o pedido decide.
 
 ### 2.3 `POST /api/v1/storefront/{merchantId}/orders` → `order`
+
+**Loja fechada: 409**, com a frase dizendo quando abre (*"a loja está fechada agora e abre hoje às
+18:00; volte nesse horário para fazer o pedido"*). Sem resposta do `merchant`: **503**, e o
+pedido não nasce — falha fechada.
 
 ```json
 {
@@ -109,6 +119,23 @@ não aceita. Loja inexistente cai em "produto fora do cardápio" (400), pelo mes
 O que o cliente acompanha: número, status, itens, valores, modalidade. **Sem telefone nem
 endereço** na resposta (ADR-013). O código é um UUID aleatório; sem ele, não há como listar
 pedidos de ninguém. Inexistente: **404**.
+
+### 2.5 `GET /api/v1/storefront/{merchantId}/status` → `merchant` (não passa pelo gateway)
+
+Decisão de 01/11/2026: **loja fora do horário não recebe pedido.** Quem sabe o horário é o
+agregado da loja, no `merchant` (horário, pausa e fuso — `Estabelecimento.estaAberta`). Esta rota
+pública devolve a resposta dele:
+
+```json
+{ "nome": "Pizzaria da Marli", "aberta": false, "proximaAbertura": "2026-11-01T21:00:00Z" }
+```
+
+`proximaAbertura` nula com a loja aberta, **ou quando ela ainda não definiu o horário** — e loja
+sem horário fica fechada. É o passo 3 dos primeiros passos do painel. Identificador que não é de
+loja: **404** (a vitrine é o link que a loja divulga; ver `LojaNaoEncontrada`).
+
+Quem chama é o `order`, por dentro: na vitrine (§2.2) e ao receber o pedido (§2.3). O gateway não
+a roteia — o cliente recebe a situação junto com a taxa, numa chamada só.
 
 ## 3. Rotas do painel (com token)
 

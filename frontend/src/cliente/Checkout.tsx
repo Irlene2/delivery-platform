@@ -1,16 +1,17 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import type {
-  ConfiguracaoDePedidos,
   FormaDePagamento,
   Modalidade,
   NovoPedido,
   PedidoPublico,
+  VitrineDaLoja,
 } from '../api/pedidos';
 import { dinheiro } from '../aki/formatos';
 import { totaisDoCarrinho, type ItemDoCarrinho } from '../aki/pedidos';
 import { lerPreco, mensagemDoErro } from '../painel/catalogo';
 import type { Vitrine } from '../pedido/fontes';
 import { ROTULO_DA_FORMA, ROTULO_DA_MODALIDADE } from '../pedido/regras';
+import { AvisoDeLojaFechada } from './AvisoDeLojaFechada';
 
 /**
  * O resumo e o checkout de verdade, no lugar do bloco de pagamento da demonstração — com as
@@ -32,7 +33,7 @@ export function ResumoComCheckout({
   vitrine: Vitrine;
   aoCriar: (pedido: PedidoPublico) => void;
 }) {
-  const [configuracao, definirConfiguracao] = useState<ConfiguracaoDePedidos | null>(null);
+  const [configuracao, definirConfiguracao] = useState<VitrineDaLoja | null>(null);
   const [nome, definirNome] = useState('');
   const [telefone, definirTelefone] = useState('');
   const [modalidade, definirModalidade] = useState<Modalidade>('ENTREGA');
@@ -65,6 +66,7 @@ export function ResumoComCheckout({
     };
   }, [vitrine]);
 
+  const fechada = configuracao?.aberta === false;
   const entrega = modalidade === 'ENTREGA';
   const taxa = entrega ? (configuracao?.taxaDeEntrega ?? 0) : 0;
   const { subtotal, fee, total } = totaisDoCarrinho(itens, taxa);
@@ -265,14 +267,15 @@ export function ResumoComCheckout({
         </label>
       </div>
 
+      <AvisoDeLojaFechada vitrine={configuracao} />
       <button
         type="submit"
         className="btn btn-primary full checkout-btn"
-        disabled={enviando}
+        disabled={enviando || fechada}
         aria-busy={enviando}
       >
         <span className="material-symbols-outlined">shopping_bag</span>
-        {enviando ? 'Enviando pedido…' : 'Finalizar pedido'}
+        {enviando ? 'Enviando pedido…' : fechada ? 'Loja fechada agora' : 'Finalizar pedido'}
       </button>
       {recusa !== null && (
         <p className="prod-msg erro" role="alert" style={{ marginTop: '10px' }}>

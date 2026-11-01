@@ -22,6 +22,7 @@ import {
   type PedidoDaLoja,
   type PedidoPublico,
   type StatusDoPedido,
+  type VitrineDaLoja,
 } from '../api/pedidos';
 import { chamar } from '../api/cliente';
 import { estadoConhecido } from '../api/disponibilidade';
@@ -55,7 +56,7 @@ import {
 
 export interface Vitrine {
   readonly cardapio: FonteDoCatalogo;
-  configuracao(): Promise<ConfiguracaoDePedidos>;
+  configuracao(): Promise<VitrineDaLoja>;
   fazer(novo: NovoPedido): Promise<PedidoPublico>;
 }
 
