@@ -1,19 +1,53 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { emDemonstracao } from '../aki/demo';
 import { dinheiro } from '../aki/formatos';
+import { toast } from '../aki/toast';
+import type { FechamentoGravado } from '../api/pedidos';
+import { fechamentoEmCsv } from '../pedido/caixa';
 import { acertosDosEntregadores, resumoDoDia } from '../pedido/fechamento';
 import { hojeLocal, ROTULO_DA_FORMA } from '../pedido/regras';
+import { lerPreco, mensagemDoErro } from './catalogo';
 import { CascaDaLoja } from './CascaDaLoja';
 import { useLojaAtual } from './lojaAtual';
-import { useFonteDePedidos } from './useFonteDePedidos';
+import { useFonteDePedidos, useFonteDoCaixa } from './useFonteDePedidos';
 import { usePedidosDoDia } from './usePedidosDoDia';
+
+/** Uma linha do acerto, venha ela da soma ao vivo ou do fechamento gravado. */
+interface LinhaDoAcerto {
+  readonly chave: string;
+  readonly nome: string;
+  readonly comConta: boolean;
+  readonly entregas: number;
+  readonly emRota: number;
+  readonly repasse: number;
+  readonly dinheiroRecebido: number;
+  readonly cartaoRecebido: number;
+  readonly acerto: number;
+}
+
+const dataBr = (dia: string) => dia.split('-').reverse().join('/');
+
+function baixarCsv(fechamento: FechamentoGravado) {
+  // O BOM faz a planilha abrir os acentos certos.
+  const arquivo = new Blob(['﻿', fechamentoEmCsv(fechamento)], {
+    type: 'text/csv;charset=utf-8',
+  });
+  const url = URL.createObjectURL(arquivo);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `fechamento-${fechamento.dia}.csv`;
+  link.click();
+  // Revogar na hora pode cortar o download em alguns navegadores.
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
 
 /**
  * O fechamento do dia: o caixa por forma de pagamento e o acerto de cada entregador.
  *
- * **É um relatório, e não um registro.** Ele soma os pedidos do dia como o servidor os
- * devolve; fechar o caixa com data, conferência e assinatura é o marco 6 (settlement). Para
- * 15/11, a loja confere aqui e imprime.
+ * **Antes de fechar, é a soma ao vivo dos pedidos; depois, é o que o servidor gravou** (ADR-077,
+ * emenda de 01/11/2026). Fechar exige que nenhum pedido do dia esteja em andamento; o servidor
+ * apura os totais a partir dos pedidos — a tela só manda o dia e, se quiser, o dinheiro contado
+ * no caixa. Fechado, o dia não muda mais, e o histórico guarda cada fechamento.
  *
  * O repasse é a taxa de cada entrega feita (decisão de 31/10/2026). O dinheiro que o
  * entregador recebeu na porta é da loja; o acerto é a diferença.
@@ -21,19 +55,115 @@ import { usePedidosDoDia } from './usePedidosDoDia';
 export function FechamentoDoDia() {
   const { estabelecimentoId, loja } = useLojaAtual();
   const fonte = useFonteDePedidos(estabelecimentoId);
+  const caixa = useFonteDoCaixa(estabelecimentoId);
+  const podeFechar = emDemonstracao() || (loja?.permissoes.includes('GERENCIAR_JORNADA') ?? false);
+  const podeVerHistorico = emDemonstracao() || (loja?.permissoes.includes('VER_VENDAS') ?? false);
+
   const [dia, definirDia] = useState(hojeLocal());
   const { pedidos, falha, recarregar } = usePedidosDoDia(fonte, dia);
   const lista = useMemo(() => pedidos ?? [], [pedidos]);
   const resumo = useMemo(() => resumoDoDia(lista), [lista]);
-  const acertos = useMemo(() => acertosDosEntregadores(lista), [lista]);
+  const acertosAoVivo = useMemo(() => acertosDosEntregadores(lista), [lista]);
+
+  const [gravado, definirGravado] = useState<FechamentoGravado | null>(null);
+  const [historico, definirHistorico] = useState<FechamentoGravado[]>([]);
+  const [contado, definirContado] = useState('');
+  const [observacao, definirObservacao] = useState('');
+  const [fechando, definirFechando] = useState(false);
+  const [recusa, definirRecusa] = useState<string | null>(null);
+
+  const carregarCaixa = useCallback(() => {
+    let atual = true;
+    if (podeVerHistorico) {
+      caixa
+        .doDia(dia)
+        .then((lido) => {
+          if (atual) definirGravado(lido);
+        })
+        .catch(() => {
+          if (atual) definirGravado(null);
+        });
+      caixa
+        .historico()
+        .then((lidos) => {
+          if (atual) definirHistorico(lidos);
+        })
+        .catch(() => undefined);
+    }
+    return () => {
+      atual = false;
+    };
+  }, [caixa, dia, podeVerHistorico]);
+
+  useEffect(() => carregarCaixa(), [carregarCaixa]);
+
   const abertos = lista.filter(
     (um) => !['ENTREGUE', 'RETIRADO', 'CANCELADO'].includes(um.status),
   ).length;
-  const semRegistro = lista.filter(
-    (um) =>
-      (um.status === 'ENTREGUE' || um.status === 'RETIRADO') && um.pagamentoRegistrado === null,
-  ).length;
-  const totalRepasse = acertos.reduce((soma, um) => soma + um.repasse, 0);
+
+  // Fechado, vale o que foi gravado; aberto, a soma ao vivo.
+  const quadro =
+    gravado === null
+      ? {
+          vendas: resumo.vendas,
+          concluidos: resumo.concluidos,
+          cancelados: resumo.cancelados,
+          taxas: resumo.taxas,
+          ticketMedio: resumo.ticketMedio,
+          porForma: resumo.porForma,
+        }
+      : {
+          vendas: gravado.vendas,
+          concluidos: gravado.concluidos,
+          cancelados: gravado.cancelados,
+          taxas: gravado.taxas,
+          ticketMedio:
+            gravado.concluidos === 0
+              ? 0
+              : Math.round((gravado.vendas / gravado.concluidos) * 100) / 100,
+          porForma: { PIX: gravado.pix, CARTAO: gravado.cartao, DINHEIRO: gravado.dinheiro },
+        };
+  const acertos: LinhaDoAcerto[] =
+    gravado === null
+      ? acertosAoVivo
+      : gravado.acertos.map((um, i) => ({
+          chave: um.entregadorId ?? `avulso-${i}`,
+          nome: um.nome,
+          comConta: um.entregadorId !== null,
+          entregas: um.entregas,
+          emRota: 0,
+          repasse: um.repasse,
+          dinheiroRecebido: um.dinheiro,
+          cartaoRecebido: um.cartao,
+          acerto: um.acerto,
+        }));
+  const totalRepasse =
+    gravado === null ? acertos.reduce((soma, um) => soma + um.repasse, 0) : gravado.repasseTotal;
+
+  async function fechar(evento: FormEvent) {
+    evento.preventDefault();
+    definirRecusa(null);
+    const valor = contado.trim() === '' ? null : lerPreco(contado);
+    if (contado.trim() !== '' && valor === null) {
+      definirRecusa('O dinheiro contado precisa ser um valor, como 320,00.');
+      return;
+    }
+    definirFechando(true);
+    try {
+      const fechado = await caixa.fechar({
+        dia,
+        ...(valor === null ? {} : { dinheiroContado: valor }),
+        ...(observacao.trim() === '' ? {} : { observacao: observacao.trim() }),
+      });
+      definirGravado(fechado);
+      definirHistorico((antes) => [fechado, ...antes.filter((um) => um.dia !== fechado.dia)]);
+      toast(`Caixa de ${dataBr(fechado.dia)} fechado`);
+    } catch (erro) {
+      definirRecusa(mensagemDoErro(erro));
+    } finally {
+      definirFechando(false);
+    }
+  }
 
   return (
     <CascaDaLoja
@@ -44,9 +174,11 @@ export function FechamentoDoDia() {
       <section className="panel prod-panel">
         <div className="table-title">
           <div>
-            <h2>Caixa de {dia.split('-').reverse().join('/')}</h2>
+            <h2>Caixa de {dataBr(dia)}</h2>
             <p className="admin-muted">
-              Relatório do dia, somado dos pedidos. Confira e imprima no fim do expediente.
+              {gravado === null
+                ? 'Soma ao vivo dos pedidos do dia. Feche o caixa no fim do expediente.'
+                : `Fechado em ${new Date(gravado.fechadoEm).toLocaleString('pt-BR')}. Estes são os números gravados.`}
             </p>
           </div>
           <div className="pedido-campo">
@@ -59,9 +191,21 @@ export function FechamentoDoDia() {
                 onChange={(evento) => definirDia(evento.target.value || hojeLocal())}
               />
             )}
-            <button type="button" className="btn btn-light" onClick={recarregar}>
+            <button
+              type="button"
+              className="btn btn-light"
+              onClick={() => {
+                recarregar();
+                carregarCaixa();
+              }}
+            >
               <span className="material-symbols-outlined">refresh</span>Atualizar
             </button>
+            {gravado !== null && (
+              <button type="button" className="btn btn-light" onClick={() => baixarCsv(gravado)}>
+                <span className="material-symbols-outlined">download</span>Exportar CSV
+              </button>
+            )}
             <button type="button" className="btn btn-primary" onClick={() => window.print()}>
               <span className="material-symbols-outlined">print</span>Imprimir
             </button>
@@ -72,16 +216,24 @@ export function FechamentoDoDia() {
             {falha}
           </p>
         )}
-        {abertos > 0 && (
+        {gravado !== null && (
           <p className="prod-nota" role="status">
-            Ainda há {abertos} {abertos === 1 ? 'pedido em andamento' : 'pedidos em andamento'}: o
-            fechamento só soma o que foi concluído.
+            <b>Caixa fechado.</b> Os pedidos deste dia não mudam mais.
+            {gravado.diferencaDeCaixa !== null &&
+              ` Conferência: contado ${dinheiro(gravado.dinheiroContado ?? 0)}, ${
+                gravado.diferencaDeCaixa === 0
+                  ? 'sem diferença'
+                  : gravado.diferencaDeCaixa > 0
+                    ? `sobra de ${dinheiro(gravado.diferencaDeCaixa)}`
+                    : `falta de ${dinheiro(-gravado.diferencaDeCaixa)}`
+              }.`}
+            {gravado.observacao !== null && ` Observação: ${gravado.observacao}`}
           </p>
         )}
-        {semRegistro > 0 && (
+        {gravado === null && abertos > 0 && (
           <p className="prod-nota" role="status">
-            {semRegistro} {semRegistro === 1 ? 'pedido concluído' : 'pedidos concluídos'} sem o
-            pagamento registrado — entram pela forma que o cliente declarou.
+            Ainda há {abertos} {abertos === 1 ? 'pedido em andamento' : 'pedidos em andamento'}:
+            conclua ou cancele antes de fechar o caixa.
           </p>
         )}
 
@@ -93,8 +245,8 @@ export function FechamentoDoDia() {
                 <span className="material-symbols-outlined">payments</span>
               </div>
             </div>
-            <strong>{dinheiro(resumo.vendas)}</strong>
-            <small>{resumo.concluidos} pedidos concluídos</small>
+            <strong>{dinheiro(quadro.vendas)}</strong>
+            <small>{quadro.concluidos} pedidos concluídos</small>
           </div>
           {(['PIX', 'CARTAO', 'DINHEIRO'] as const).map((forma) => (
             <div className="stat" key={forma}>
@@ -110,7 +262,7 @@ export function FechamentoDoDia() {
                   </span>
                 </div>
               </div>
-              <strong>{dinheiro(resumo.porForma[forma])}</strong>
+              <strong>{dinheiro(quadro.porForma[forma])}</strong>
               <small>
                 {forma === 'DINHEIRO' ? 'No caixa e com os entregadores' : 'Na conta da loja'}
               </small>
@@ -118,9 +270,54 @@ export function FechamentoDoDia() {
           ))}
         </section>
         <p className="admin-muted">
-          {resumo.cancelados} cancelados · {dinheiro(resumo.taxas)} em taxas de entrega · ticket
-          médio {dinheiro(resumo.ticketMedio)}
+          {quadro.cancelados} cancelados · {dinheiro(quadro.taxas)} em taxas de entrega · ticket
+          médio {dinheiro(quadro.ticketMedio)}
         </p>
+
+        {gravado === null && podeFechar && (
+          <form className="prod-form" noValidate onSubmit={(evento) => void fechar(evento)}>
+            <fieldset className="prod-grupo" disabled={fechando}>
+              <legend>Fechar o caixa</legend>
+              <div className="prod-linha">
+                <label className="prod-campo">
+                  Dinheiro contado no caixa (opcional)
+                  <input
+                    inputMode="decimal"
+                    placeholder="Ex.: 320,00"
+                    value={contado}
+                    onChange={(evento) => definirContado(evento.target.value)}
+                  />
+                </label>
+                <label className="prod-campo">
+                  Observação (opcional)
+                  <input
+                    maxLength={500}
+                    value={observacao}
+                    onChange={(evento) => definirObservacao(evento.target.value)}
+                  />
+                </label>
+              </div>
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={abertos > 0 || fechando}
+                aria-busy={fechando}
+              >
+                <span className="material-symbols-outlined">lock</span>
+                {fechando ? 'Fechando…' : `Fechar o caixa de ${dataBr(dia)}`}
+              </button>
+              <small className="prod-dica">
+                Depois de fechado, os pedidos deste dia não mudam mais e a loja não recebe pedido
+                novo neste dia.
+              </small>
+            </fieldset>
+            {recusa !== null && (
+              <p className="prod-msg erro" role="alert">
+                {recusa}
+              </p>
+            )}
+          </form>
+        )}
       </section>
 
       <section className="panel table-panel" id="entregadores">
@@ -184,6 +381,69 @@ export function FechamentoDoDia() {
           </table>
         </div>
       </section>
+
+      {podeVerHistorico && (
+        <section className="panel table-panel" id="historico">
+          <div className="table-title">
+            <div>
+              <h2>Caixas fechados</h2>
+              <p className="admin-muted">
+                Os fechamentos gravados, do mais recente ao mais antigo.
+              </p>
+            </div>
+          </div>
+          <div className="table-scroll">
+            <table className="orders-table">
+              <thead>
+                <tr>
+                  <th>Dia</th>
+                  <th>Pedidos</th>
+                  <th>Vendas</th>
+                  <th>Repasse</th>
+                  <th>Conferência</th>
+                  <th />
+                </tr>
+              </thead>
+              <tbody>
+                {historico.length === 0 ? (
+                  <tr>
+                    <td colSpan={6}>Nenhum caixa fechado ainda.</td>
+                  </tr>
+                ) : (
+                  historico.map((um) => (
+                    <tr key={um.id}>
+                      <td>
+                        <strong>{dataBr(um.dia)}</strong>
+                      </td>
+                      <td>{um.concluidos}</td>
+                      <td>{dinheiro(um.vendas)}</td>
+                      <td>{dinheiro(um.repasseTotal)}</td>
+                      <td>
+                        {um.diferencaDeCaixa === null
+                          ? 'Sem contagem'
+                          : um.diferencaDeCaixa === 0
+                            ? 'Sem diferença'
+                            : um.diferencaDeCaixa > 0
+                              ? `Sobra ${dinheiro(um.diferencaDeCaixa)}`
+                              : `Falta ${dinheiro(-um.diferencaDeCaixa)}`}
+                      </td>
+                      <td>
+                        <button
+                          type="button"
+                          className="btn btn-light"
+                          onClick={() => baixarCsv(um)}
+                        >
+                          <span className="material-symbols-outlined">download</span>CSV
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
       <footer className="footer">
         <b>Aki Delivery</b> © 2026 — Fechamento do dia
       </footer>

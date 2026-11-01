@@ -282,3 +282,49 @@ GET {{base}}/api/v1/storefront/{{loja}}/orders/settings
 
 ### 39. Com a loja fora do horário: o pedido é recusado (409, "a loja está fechada agora e abre …")
 # Para ver este 409, ponha um horário que não inclua agora e repita o passo 9.
+
+### ── CORRIGIR O PRODUTO E A FOTO (01/11/2026) ───────────────────────────
+
+### 40. Corrigir nome, preço e descrição (200) — publicado continua publicado
+PUT {{base}}/api/v1/merchants/{{loja}}/catalog/produtos/{{produto.response.body.id}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "categoriaId": "{{categoria.response.body.id}}", "nome": "Pizza margherita grande", "descricao": "Molho, mussarela e manjericão", "precoBase": 54.90 }
+
+### 41. Preço zero num produto publicado (400, "… está com preço zero e não vai ao cardápio…")
+PUT {{base}}/api/v1/merchants/{{loja}}/catalog/produtos/{{produto.response.body.id}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "categoriaId": "{{categoria.response.body.id}}", "nome": "Pizza", "precoBase": 0 }
+
+### 42. A foto (200; a resposta traz "imagem" com o caminho público). AQID = 3 bytes de exemplo.
+PUT {{base}}/api/v1/merchants/{{loja}}/catalog/produtos/{{produto.response.body.id}}/imagem
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "tipo": "image/png", "conteudo": "AQID" }
+
+### ── O CAIXA DO DIA (01/11/2026) ─────────────────────────────────────────
+
+### 43. Fechar o caixa de hoje, com a contagem (201; 409 se houver pedido em andamento)
+POST {{base}}/api/v1/merchants/{{loja}}/orders/closings
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "dinheiroContado": 100.00, "observacao": "teste" }
+
+### 44. O histórico (200)
+GET {{base}}/api/v1/merchants/{{loja}}/orders/closings
+Authorization: Bearer {{token}}
+
+### 45. Fechar de novo o mesmo dia (409, "o caixa deste dia já foi fechado…")
+POST {{base}}/api/v1/merchants/{{loja}}/orders/closings
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{}
+
+### 46. Depois de fechado, a vitrine não aceita pedido hoje (409, "a loja não está recebendo pedidos agora")
+# Repita o passo 9.

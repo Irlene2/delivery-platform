@@ -17,7 +17,11 @@ public enum PermissaoDoPedido {
     ALTERAR_STATUS,
     /** O entregador da equipe: vê e opera só as entregas dele. */
     VER_ENTREGA,
-    CONFIGURAR_LOJA;
+    CONFIGURAR_LOJA,
+    /** Ver o histórico dos fechamentos — leitura de vendas (ADR-077, emenda de 01/11/2026). */
+    VER_VENDAS,
+    /** Fechar o caixa do dia: mexe em dinheiro, como fechar jornada no {@code merchant}. */
+    GERENCIAR_JORNADA;
 
     public static Optional<PermissaoDoPedido> de(String nome) {
         if (nome == null || nome.isBlank()) {

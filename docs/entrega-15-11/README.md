@@ -34,9 +34,9 @@ O dashboard da loja mostra as vendas e os pedidos recentes do dia, a partir dos 
 | --- | --- |
 | `gateway` (8080) | Única porta do front. Libera sem token só a vitrine: o cardápio, a taxa, fazer o pedido e acompanhá-lo |
 | `identity` (8081) | Conta, login e token — do dono, da equipe e do entregador. O cliente da vitrine **não** tem conta |
-| `merchant` (8082) | A loja, o horário, a equipe e o convite. Responde ao `order` o que cada pessoa pode fazer na loja (`VER_PEDIDO`, `ALTERAR_STATUS`, `VER_ENTREGA`, `CONFIGURAR_LOJA`) |
-| `catalog` (8083) | Seções e produtos, publicação e disponibilidade; serve o **cardápio público** e o preço que o `order` congela no item |
-| `order` (8085) | **O único serviço novo.** O pedido e seus estados, a taxa da loja, o entregador e o pagamento registrado, as entregas de cada entregador |
+| `merchant` (8082) | A loja, o horário, a equipe e o convite. Responde ao `order` o que cada pessoa pode fazer na loja (`VER_PEDIDO`, `ALTERAR_STATUS`, `VER_ENTREGA`, `CONFIGURAR_LOJA`, `VER_VENDAS`, `GERENCIAR_JORNADA`) e se a loja está aberta agora |
+| `catalog` (8083) | Seções e produtos, publicação, disponibilidade, correção do cadastro e **foto**; serve o **cardápio público** e o preço que o `order` congela no item |
+| `order` (8085) | **O único serviço novo.** O pedido e seus estados, a taxa da loja, o entregador e o pagamento registrado, as entregas de cada entregador e o **caixa do dia** fechado e gravado. Pergunta ao `merchant` se a loja está aberta |
 
 `payment`, `delivery`, `settlement` e `conversation` continuam esqueleto: nesta entrega,
 pagamento na entrega e entregador são campos do pedido.
@@ -50,6 +50,7 @@ pagamento na entrega e entregador são campos do pedido.
 | 3 | Back-end: `order-service`, cardápio público no `catalog`, rotas no `gateway`, perfil `pedidos` no Compose | ✅ testes de unidade verdes; pilha de pé no Docker Desktop |
 | 4 | Front ligado ao `order`: vitrine, checkout, acompanhamento, painel de pedidos, dashboard com dados reais, entregador com conta, fechamento do dia, configurações | ✅ passagem humana até o pedido entregue; o entregador e o fechamento ainda esperam a passagem humana |
 | 5 | WhatsApp: a resposta automática do WhatsApp Business com o link do cardápio, e o aviso ao cliente pelo `wa.me` | ⏳ |
+| 4b | O pacote até o marco 6 (01/11/2026): loja fechada não recebe pedido, corrigir produto, foto do produto, sessão de 12 horas, código do cadastro na tela (local), caixa do dia gravado | ✅ testes de unidade e de tela; espera os testes do Gradle e a passagem humana |
 | 6 | Testes que faltam (contrato e integração do `order`), passagem completa no navegador, ensaio da demonstração e vídeo de reserva | ⏳ |
 
 Pendente fora das etapas: a aprovação da ADR-077 pelo grupo. O que foi assumido como dívida

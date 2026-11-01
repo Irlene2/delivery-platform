@@ -76,6 +76,14 @@ em [`docs/entrega-15-11/pedido.md`](../../entrega-15-11/pedido.md).
   ela, o identificador que não é de loja passa a ter resposta própria (**404**) — o gatilho que
   o `pedido.md` §2.1 deixou para o cardápio vazio.
 
+- **01/11/2026 — o pacote até o marco 6.** Corrigir o cadastro de produto (`PUT` do produto no
+  `catalog`, com C1 e C2 valendo para o publicado); **a foto do produto** numa coleção própria do
+  MongoDB do `catalog`, servida por rota pública, e não no MinIO do `catalogo.md` §9 — sem
+  serviço novo até a entrega; **o caixa do dia apurado e gravado no `order`**, e não no
+  `settlement` que o PRD desenha — o `order` já tem os pedidos, e montar outro serviço do zero não
+  cabe até 15/11. As emendas da ADR-037 (sessão de 12 horas) e da ADR-042 (o código na tela, só
+  com a bandeira de desenvolvimento) são da mesma rodada.
+
 ## Alternativas consideradas
 
 - **A ADR-075 completa antes de 15/11.** Recusada pelo prazo.

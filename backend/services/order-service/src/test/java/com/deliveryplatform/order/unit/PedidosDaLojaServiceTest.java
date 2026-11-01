@@ -43,13 +43,15 @@ class PedidosDaLojaServiceTest {
     final Autorizador autorizador = new Autorizador(merchant, pedidos);
 
     final Dubles.Entregadores entregadores = new Dubles.Entregadores();
+    final Dubles.Fechamentos fechamentos = new Dubles.Fechamentos();
     final PedidosDaLojaService servico = new PedidosDaLojaService(autorizador, pedidos,
-            entregadores, relogio, "America/Sao_Paulo");
+            entregadores, relogio, "America/Sao_Paulo", Dubles.trava(fechamentos, relogio));
 
     Pedido umPedido() {
         var cardapio = new Dubles.Cardapio()
                 .com(new ProdutoDoCardapio(PIZZA, "Pizza", Money.de("40"), true));
-        return new FazerPedidoService(new Dubles.Lojas(), cardapio, configuracoes, pedidos, relogio).fazer(LOJA,
+        return new FazerPedidoService(new Dubles.Lojas(), cardapio, configuracoes, pedidos, relogio,
+                Dubles.trava(fechamentos, relogio)).fazer(LOJA,
                 new Solicitacao("Maria", "21999990000", Modalidade.RETIRADA, null,
                         List.of(new ItemSolicitado(PIZZA, 1, null)), FormaDePagamento.PIX, null));
     }
@@ -120,7 +122,8 @@ class PedidosDaLojaServiceTest {
     @DisplayName("a configuração pública não pede token; a do painel pede CONFIGURAR_LOJA")
     void configuracao() {
         var lojas = new Dubles.Lojas();
-        var config = new ConfiguracaoDePedidosService(autorizador, configuracoes, lojas);
+        var config = new ConfiguracaoDePedidosService(autorizador, configuracoes, lojas,
+                Dubles.trava(fechamentos, relogio));
 
         assertThat(config.daLoja(LOJA).getTaxaDeEntrega()).isEqualTo(Money.ZERO);
         assertThatThrownBy(() -> config.definir(LOJA, Money.de("5"), true, true))
@@ -137,7 +140,8 @@ class PedidosDaLojaServiceTest {
     @DisplayName("a vitrine diz se a loja está aberta; sem o merchant, abre com 'aberta' nula")
     void vitrine() {
         var lojas = new Dubles.Lojas();
-        var config = new ConfiguracaoDePedidosService(autorizador, configuracoes, lojas);
+        var config = new ConfiguracaoDePedidosService(autorizador, configuracoes, lojas,
+                Dubles.trava(fechamentos, relogio));
         Instant abre = Instant.parse("2026-11-05T21:00:00Z");
 
         lojas.situacao = SituacaoDaLojaPort.SituacaoDaLoja.fechada(abre);

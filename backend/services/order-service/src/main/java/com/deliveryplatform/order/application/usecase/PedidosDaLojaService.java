@@ -48,15 +48,18 @@ public class PedidosDaLojaService implements ListarPedidos, ConsultarPedido, Ope
     private final EntregadorRepositorio entregadores;
     private final Clock relogio;
     private final ZoneId fuso;
+    private final TravaDoDia trava;
 
     public PedidosDaLojaService(Autorizador autorizador, PedidoRepositorio pedidos,
                                 EntregadorRepositorio entregadores, Clock relogio,
-                                @Value("${delivery.pedidos.fuso:America/Sao_Paulo}") String fuso) {
+                                @Value("${delivery.pedidos.fuso:America/Sao_Paulo}") String fuso,
+                                TravaDoDia trava) {
         this.autorizador = autorizador;
         this.pedidos = pedidos;
         this.entregadores = entregadores;
         this.relogio = relogio;
         this.fuso = ZoneId.of(fuso);
+        this.trava = trava;
     }
 
     @Override
@@ -89,6 +92,7 @@ public class PedidosDaLojaService implements ListarPedidos, ConsultarPedido, Ope
                                      String nome) {
         Pedido pedido = autorizador.pedidoDaLoja(
                 estabelecimentoId, pedidoId, PermissaoDoPedido.ALTERAR_STATUS);
+        trava.exigirAberto(pedido);
         if (usuarioId == null) {
             pedido.informarEntregador(nome, Instant.now(relogio));
         } else {
@@ -111,6 +115,7 @@ public class PedidosDaLojaService implements ListarPedidos, ConsultarPedido, Ope
     private Pedido operar(UUID estabelecimentoId, UUID pedidoId, Consumer<Pedido> ato) {
         Pedido pedido = autorizador.pedidoDaLoja(
                 estabelecimentoId, pedidoId, PermissaoDoPedido.ALTERAR_STATUS);
+        trava.exigirAberto(pedido);
         ato.accept(pedido);
         return pedidos.salvar(pedido);
     }

@@ -176,9 +176,23 @@ ou `{ "nome": "…" }` (o entregador avulso, sem conta). Entrega que não está 
 31/10/2026). O dinheiro que ele recebeu na porta é da loja, e o acerto é a diferença:
 `acerto = dinheiro recebido − repasse` (positivo: ele devolve à loja; negativo: a loja paga).
 
-Para 15/11 o fechamento é um **relatório** calculado na tela a partir dos pedidos do dia (caixa
-por forma de pagamento e acerto por entregador), com impressão. Fechar o caixa com registro,
-conferência e histórico é o marco 6 (`settlement`).
+**Desde 01/11/2026 o caixa do dia é fechado e gravado no `order`** (`FechamentoDoDia`, migration
+V3). O servidor apura tudo a partir dos pedidos do dia — o navegador manda só o dia e, se quiser,
+o dinheiro contado e uma observação:
+
+| Rota | Permissão | O que faz |
+| --- | --- | --- |
+| `POST /api/v1/merchants/{id}/orders/closings` | `GERENCIAR_JORNADA` | `{ "dia": "2026-11-05", "dinheiroContado": 320.00, "observacao": "…" }` → **201** com o fechamento |
+| `GET /api/v1/merchants/{id}/orders/closings` | `VER_VENDAS` | o histórico, do mais recente ao mais antigo |
+| `GET /api/v1/merchants/{id}/orders/closings/{dia}` | `VER_VENDAS` | o fechamento de um dia; **404** se ainda não fechou |
+
+- **Não fecha com pedido em andamento** (409, *"há 2 pedidos do dia em andamento; conclua ou
+  cancele antes de fechar o caixa"*), nem duas vezes o mesmo dia (409), nem dia futuro (400).
+- **A conferência é opcional:** `diferencaDeCaixa = dinheiro contado − vendas em dinheiro`, só
+  registrada, sem bloquear.
+- **Depois de fechado, o dia não muda:** os pedidos daquele dia não avançam, não trocam de
+  entregador e não registram pagamento (409), e a vitrine não aceita pedido novo naquele dia.
+- A tela exporta o fechamento em CSV (separador `;`, vírgula decimal).
 
 ## 4. Estados
 

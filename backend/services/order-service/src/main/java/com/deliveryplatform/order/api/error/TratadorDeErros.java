@@ -2,6 +2,7 @@ package com.deliveryplatform.order.api.error;
 
 import com.deliveryplatform.order.application.exception.AcessoNegado;
 import com.deliveryplatform.order.application.exception.EntregadorForaDaEquipe;
+import com.deliveryplatform.order.application.exception.FechamentoNaoEncontrado;
 import com.deliveryplatform.order.application.exception.RecusaAoEntregador;
 import com.deliveryplatform.order.application.exception.ItemForaDoCardapio;
 import com.deliveryplatform.order.application.exception.LojaFechada;
@@ -9,6 +10,7 @@ import com.deliveryplatform.order.application.exception.PedidoNaoEncontrado;
 import com.deliveryplatform.order.application.port.out.AutorizacaoIndisponivel;
 import com.deliveryplatform.order.application.port.out.CardapioIndisponivel;
 import com.deliveryplatform.order.application.port.out.SituacaoIndisponivel;
+import com.deliveryplatform.order.domain.exception.FechamentoRecusado;
 import com.deliveryplatform.order.domain.exception.RegraDoPedidoViolada;
 import com.deliveryplatform.order.domain.exception.TransicaoInvalida;
 import com.deliveryplatform.order.domain.model.Modalidade;
@@ -69,6 +71,30 @@ public class TratadorDeErros {
                         + "; volte nesse horário para fazer o pedido")
                 .orElse("a loja não está recebendo pedidos agora");
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, frase);
+    }
+
+    /** O fechamento do caixa (ADR-077, emenda de 01/11/2026). */
+    @ExceptionHandler(FechamentoRecusado.class)
+    public ProblemDetail fechamentoRecusado(FechamentoRecusado excecao) {
+        return switch (excecao.motivo()) {
+            case EM_ANDAMENTO -> ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT,
+                    (excecao.quantos() == 1 ? "há 1 pedido do dia em andamento"
+                            : "há " + excecao.quantos() + " pedidos do dia em andamento")
+                            + "; conclua ou cancele antes de fechar o caixa");
+            case JA_FECHADO -> ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT,
+                    "o caixa deste dia já foi fechado; veja o fechamento no histórico");
+            case DIA_FECHADO -> ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT,
+                    "o caixa do dia deste pedido já foi fechado; ele não pode mais mudar");
+            case DIA_FUTURO -> ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
+                    "não dá para fechar um dia que ainda não chegou");
+            case CONTAGEM_NEGATIVA -> ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
+                    "o dinheiro contado no caixa não pode ser negativo");
+        };
+    }
+
+    @ExceptionHandler(FechamentoNaoEncontrado.class)
+    public ProblemDetail fechamentoNaoEncontrado(FechamentoNaoEncontrado excecao) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, excecao.getMessage());
     }
 
     @ExceptionHandler(SituacaoIndisponivel.class)

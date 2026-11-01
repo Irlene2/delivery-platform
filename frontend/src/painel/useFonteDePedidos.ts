@@ -6,6 +6,7 @@ import {
   pedidosDoServidor,
   type FonteDePedidos,
 } from '../pedido/fontes';
+import { caixaDaDemonstracao, caixaDoServidor, type FonteDoCaixa } from '../pedido/caixa';
 
 /** Os pedidos da loja da URL: do servidor, com o token da sessão, ou da demonstração. */
 export function useFonteDePedidos(estabelecimentoId: string): FonteDePedidos {
@@ -27,4 +28,13 @@ export function linkDoCardapio(estabelecimentoId: string): string {
 /** O link do acompanhamento, para a mensagem do WhatsApp. */
 export function linkDoAcompanhamento(codigo: string): string {
   return `${window.location.origin}/pedido/${codigo}`;
+}
+
+/** O caixa do dia da loja da URL: do servidor ou da demonstração. */
+export function useFonteDoCaixa(estabelecimentoId: string): FonteDoCaixa {
+  const token = useSessao().sessao?.token ?? '';
+  return useMemo(
+    () => (emDemonstracao() ? caixaDaDemonstracao() : caixaDoServidor(estabelecimentoId, token)),
+    [estabelecimentoId, token],
+  );
 }

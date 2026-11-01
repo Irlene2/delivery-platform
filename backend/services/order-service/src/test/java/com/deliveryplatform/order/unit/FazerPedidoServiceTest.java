@@ -43,8 +43,11 @@ class FazerPedidoServiceTest {
 
     final Dubles.Lojas lojas = new Dubles.Lojas();
 
+    final Dubles.Fechamentos fechamentos = new Dubles.Fechamentos();
+
     final FazerPedidoService servico = new FazerPedidoService(lojas, cardapio, configuracoes,
-            pedidos, Clock.fixed(AGORA, ZoneOffset.UTC));
+            pedidos, Clock.fixed(AGORA, ZoneOffset.UTC),
+            Dubles.trava(fechamentos, Clock.fixed(AGORA, ZoneOffset.UTC)));
 
     static Solicitacao entrega(UUID produto, int quantidade) {
         return new Solicitacao("Maria", "21999990000", Modalidade.ENTREGA,

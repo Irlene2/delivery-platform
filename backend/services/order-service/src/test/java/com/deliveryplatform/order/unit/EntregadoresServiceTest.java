@@ -42,10 +42,11 @@ class EntregadoresServiceTest {
     final Dubles.Merchant merchant = new Dubles.Merchant();
     final Clock relogio = Clock.fixed(AGORA, ZoneOffset.UTC);
     final Autorizador autorizador = new Autorizador(merchant, pedidos);
-    final EntregadoresService entregador =
-            new EntregadoresService(autorizador, cadastro, pedidos, relogio, "America/Sao_Paulo");
-    final PedidosDaLojaService loja =
-            new PedidosDaLojaService(autorizador, pedidos, cadastro, relogio, "America/Sao_Paulo");
+    final Dubles.Fechamentos fechamentos = new Dubles.Fechamentos();
+    final EntregadoresService entregador = new EntregadoresService(autorizador, cadastro, pedidos,
+            relogio, "America/Sao_Paulo", Dubles.trava(fechamentos, relogio));
+    final PedidosDaLojaService loja = new PedidosDaLojaService(autorizador, pedidos, cadastro,
+            relogio, "America/Sao_Paulo", Dubles.trava(fechamentos, relogio));
 
     /** Um pedido de entrega, pronto, de R$ 45,00 (40 + 5 de taxa). */
     Pedido prontoParaSair() {
@@ -54,7 +55,8 @@ class EntregadoresServiceTest {
         var configuracoes = new Dubles.Configuracoes();
         configuracoes.salvar(com.deliveryplatform.order.domain.model.ConfiguracaoDePedidos
                 .reconstituir(LOJA, Money.de("5"), true, true));
-        Pedido pedido = new FazerPedidoService(new Dubles.Lojas(), cardapio, configuracoes, pedidos, relogio).fazer(LOJA,
+        Pedido pedido = new FazerPedidoService(new Dubles.Lojas(), cardapio, configuracoes, pedidos, relogio,
+                Dubles.trava(fechamentos, relogio)).fazer(LOJA,
                 new Solicitacao("Maria", "21999990000", Modalidade.ENTREGA,
                         new EnderecoInformado("Rua A, 1", "Centro", null),
                         List.of(new ItemSolicitado(PIZZA, 1, null)), FormaDePagamento.DINHEIRO, null));

@@ -52,15 +52,18 @@ public class EntregadoresService implements EntregadoresDaLoja, MinhasEntregas {
     private final PedidoRepositorio pedidos;
     private final Clock relogio;
     private final ZoneId fuso;
+    private final TravaDoDia trava;
 
     public EntregadoresService(Autorizador autorizador, EntregadorRepositorio entregadores,
                                PedidoRepositorio pedidos, Clock relogio,
-                               @Value("${delivery.pedidos.fuso:America/Sao_Paulo}") String fuso) {
+                               @Value("${delivery.pedidos.fuso:America/Sao_Paulo}") String fuso,
+                               TravaDoDia trava) {
         this.autorizador = autorizador;
         this.entregadores = entregadores;
         this.pedidos = pedidos;
         this.relogio = relogio;
         this.fuso = ZoneId.of(fuso);
+        this.trava = trava;
     }
 
     @Override
@@ -101,6 +104,7 @@ public class EntregadoresService implements EntregadoresDaLoja, MinhasEntregas {
             throw new RecusaAoEntregador(RecusaAoEntregador.Motivo.STATUS);
         }
         Pedido pedido = minha(estabelecimentoId, pedidoId);
+        trava.exigirAberto(pedido);
         pedido.avancarPara(destino, null, Instant.now(relogio));
         return pedidos.salvar(pedido);
     }
@@ -113,6 +117,7 @@ public class EntregadoresService implements EntregadoresDaLoja, MinhasEntregas {
             throw new RecusaAoEntregador(RecusaAoEntregador.Motivo.PIX);
         }
         Pedido pedido = minha(estabelecimentoId, pedidoId);
+        trava.exigirAberto(pedido);
         pedido.registrarPagamento(forma, valorRecebido, false, Instant.now(relogio));
         return pedidos.salvar(pedido);
     }

@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -46,6 +47,7 @@ import java.util.UUID;
 public class FazerPedidoService implements FazerPedido {
 
     private final SituacaoDaLojaPort situacoes;
+    private final TravaDoDia trava;
     private final CardapioPort cardapio;
     private final ConfiguracaoDePedidosRepositorio configuracoes;
     private final PedidoRepositorio pedidos;
@@ -53,8 +55,9 @@ public class FazerPedidoService implements FazerPedido {
 
     public FazerPedidoService(SituacaoDaLojaPort situacoes, CardapioPort cardapio,
                               ConfiguracaoDePedidosRepositorio configuracoes,
-                              PedidoRepositorio pedidos, Clock relogio) {
+                              PedidoRepositorio pedidos, Clock relogio, TravaDoDia trava) {
         this.situacoes = situacoes;
+        this.trava = trava;
         this.cardapio = cardapio;
         this.configuracoes = configuracoes;
         this.pedidos = pedidos;
@@ -81,6 +84,10 @@ public class FazerPedidoService implements FazerPedido {
         SituacaoDaLojaPort.SituacaoDaLoja situacao = situacoes.daLoja(estabelecimentoId);
         if (!situacao.aberta()) {
             throw new LojaFechada(situacao.proximaAbertura());
+        }
+        // O caixa de hoje já foi fechado: a loja encerrou o dia (ADR-077, emenda de 01/11/2026).
+        if (trava.hojeFechado(estabelecimentoId)) {
+            throw new LojaFechada(Optional.empty());
         }
 
         ConfiguracaoDePedidos configuracao = configuracoes.daLoja(estabelecimentoId)

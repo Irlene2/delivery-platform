@@ -95,7 +95,9 @@ Pré-requisitos, uma vez:
 - `.env` na raiz, copiado do `.env.example` e **preenchido** — copiar não basta: um `.env`
   com os valores vazios sobe o `postgres` sem senha, e ele fica `unhealthy`. Invente as
   senhas (são só da sua máquina); `JWT_ISSUER` e `JWT_AUDIENCE` vazios usam o padrão do
-  `docker-compose.yml`; `DELIVERY_DOCS_ABERTAS=true` se quiser o Swagger. **O `.env` é
+  `docker-compose.yml`; `DELIVERY_DOCS_ABERTAS=true` se quiser o Swagger;
+  `DELIVERY_CODIGO_NA_TELA=true` para o código do cadastro aparecer na própria tela (só local
+  e na demonstração — ADR-042 emendada). **O `.env` é
   gitignorado e nunca entra em relatório, em commit nem em conversa.**
 
 ---

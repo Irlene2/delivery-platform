@@ -23,13 +23,15 @@ public class ConfiguracaoDePedidosService implements ConfigurarPedidos, Consulta
     private final Autorizador autorizador;
     private final ConfiguracaoDePedidosRepositorio configuracoes;
     private final SituacaoDaLojaPort situacoes;
+    private final TravaDoDia trava;
 
     public ConfiguracaoDePedidosService(Autorizador autorizador,
                                         ConfiguracaoDePedidosRepositorio configuracoes,
-                                        SituacaoDaLojaPort situacoes) {
+                                        SituacaoDaLojaPort situacoes, TravaDoDia trava) {
         this.autorizador = autorizador;
         this.configuracoes = configuracoes;
         this.situacoes = situacoes;
+        this.trava = trava;
     }
 
     /**
@@ -39,6 +41,10 @@ public class ConfiguracaoDePedidosService implements ConfigurarPedidos, Consulta
     @Override
     public Vitrine vitrine(UUID estabelecimentoId) {
         ConfiguracaoDePedidos configuracao = daLoja(estabelecimentoId);
+        // O caixa de hoje já fechou: a loja encerrou o dia, e a vitrine diz isso antes do pedido.
+        if (trava.hojeFechado(estabelecimentoId)) {
+            return new Vitrine(configuracao, false, null);
+        }
         try {
             SituacaoDaLojaPort.SituacaoDaLoja s = situacoes.daLoja(estabelecimentoId);
             return new Vitrine(configuracao, s.aberta(), s.proximaAbertura().orElse(null));

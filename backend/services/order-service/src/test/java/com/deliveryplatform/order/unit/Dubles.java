@@ -6,6 +6,7 @@ import com.deliveryplatform.order.application.port.out.CardapioPort;
 import com.deliveryplatform.order.application.port.out.ConfiguracaoDePedidosRepositorio;
 import com.deliveryplatform.order.application.port.out.ContextoDeAcesso;
 import com.deliveryplatform.order.application.port.out.EntregadorRepositorio;
+import com.deliveryplatform.order.application.port.out.FechamentoRepositorio;
 import com.deliveryplatform.order.application.port.out.PedidoRepositorio;
 import com.deliveryplatform.order.application.port.out.PermissaoDoPedido;
 import com.deliveryplatform.order.application.port.out.ProdutoDoCardapio;
@@ -13,6 +14,7 @@ import com.deliveryplatform.order.application.port.out.SituacaoDaLojaPort;
 import com.deliveryplatform.order.application.port.out.SituacaoIndisponivel;
 import com.deliveryplatform.order.domain.model.ConfiguracaoDePedidos;
 import com.deliveryplatform.order.domain.model.EntregadorDaLoja;
+import com.deliveryplatform.order.domain.model.FechamentoDoDia;
 import com.deliveryplatform.order.domain.model.Pedido;
 import com.deliveryplatform.order.domain.model.StatusDoPedido;
 
@@ -119,6 +121,43 @@ final class Dubles {
             }
             return Map.copyOf(publicados);
         }
+    }
+
+    /** Os fechamentos do dia, por loja e dia. */
+    static final class Fechamentos implements FechamentoRepositorio {
+        final Map<String, FechamentoDoDia> gravados = new LinkedHashMap<>();
+
+        @Override
+        public FechamentoDoDia salvar(FechamentoDoDia f) {
+            gravados.put(f.getEstabelecimentoId() + "/" + f.getDia(), f);
+            return f;
+        }
+
+        @Override
+        public Optional<FechamentoDoDia> doDia(UUID loja, java.time.LocalDate dia) {
+            return Optional.ofNullable(gravados.get(loja + "/" + dia));
+        }
+
+        @Override
+        public boolean existe(UUID loja, java.time.LocalDate dia) {
+            return gravados.containsKey(loja + "/" + dia);
+        }
+
+        @Override
+        public List<FechamentoDoDia> recentes(UUID loja, int limite) {
+            return gravados.values().stream()
+                    .filter(f -> f.getEstabelecimentoId().equals(loja))
+                    .sorted(Comparator.comparing(FechamentoDoDia::getDia).reversed())
+                    .limit(limite)
+                    .toList();
+        }
+    }
+
+    /** A trava do dia sobre os fechamentos dados, no fuso das lojas da demonstração. */
+    static com.deliveryplatform.order.application.usecase.TravaDoDia trava(
+            Fechamentos fechamentos, java.time.Clock relogio) {
+        return new com.deliveryplatform.order.application.usecase.TravaDoDia(
+                fechamentos, relogio, "America/Sao_Paulo");
     }
 
     /** A loja aberta, salvo quando o teste diz outra coisa. */

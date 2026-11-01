@@ -1,4 +1,4 @@
-import { chamar } from './cliente';
+import { chamar, ErroDaApi } from './cliente';
 
 /**
  * O pedido da entrega de 15/11 (ADR-077, `docs/entrega-15-11/pedido.md`).
@@ -301,4 +301,79 @@ export function definirConfiguracao(
     corpo: configuracao,
     token,
   });
+}
+
+// ─────────────── o caixa do dia (ADR-077, emenda de 01/11/2026) ───────────────
+
+/** O acerto de um entregador no fechamento. `acerto` positivo: ele devolve à loja. */
+export interface AcertoGravado {
+  readonly entregadorId: string | null;
+  readonly nome: string;
+  readonly entregas: number;
+  readonly repasse: number;
+  readonly dinheiro: number;
+  readonly cartao: number;
+  readonly acerto: number;
+}
+
+/** O caixa fechado, como o servidor o apurou e gravou. */
+export interface FechamentoGravado {
+  readonly id: string;
+  readonly dia: string;
+  readonly fechadoEm: string;
+  readonly pedidos: number;
+  readonly concluidos: number;
+  readonly cancelados: number;
+  readonly vendas: number;
+  readonly taxas: number;
+  readonly dinheiro: number;
+  readonly cartao: number;
+  readonly pix: number;
+  readonly dinheiroContado: number | null;
+  readonly diferencaDeCaixa: number | null;
+  readonly repasseTotal: number;
+  readonly observacao: string | null;
+  readonly acertos: readonly AcertoGravado[];
+}
+
+/** Fechar: **nenhum total vai daqui** — o servidor apura o dia a partir dos pedidos. */
+export interface NovoFechamento {
+  readonly dia: string;
+  readonly dinheiroContado?: number;
+  readonly observacao?: string;
+}
+
+export function fecharCaixa(
+  estabelecimentoId: string,
+  corpo: NovoFechamento,
+  token: string,
+): Promise<FechamentoGravado> {
+  return chamar<FechamentoGravado>(`${doPainel(estabelecimentoId)}/closings`, {
+    metodo: 'POST',
+    corpo,
+    token,
+  });
+}
+
+/** O fechamento do dia, ou `null` se ainda não foi fechado. */
+export async function lerFechamento(
+  estabelecimentoId: string,
+  dia: string,
+  token: string,
+): Promise<FechamentoGravado | null> {
+  try {
+    return await chamar<FechamentoGravado>(`${doPainel(estabelecimentoId)}/closings/${dia}`, {
+      token,
+    });
+  } catch (erro) {
+    if (erro instanceof ErroDaApi && erro.status === 404) return null;
+    throw erro;
+  }
+}
+
+export function historicoDeFechamentos(
+  estabelecimentoId: string,
+  token: string,
+): Promise<FechamentoGravado[]> {
+  return chamar<FechamentoGravado[]>(`${doPainel(estabelecimentoId)}/closings`, { token });
 }

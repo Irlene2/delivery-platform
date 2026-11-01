@@ -256,11 +256,13 @@ sem.
 | O `order` não tem teste de integração com banco de verdade (Testcontainers) — a numeração por loja (`INSERT … ON CONFLICT`) e a migration V2 só são exercidas subindo a pilha | idem |
 | Os tipos do pedido no front são escritos à mão (`frontend/src/api/pedidos.ts`), porque não há contrato do que gerar | consequência da primeira linha |
 | ~~`npm run tipos:conferir` sempre acusa diferença~~ — **paga em 31/10/2026:** o `npm run tipos` agora formata com o Prettier. O `--ignore-path=../.gitignore` é obrigatório: o `.prettierignore` do front exclui `src/api/generated/`, e sem ele o Prettier pula a pasta sem avisar | o CI do front vermelho no primeiro push ao repositório pessoal |
-| O fechamento do dia é relatório na tela, não é gravado: não há caixa fechado, conferência nem histórico | ADR-077, decisões de 31/10; o marco 6 o resolve |
+| ~~O fechamento do dia é relatório na tela, não é gravado~~ — **pago em 01/11/2026:** o `order` apura e grava (`FechamentoDoDia`, V3). Fica a dívida de onde ele mora: o PRD põe o fechamento no `settlement`, e ele está no `order` | ADR-077, emenda de 01/11/2026 |
 | O nome do entregador mora no `order`, porque a equipe do `merchant` não guarda nome — é uma segunda verdade sobre a pessoa | ADR-077, decisão de 31/10; gatilho: a rota do usuário do token (`premissas-do-front.md` §6) |
 | O fuso do "dia" dos pedidos é fixo por configuração (`delivery.pedidos.fuso`), e não o da loja | `PedidosDaLojaService` |
 | Entrar com Google ou Apple: os botões estão na tela de entrada, sem serviço que os atenda | passagem humana de 30/10/2026 |
-| O produto não tem foto nem selo guardados — a tela mostra o ícone padrão | `frontend/README.md` |
+| ~~O produto não tem foto~~ — **paga em 01/11/2026**, numa coleção própria do MongoDB do `catalog`, e não no MinIO que o `catalogo.md` §9 prevê. O selo continua só na demonstração | ADR-077, emenda de 01/11/2026 |
+| O código de verificação do cadastro aparece na tela com a bandeira `DELIVERY_CODIGO_NA_TELA`; não há canal que o entregue | ADR-042, emenda de 01/11/2026 |
+| O token vale 12 horas, sem refresh | ADR-037, emenda da §3 |
 | O aviso ao cliente é o link `wa.me` que o atendente toca; não há mensagem automática | ADR-077 §4; a ADR-075 o resolve |
 | As rotas públicas do `identity` (cadastro, código, login, JWKS) não declaram `security: []` no contrato, e o `redocly.yaml` rebaixou `security-defined` a aviso para o workflow `contracts` passar | medido em 31/10/2026; gatilho: a primeira rodada que mexer no `identity` — declara, regenera o contrato e volta a regra a `error` |
 
