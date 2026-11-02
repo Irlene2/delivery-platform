@@ -46,7 +46,7 @@ sem saber direito quanto vendeu e quanto o entregador tem a acertar.
 
 | Para quem | O que já funciona |
 |---|---|
-| **Dono / administrador** | Cadastro da conta e de uma ou mais lojas, com o passo a passo inicial · cardápio com seções, foto, descrição, opções e publicação · estoque do dia com busca e filtros · horário e loja fechada · equipe com convite e permissões · pedidos do dia, despacho e mensagem pronta para o WhatsApp · sino de notificações · conferência do Pix · dashboard de vendas · fechamento do caixa com histórico, período e CSV · link do cardápio |
+| **Dono / administrador** | Cadastro da conta pelo telefone, recuperação de senha pelo código, e uma ou mais lojas, com o passo a passo inicial · cardápio com seções, foto, descrição, opções e publicação · estoque do dia com busca e filtros · horário e loja fechada · equipe com convite e permissões · pedidos do dia, despacho e mensagem pronta para o WhatsApp · sino de notificações · conferência do Pix · dashboard de vendas · fechamento do caixa com histórico, período e CSV · link do cardápio |
 | **Colaborador** | O painel com o que a permissão dele deixa: pedidos, cardápio, estoque |
 | **Entregador** | Conta própria, "minhas entregas", saída, entrega e registro do recebimento (dinheiro, cartão ou Pix) |
 | **Cliente** | Cardápio pelo link, sem conta · carrinho, entrega ou retirada, troco · acompanhamento do pedido |
@@ -138,7 +138,8 @@ cd frontend && npm ci && npm run dev       # http://localhost:5173
 **Loja de teste pronta:** com `DELIVERY_SEMEADURA=true` e uma senha em `DELIVERY_SEMEADURA_SENHA`,
 a subida grava a **"Pizzaria da Fixture"**, com 24 produtos, fotos e opções. Entre com
 `+5511999990001` e ajuste o Horário para o dia do teste. Para cadastrar contas novas sem SMS, no
-ambiente local, use `DELIVERY_CODIGO_NA_TELA=true`: o código aparece na tela. O passo a passo está
+ambiente local, use `DELIVERY_CODIGO_NA_TELA=true`: o código do cadastro e do "Esqueci minha
+senha" aparece na tela — só com contas de teste. O passo a passo está
 em [`docs/como-subir-local.md`](docs/como-subir-local.md).
 
 **Testes:**
@@ -188,7 +189,8 @@ entregador próprio, registra como cada pedido foi pago e fecha o caixa com extr
 - a hospedagem de teste e a resposta automática do WhatsApp Business com o link;
 - a aprovação da ADR-077 pelo grupo.
 
-**Para vender, depois:** o código de verificação por SMS ou WhatsApp, recuperar a senha, grupos de
+**Para vender, depois:** o código de verificação por SMS ou WhatsApp (serve ao cadastro e ao
+"Esqueci minha senha"), grupos de
 opções pelo painel, o aviso automático ao cliente, a hospedagem de produção (domínio, HTTPS e cópia
 de segurança), os termos de uso e a política de privacidade, e os marcos 7, 9, 10 e 11. As dívidas
 assumidas estão em [`docs/dividas.md`](docs/dividas.md).

@@ -78,8 +78,11 @@ sai do mesmo computador, e um serviço a mais é uma configuração a mais.
 
 - **Senhas de verdade no `.env`** da máquina exposta, e não as de exemplo. O `.env` nunca vai
   para o Git.
-- `DELIVERY_CODIGO_NA_TELA=true` **só** no teste: com ela, qualquer pessoa cria conta com
-  qualquer telefone.
+- `DELIVERY_CODIGO_NA_TELA=true` **só** no teste, e **só com contas de teste**: com ela, qualquer
+  pessoa cria conta com qualquer telefone **e troca a senha de qualquer conta** pelo "Esqueci
+  minha senha", porque o código aparece na tela. Com o endereço público aberto, quem souber um
+  telefone cadastrado entra na conta dele. Use números de teste, e desligue a bandeira assim que o
+  teste acabar.
 - Feche os túneis depois do teste. Endereço `trycloudflare.com` é público enquanto estiver
   aberto.
 

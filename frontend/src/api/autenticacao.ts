@@ -55,6 +55,27 @@ export async function pedirCodigo(telefone: string): Promise<string | null> {
   return resposta?.codigoDeDemonstracao ?? null;
 }
 
+/**
+ * Esqueci minha senha, passo 1 (02/11/2026): 202 sempre. O código só existe se o telefone tiver
+ * conta, e só volta na resposta com a bandeira de desenvolvimento do `identity`.
+ */
+export async function pedirCodigoDeRecuperacao(telefone: string): Promise<string | null> {
+  const resposta = await chamar<{ codigoDeDemonstracao?: string | null } | undefined>(
+    '/api/v1/auth/password-reset/code',
+    { metodo: 'POST', corpo: { telefone } },
+  );
+  return resposta?.codigoDeDemonstracao ?? null;
+}
+
+/** Passo 2: a senha nova, com o código. 204, ou 400 com a recusa única do código. */
+export async function redefinirSenha(dados: {
+  readonly telefone: string;
+  readonly codigo: string;
+  readonly novaSenha: string;
+}): Promise<void> {
+  await chamar<undefined>('/api/v1/auth/password-reset', { metodo: 'POST', corpo: dados });
+}
+
 /** 201 com o identificador do usuário criado. Não devolve token: o login é o passo seguinte. */
 export function cadastrar(dados: PedidoDeCadastro): Promise<RespostaDeCadastro> {
   return chamar<RespostaDeCadastro>('/api/v1/auth/signup', {

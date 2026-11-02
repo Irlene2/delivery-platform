@@ -54,6 +54,7 @@ pagamento registrado são campos do pedido. O pagamento é presencial e o produt
 | 5 | WhatsApp: a resposta automática do WhatsApp Business com o link do cardápio, e o aviso ao cliente pelo `wa.me` | ⏳ |
 | 4b | O pacote até o marco 6 (01/11/2026): loja fechada não recebe pedido, corrigir produto, foto do produto, sessão de 12 horas, código do cadastro na tela (local), caixa do dia gravado | ✅ testes de unidade e de tela; espera os testes do Gradle e a passagem humana |
 | 4c | A loja de teste (01/11/2026): a "Pizzaria da Fixture" com o cardápio do protótipo — 24 produtos, fotos e opções —, a tela de entrada sem o modo demonstração e a hospedagem de teste escrita | ✅ testes de unidade; o cardápio conferido no navegador em 02/11 |
+| 4e | A segunda leva de 02/11/2026: a foto de cada item no acompanhamento do pedido, o "Esqueci minha senha" pelo código de verificação e a entrada só pelo telefone, sem Google e Apple | ✅ testes de unidade e de tela; espera os testes do Gradle e a passagem humana |
 | 4d | Os ajustes da passagem de 02/11/2026: o sino de notificações, o Pix informado pelo entregador e conferido pela loja, a busca e os filtros do estoque, as vendas por período no fechamento, o menu da loja em "Minhas lojas", a conta nova levada ao "Cadastrar minha loja" e as fotos no painel | ✅ testes de unidade e de tela; espera os testes do Gradle e a passagem humana |
 | 6 | Testes que faltam (contrato e integração do `order`), passagem completa no navegador, ensaio da demonstração e vídeo de reserva | ⏳ |
 
@@ -97,7 +98,7 @@ colaborar"*).
 | # | Tarefa | Por quê | Esforço | Quem |
 | --- | --- | --- | --- | --- |
 | 1 | Rodar os testes do Gradle numa máquina com folga de memória, um serviço por vez (`--max-workers=1`) | Ainda não houve uma rodada inteira verde com o Testcontainers | P | |
-| 2 | Regenerar os contratos do `merchant`, `catalog` e `identity` (`-Dopenapi.atualizar=true`) e os tipos do front (`npm run tipos`) | As rotas novas de 01/11 ainda não estão no contrato | P | |
+| 2 | Regenerar os contratos do `merchant`, `catalog` e `identity` (`-Dopenapi.atualizar=true`) e os tipos do front (`npm run tipos`) | As rotas novas de 01/11 e as do "Esqueci minha senha" (02/11) ainda não estão no contrato; o `ContratoOpenApiIT` do `identity` reprova até regenerar | P | |
 | 3 | Contrato OpenAPI e testes de integração do `order` | Os tipos do pedido no front são escritos à mão (`src/api/pedidos.ts`), inclusive as rotas de 02/11 (`pix-check` e o período do fechamento) | M | |
 | 4 | Passagem completa no navegador, com a fixture, anotando cada achado | Entregador, Pix a conferir, sino, fechamento por período, loja fechada, foto e correção de produto só passaram em testes de tela | M | |
 | 5 | Hospedagem de teste pelo túnel da Cloudflare, e liberar `.trycloudflare.com` no `preview.allowedHosts` do Vite | O link precisa abrir no celular de outra pessoa | P | |
@@ -110,8 +111,8 @@ colaborar"*).
 | # | Melhoria | Esforço | Observação |
 | --- | --- | --- | --- |
 | 9 | Criar e editar grupos de opções pelo painel | M | Hoje só a semeadura cria grupos; a tela avisa que o servidor não sabe |
-| 10 | Tirar da tela os botões de Google e Apple, ou deixar o aviso | P | Não há serviço por trás; mexe no visual do protótipo, então decidam juntos |
-| 11 | "Esqueci minha senha" de verdade | M | Depende de enviar código — o mesmo problema do item 13 |
+| ~~10~~ | ~~Tirar os botões de Google e Apple~~ | — | **Feito em 02/11/2026:** a entrada é só pelo telefone |
+| ~~11~~ | ~~"Esqueci minha senha" de verdade~~ | — | **Feito em 02/11/2026**, pelo código de verificação. Em produção, depende do envio do código (item 13) |
 | 12 | Declarar `security: []` nas rotas públicas do `identity` | P | Dívida do lint dos contratos (`redocly.yaml`) |
 
 ### Depois da entrega

@@ -1,6 +1,6 @@
 # ADR-042 — O código de verificação do cadastro, e quem o entrega
 
-**Status:** Aceita — 14/09/2026
+**Status:** Aceita — 14/09/2026 · **emendada em 01/11/2026** (o código na tela, com a bandeira de desenvolvimento) e **em 02/11/2026** (o mesmo código serve ao "Esqueci minha senha")
 **Fecha a pendência de:** ADR-036, consequências — *"um índice único e um fluxo de verificação no marco 1"*
 **Relacionada:** ADR-021 (catálogo de serviços), ADR-029 §1 (canal de cadastro nasce verificado), ADR-041 (a volta por condição), `docs/dominio/usuario.md` §2 e §7
 **Emenda provável:** nenhuma. Esta ADR nasce com a condição de término escrita.
@@ -210,3 +210,24 @@ assinatura e foi para a borda, e o `CadastroIT` a afirma com a bandeira desligad
 
 **Quando ela sai.** No dia em que houver adaptador de canal (SMS ou WhatsApp) entregando o código
 — a mesma condição de término desta ADR.
+
+## Emenda de 02/11/2026 — o mesmo código serve ao "Esqueci minha senha"
+
+**O que mudou.** `POST /api/v1/auth/password-reset/code` e `POST /api/v1/auth/password-reset`, no
+`identity`. O primeiro gera o código **só para telefone que já tem conta** — o avesso do
+cadastro, que só gera para telefone sem conta —, e responde **202 sempre**, com a mesma regra do
+§5. O segundo troca a senha de quem acertou o código e apaga o código: 204, ou 400 com a mesma
+frase de recusa do cadastro.
+
+**O que se reaproveita.** A tabela, a validade de dez minutos, as cinco tentativas e a regra de
+não ser transacional para a tentativa errada ficar gravada (`RedefinirSenhaService`). As duas
+finalidades não se misturam porque a existência da conta separa uma da outra.
+
+**O que esta emenda não resolve.** Como o código chega à pessoa continua sendo a pendência desta
+ADR. Até o envio por SMS ou WhatsApp existir, o código só aparece com a bandeira de
+desenvolvimento — e, com ela ligada, **qualquer pessoa troca a senha de qualquer conta** cujo
+telefone conheça. Por isso a bandeira é para contas de teste, e nunca para uma loja de verdade
+(`docs/operacao/hospedagem-de-teste.md`).
+
+**Sessões antigas.** O token já emitido continua valendo até expirar (12 horas, ADR-037): trocar a
+senha não derruba quem já estava dentro. Revogar sessão é outra decisão.

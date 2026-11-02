@@ -43,7 +43,7 @@
 | 039 | O contrato OpenAPI é gerado do código e congelado | ✅ aceita · **emendada** (06/10/2026: a lista de erros de cada rota é afirmada, e o `ContratoDeErrosIT` a prova) |
 | 040 | Um módulo de tipos de valor, e a regra que impede ele de crescer | ✅ aceita · **emendada** (28/09/2026: a `Permissao` não entra — cada serviço nomeia o seu recorte) |
 | 041 | Observabilidade sai do repositório, e a volta é por condição | ✅ aceita |
-| 042 | O código de verificação do cadastro, e quem o entrega | ✅ aceita · **emendada** (01/11/2026: o código na tela, só com a bandeira de desenvolvimento) |
+| 042 | O código de verificação do cadastro, e quem o entrega | ✅ aceita · **emendada** (01/11/2026: o código na tela, só com a bandeira de desenvolvimento; 02/11/2026: o mesmo código serve ao "Esqueci minha senha") |
 | 043 | O outbox e o relay | ✅ aceita · **emenda a 011** · **emendada** (29/09/2026: o relay espera a confirmação, e `mandatory` revela mensagem sem destino) |
 | 044 | A cadeia de filtros do gateway, e o que passa sem token | ✅ aceita · **emenda a 012 e 037** · **emendada** (30/09/2026: `/actuator/gateway` sai da exposição) |
 | 045 | A credencial entre serviços é o token de quem pediu | ✅ aceita · **emenda a 011** · **emendada** (28/09/2026: o primeiro caminho `/internal/`, e 403 contra 5xx no consumidor) · **emendada** (07/10/2026: o gatilho disparou falso, e a ADR-054 o substitui por dois) |

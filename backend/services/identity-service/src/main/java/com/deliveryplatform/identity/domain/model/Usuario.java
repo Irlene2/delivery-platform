@@ -68,6 +68,15 @@ public final class Usuario {
     }
 
     /** Cadastra ou substitui o segundo canal. Novo e-mail nasce não verificado. */
+    /**
+     * A mesma pessoa com a senha nova (recuperação de senha, 02/11/2026). Quem chega aqui já
+     * provou que atende o telefone — o caso de uso confere o código antes.
+     */
+    public Usuario comSenha(String novoHashDaSenha) {
+        return new Usuario(id, nome, telefone, telefoneVerificadoEm, email, emailVerificadoEm,
+                novoHashDaSenha);
+    }
+
     public void adicionarEmail(Email email) {
         this.email = Objects.requireNonNull(email, "email");
         this.emailVerificadoEm = null;

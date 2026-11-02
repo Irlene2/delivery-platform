@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.deliveryplatform.identity.application.exception.CadastroRecusado;
 import com.deliveryplatform.identity.application.exception.CredenciaisInvalidas;
+import com.deliveryplatform.identity.application.exception.RedefinicaoRecusada;
 import com.deliveryplatform.identity.domain.exception.TelefoneInvalido;
 
 /**
@@ -33,6 +34,13 @@ public class TratadorDeErros {
      * pedindo algo que não pode ser concedido com o que ele mandou (ADR-042
      * §5).
      */
+    /** A mesma frase do cadastro: as duas recusas são do código, e nenhuma diz por quê. */
+    @ExceptionHandler(RedefinicaoRecusada.class)
+    public ProblemDetail redefinicaoRecusada(RedefinicaoRecusada excecao) {
+        return ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST, "código de verificação inválido ou expirado");
+    }
+
     @ExceptionHandler(CadastroRecusado.class)
     public ProblemDetail cadastroRecusado(CadastroRecusado excecao) {
         return ProblemDetail.forStatusAndDetail(

@@ -10,6 +10,7 @@ import { CadastroDeLojaPage } from './paginas/CadastroDeLojaPage';
 import { ConvitePage } from './paginas/ConvitePage';
 import { EntrarPage } from './paginas/EntrarPage';
 import { PainelPage } from './paginas/PainelPage';
+import { RecuperarSenhaPage } from './paginas/RecuperarSenhaPage';
 import { CadastroDeProdutos } from './painel/CadastroDeProdutos';
 import { CardapioDaLoja } from './painel/CardapioDaLoja';
 import { ConfiguracoesDaLoja } from './painel/ConfiguracoesDaLoja';
@@ -36,6 +37,7 @@ export function App() {
       <Route path="/" element={<Navigate to="/painel" replace />} />
       <Route path="/entrar" element={<EntrarPage />} />
       <Route path="/cadastrar" element={<CadastrarPage />} />
+      <Route path="/recuperar-senha" element={<RecuperarSenhaPage />} />
       {/* ADR-070 §4: pública, fora do ExigeSessao — quem abre o link pode não ter conta. */}
       <Route path="/convite/:token" element={<ConvitePage />} />
       {/* ADR-077: o cliente compra pelo link da loja, sem conta. Públicas, fora do ExigeSessao. */}

@@ -8,7 +8,8 @@ import { AvisoDoCartao, CabecalhoDoCartao, TelaDeEntrada } from '../aki/TelaDeEn
 /**
  * Entrar — a tela de login do protótipo, ligada ao `identity`.
  *
- * Entra por **telefone e senha**. O perfil não é escolhido aqui: depois do
+ * Entra por **telefone e senha** — e só por eles: os botões de Google e Apple do protótipo
+ * saíram em 02/11/2026, porque a conta é o telefone e um segundo jeito de entrar só confundia. O perfil não é escolhido aqui: depois do
  * login, o painel lê o papel da pessoa em cada loja, e é o servidor que decide.
  *
  * Até 01/11/2026 havia aqui o link "Ver as telas em modo demonstração", com dados
@@ -23,16 +24,24 @@ export function EntrarPage() {
   const local = useLocation();
   // De onde a pessoa veio e o que ela já pediu para fazer na volta — hoje, aceitar o
   // convite (ADR-076): a intenção viaja com a volta.
-  const volta = local.state as { de?: string; acao?: string } | null;
+  // A recuperação de senha volta para cá com o telefone e o aviso de que deu certo.
+  const volta = local.state as {
+    de?: string;
+    acao?: string;
+    telefone?: string;
+    senhaRedefinida?: boolean;
+  } | null;
   const destino = volta?.de ?? '/painel';
   const naVolta = volta?.acao === undefined ? undefined : { acao: volta.acao };
 
-  const [telefone, definirTelefone] = useState('');
+  const [telefone, definirTelefone] = useState(volta?.telefone ?? '');
   const [senha, definirSenha] = useState('');
   const [verSenha, definirVerSenha] = useState(false);
   const [erros, definirErros] = useState<{ telefone?: string; senha?: string }>({});
   const [ocupado, definirOcupado] = useState(false);
-  const [aviso, definirAviso] = useState<string | null>(null);
+  const [aviso, definirAviso] = useState<string | null>(
+    volta?.senhaRedefinida === true ? 'Senha alterada. Entre com a senha nova.' : null,
+  );
 
   async function enviar(evento: FormEvent) {
     evento.preventDefault();
@@ -104,17 +113,14 @@ export function EntrarPage() {
         <div className="form-group">
           <div className="form-label-row">
             <label htmlFor="passwordInput">Senha</label>
-            <a
-              href="#"
+            <Link
+              to="/recuperar-senha"
               className="forgot-password"
               id="forgotPassword"
-              onClick={(evento) => {
-                evento.preventDefault();
-                definirAviso('A recuperação de senha será disponibilizada em uma próxima etapa.');
-              }}
+              state={telefone.trim() === '' ? undefined : { telefone: telefone.trim() }}
             >
               Esqueci minha senha
-            </a>
+            </Link>
           </div>
           <div className="input-container">
             <span className="material-icons input-icon">lock</span>
@@ -162,61 +168,6 @@ export function EntrarPage() {
         </button>
         {aviso !== null && <AvisoDoCartao>{aviso}</AvisoDoCartao>}
       </form>
-
-      <div className="login-divider">
-        <span />
-        <small>ou continue com</small>
-        <span />
-      </div>
-
-      <div className="social-login">
-        <button
-          type="button"
-          className="social-button"
-          id="googleLogin"
-          aria-label="Entrar com Google"
-          onClick={() =>
-            definirAviso('O login com Google precisa ser conectado a um serviço de autenticação.')
-          }
-        >
-          <svg className="social-icon" viewBox="0 0 24 24" aria-hidden="true">
-            <path
-              d="M21.35 12.27c0-.78-.07-1.54-.22-2.27H12v4.3h5.24a4.48 4.48 0 0 1-1.94 2.94v2.45h3.14c1.84-1.69 2.91-4.18 2.91-7.42Z"
-              fill="#4285F4"
-            />
-            <path
-              d="M12 21.5c2.63 0 4.84-.87 6.45-2.35l-3.14-2.45c-.87.58-1.98.93-3.31.93-2.54 0-4.69-1.72-5.46-4.03H3.29v2.53A9.75 9.75 0 0 0 12 21.5Z"
-              fill="#34A853"
-            />
-            <path
-              d="M6.54 13.6a5.86 5.86 0 0 1 0-3.2V7.87H3.29a9.76 9.76 0 0 0 0 8.26l3.25-2.53Z"
-              fill="#FBBC05"
-            />
-            <path
-              d="M12 6.37c1.43 0 2.71.49 3.72 1.45l2.79-2.79C16.84 3.45 14.63 2.5 12 2.5a9.75 9.75 0 0 0-8.71 5.37l3.25 2.53C7.31 8.09 9.46 6.37 12 6.37Z"
-              fill="#EA4335"
-            />
-          </svg>
-          <span>Google</span>
-        </button>
-        <button
-          type="button"
-          className="social-button"
-          id="appleLogin"
-          aria-label="Entrar com Apple"
-          onClick={() =>
-            definirAviso('O login com Apple precisa ser conectado a um serviço de autenticação.')
-          }
-        >
-          <svg className="social-icon apple-icon" viewBox="0 0 24 24" aria-hidden="true">
-            <path
-              d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.1.8 1.21-.25 2.37-.94 3.66-.84 1.56.13 2.74.74 3.51 1.83-3.22 1.93-2.46 6.18.5 7.36-.59 1.55-1.35 3.09-2.77 3.82ZM12.03 7.25C11.88 4.95 13.74 3.07 15.88 2.89c.3 2.65-2.42 4.62-3.85 4.36Z"
-              fill="currentColor"
-            />
-          </svg>
-          <span>Apple</span>
-        </button>
-      </div>
 
       <div className="login-footer">
         <p>

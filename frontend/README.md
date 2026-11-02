@@ -75,8 +75,12 @@ continua no código, sem porta de entrada na tela desde 01/11/2026. O carrinho d
 feito no painel: pedido novo, saída e entrega, retirada, cancelamento, pagamento e Pix a conferir
 (`src/painel/notificacoes.ts`). O contador é só do que ainda não foi visto nesta aba.
 
-**O que ainda não existe:** entrar com Google ou Apple (os botões estão na tela, sem serviço
-por trás).
+**A entrada é só pelo telefone.** Os botões de Google e Apple do protótipo saíram em 02/11/2026:
+a conta é o telefone. **"Esqueci minha senha"** (`/recuperar-senha`) pede o código ao `identity` e
+troca a senha; com `DELIVERY_CODIGO_NA_TELA=true`, o código aparece na tela, como no cadastro.
+
+**O acompanhamento do pedido mostra a foto de cada item**, lida do cardápio público da loja
+(`src/cliente/useFotosDaLoja.ts`); produto que saiu do cardápio fica na imagem padrão.
 
 **O que o servidor ainda não sabe**, e a tela diz: mudar a posição ou o "pode acabar" de um
 produto que já existe; criar grupos de opções; guardar o selo. Os ingredientes vão no fim da

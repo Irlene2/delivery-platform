@@ -96,8 +96,8 @@ Pré-requisitos, uma vez:
   com os valores vazios sobe o `postgres` sem senha, e ele fica `unhealthy`. Invente as
   senhas (são só da sua máquina); `JWT_ISSUER` e `JWT_AUDIENCE` vazios usam o padrão do
   `docker-compose.yml`; `DELIVERY_DOCS_ABERTAS=true` se quiser o Swagger;
-  `DELIVERY_CODIGO_NA_TELA=true` para o código do cadastro aparecer na própria tela (só local
-  e na demonstração — ADR-042 emendada). **O `.env` é
+  `DELIVERY_CODIGO_NA_TELA=true` para o código do cadastro e do "Esqueci minha senha" aparecer
+  na própria tela (só local e de teste, com contas de teste — ADR-042 emendada). **O `.env` é
   gitignorado e nunca entra em relatório, em commit nem em conversa.**
 
 ---

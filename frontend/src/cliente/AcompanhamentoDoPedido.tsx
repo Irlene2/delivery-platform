@@ -15,6 +15,7 @@ import {
   ROTULO_DO_STATUS,
 } from '../pedido/regras';
 import { CascaDaVitrine } from './CascaDaVitrine';
+import { useFotosDaLoja } from './useFotosDaLoja';
 
 /**
  * `/pedido/:codigo` — o cliente acompanha o pedido pelo código que recebeu (ADR-077). Público:
@@ -55,6 +56,7 @@ export function AcompanhamentoDoPedido() {
     pedido?.estabelecimentoId ??
     lembrados.find((um) => um.codigo === codigo)?.estabelecimentoId ??
     '';
+  const fotos = useFotosDaLoja(loja);
 
   async function copiarLink() {
     try {
@@ -167,7 +169,13 @@ export function AcompanhamentoDoPedido() {
             </div>
             {pedido.itens.map((item, i) => (
               <div className="order-product" key={`${item.produtoId}-${i}`}>
-                <img src={IMAGEM_PADRAO} alt="" />
+                <img
+                  src={fotos.get(item.produtoId) ?? IMAGEM_PADRAO}
+                  alt=""
+                  onError={(evento) => {
+                    evento.currentTarget.src = IMAGEM_PADRAO;
+                  }}
+                />
                 <div>
                   <strong>
                     {item.quantidade}x {item.nome}

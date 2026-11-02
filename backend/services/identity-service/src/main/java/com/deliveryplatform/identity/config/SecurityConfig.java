@@ -124,6 +124,9 @@ public class SecurityConfig {
                         // fecha, pelo mesmo motivo do login (ADR-042 §1, §5)
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/verification-code").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/signup").permitAll()
+                        // quem esqueceu a senha não tem token (recuperação, 02/11/2026)
+                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/password-reset",
+                                "/api/v1/auth/password-reset/code").permitAll()
                         // é a chave pública; protegê-la trava a partida do sistema inteiro
                         .requestMatchers(HttpMethod.GET, "/.well-known/jwks.json").permitAll()
                         // probe de contêiner não carrega credencial
