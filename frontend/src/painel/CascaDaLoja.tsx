@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router';
 import { Casca, type ItemDoMenu } from '../aki/Casca';
 import { caminhoDaLoja } from './caminhos';
+import { SinoDeNotificacoes } from './SinoDeNotificacoes';
 import { useLojaAtual } from './lojaAtual';
 import type { LojaDoUsuario } from './tipos';
 
@@ -27,7 +28,7 @@ export type ChaveDoMenu =
   | 'entregas'
   | 'configuracoes';
 
-function menuDa(loja: LojaDoUsuario): ItemDoMenu[] {
+export function menuDa(loja: LojaDoUsuario): ItemDoMenu[] {
   const base = caminhoDaLoja(loja.estabelecimentoId);
   const tem = (permissao: LojaDoUsuario['permissoes'][number]) =>
     loja.permissoes.includes(permissao);
@@ -99,8 +100,14 @@ function menuDa(loja: LojaDoUsuario): ItemDoMenu[] {
       icone: 'settings',
       para: `${base}/configuracoes`,
     },
-    // A porta para a segunda loja (passagem humana de 19/10, item 3).
-    { chave: 'lojas', rotulo: 'Minhas lojas', icone: 'storefront', para: '/painel?todas=1' },
+    // A porta para a segunda loja (passagem humana de 19/10, item 3). O `de` deixa a lista
+    // com o menu desta loja na lateral, para voltar a ela sem procurar o ícone.
+    {
+      chave: 'lojas',
+      rotulo: 'Minhas lojas',
+      icone: 'storefront',
+      para: `/painel?todas=1&de=${loja.estabelecimentoId}`,
+    },
   ];
 }
 
@@ -162,12 +169,7 @@ export function CascaDaLoja({
               ))}
             </select>
           )}
-          {!colaborador && (
-            <button className="icon-btn notification" type="button" aria-label="Notificações">
-              <span className="material-symbols-outlined">notifications</span>
-              <b>4</b>
-            </button>
-          )}
+          {!colaborador && <SinoDeNotificacoes estabelecimentoId={loja.estabelecimentoId} />}
           <div className="avatar">{entregador ? 'EN' : colaborador ? 'CO' : 'AD'}</div>
           <span className="role">
             {entregador ? 'Entregador' : colaborador ? 'Colaborador' : 'Administrador'}

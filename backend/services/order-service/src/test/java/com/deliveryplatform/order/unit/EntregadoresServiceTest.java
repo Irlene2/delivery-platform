@@ -115,15 +115,33 @@ class EntregadoresServiceTest {
     }
 
     @Test
-    @DisplayName("confirmar e cancelar são da loja; o Pix também")
+    @DisplayName("confirmar e cancelar são da loja")
     void o_que_nao_e_do_entregador() {
         merchant.permite(LOJA, PermissaoDoPedido.VER_ENTREGA);
         UUID qualquer = UUID.randomUUID();
 
         assertThatThrownBy(() -> entregador.avancar(LOJA, qualquer, StatusDoPedido.CANCELADO))
                 .isInstanceOf(RecusaAoEntregador.class);
-        assertThatThrownBy(() -> entregador.registrarPagamento(LOJA, qualquer, FormaDePagamento.PIX, null))
-                .isInstanceOf(RecusaAoEntregador.class);
+    }
+
+    @Test
+    @DisplayName("o entregador informa Pix, entrega, e a loja confere no extrato depois (02/11/2026)")
+    void pix_informado_pelo_entregador() {
+        merchant.permite(LOJA, PermissaoDoPedido.VER_ENTREGA, PermissaoDoPedido.ALTERAR_STATUS);
+        entregador.apresentar(LOJA, "Carlos");
+        Pedido meu = prontoParaSair();
+        loja.informarEntregador(LOJA, meu.getId(), merchant.eu, null);
+        entregador.avancar(LOJA, meu.getId(), StatusDoPedido.SAIU_PARA_ENTREGA);
+
+        Pedido informado = entregador.registrarPagamento(LOJA, meu.getId(), FormaDePagamento.PIX, null);
+        assertThat(informado.pixAConferir()).isTrue();
+
+        Pedido entregue = entregador.avancar(LOJA, meu.getId(), StatusDoPedido.ENTREGUE);
+        assertThat(entregue.getStatus()).isEqualTo(StatusDoPedido.ENTREGUE);
+
+        Pedido conferido = loja.conferirPix(LOJA, meu.getId());
+        assertThat(conferido.pixAConferir()).isFalse();
+        assertThat(conferido.getPagamentoRegistrado().pixConferido()).isTrue();
     }
 
     @Test

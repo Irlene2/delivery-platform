@@ -35,8 +35,7 @@ que uma interrupção no meio não deixe dado pessoal órfão.
 | 4 | `identity` | **Anonimizar** conta, se o titular for usuário do sistema | Só após 5 anos do fim do vínculo — ADR-013 §3 |
 | 5 | `merchant` | **Anonimizar** telefone de colaborador ou dados de entregador | Idem |
 | 6 | `settlement` | **Anonimizar** identificação do entregador nos fechamentos | Valores permanecem |
-| 7 | ~~`payment`~~ | — | Saiu em 01/11/2026 (ADR-021, emenda): não há pagamento pelo aplicativo |
-| 8 | `catalog` · `gateway` | Nada a fazer | Não guardam dado pessoal |
+| 7 | `catalog` · `gateway` | Nada a fazer | Não guardam dado pessoal |
 
 **Documento fiscal emitido não é tocado.** Art. 16, I. Ver a resposta ao titular
 abaixo.

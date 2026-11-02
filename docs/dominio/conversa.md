@@ -398,7 +398,7 @@ canal.
 |---|---|---|
 | `PedidoRecebidoV1` | `order` | Confirmar ao cliente |
 | `PedidoConfirmadoV1` | `order` | Avisar que a loja aceitou |
-| `PedidoPagoV1` | `order` | Confirmar o pagamento online — marco 8 |
+| `PedidoPagoV1` | `order` | Só existiria com pagamento online — fora da proposta atual (ADR-023) |
 | `PedidoProntoV1` | `order` | Avisar retirada ou saída |
 | `PedidoSaiuParaEntregaV1` | `order` | Avisar |
 | `PedidoEntregueV1` / `PedidoRetiradoV1` | `order` | Recibo |

@@ -18,4 +18,7 @@ public interface FechamentoRepositorio {
 
     /** Os mais recentes primeiro. */
     List<FechamentoDoDia> recentes(UUID estabelecimentoId, int limite);
+
+    /** Os fechamentos de {@code de} a {@code ate}, inclusive, do mais recente ao mais antigo. */
+    List<FechamentoDoDia> entre(UUID estabelecimentoId, LocalDate de, LocalDate ate);
 }

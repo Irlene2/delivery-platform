@@ -20,4 +20,10 @@ public interface FecharODia {
     FechamentoDoDia doDia(UUID estabelecimentoId, LocalDate dia);
 
     List<FechamentoDoDia> recentes(UUID estabelecimentoId);
+
+    /**
+     * As vendas de um período (02/11/2026): os dias fechados de {@code de} a {@code ate},
+     * inclusive. No máximo {@code 366} dias; dia sem fechamento não entra.
+     */
+    List<FechamentoDoDia> doPeriodo(UUID estabelecimentoId, LocalDate de, LocalDate ate);
 }

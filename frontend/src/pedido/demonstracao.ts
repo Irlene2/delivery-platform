@@ -260,6 +260,36 @@ export function entregadorNaDemonstracao(
   });
 }
 
+/** O entregador informa Pix: fica a conferir pela loja, como no servidor (02/11/2026). */
+export function pixInformadoNaDemonstracao(pedidoId: string): PedidoDaLoja {
+  return alterar(pedidoId, (pedido) => {
+    if (!aceitaPagamento(pedido.status)) {
+      throw conflito(`o pagamento é registrado a partir de «Pronto»`);
+    }
+    return {
+      ...pedido,
+      pagamentoRegistrado: {
+        formaEfetiva: 'PIX',
+        valorRecebido: null,
+        trocoDevolvido: null,
+        pixConferido: false,
+        registradoEm: new Date().toISOString(),
+      },
+    };
+  });
+}
+
+/** A loja confere o Pix informado. */
+export function conferirPixNaDemonstracao(pedidoId: string): PedidoDaLoja {
+  return alterar(pedidoId, (pedido) => {
+    const pago = pedido.pagamentoRegistrado;
+    if (pago === null || pago.formaEfetiva !== 'PIX' || pago.pixConferido) {
+      throw recusa('este pedido não tem Pix a conferir');
+    }
+    return { ...pedido, pagamentoRegistrado: { ...pago, pixConferido: true } };
+  });
+}
+
 export function pagamentoNaDemonstracao(
   pedidoId: string,
   informado: PagamentoInformado,

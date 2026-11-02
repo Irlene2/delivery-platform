@@ -125,7 +125,7 @@ public class EntregadorController {
 
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "A entrega com o recebimento registrado"),
-            @ApiResponse(responseCode = "400", description = "Pix (é a loja que confere), dinheiro sem valor ou menor que o total, ou corpo malformado", content = @Content),
+            @ApiResponse(responseCode = "400", description = "Dinheiro sem valor ou menor que o total, ou corpo malformado", content = @Content),
             @ApiResponse(responseCode = "401", description = "Sem token, ou token inválido", content = @Content),
             @ApiResponse(responseCode = "403", description = "Sem vínculo, sem VER_ENTREGA, loja inexistente ou merchant indisponível — a mesma recusa", content = @Content),
             @ApiResponse(responseCode = "404", description = "A entrega não está comigo", content = @Content),
@@ -134,7 +134,8 @@ public class EntregadorController {
     @PutMapping(path = "/deliveries/{pedidoId}/settlement", consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Registro o que recebi na porta",
-            description = "Exige VER_ENTREGA. DINHEIRO ou CARTAO; o troco é calculado pelo servidor.")
+            description = "Exige VER_ENTREGA. DINHEIRO, CARTAO ou PIX; o troco é calculado pelo "
+                    + "servidor, e o PIX fica a conferir pela loja.")
     public PedidoResponse receber(@PathVariable UUID estabelecimentoId, @PathVariable UUID pedidoId,
                                   @Valid @RequestBody RecebimentoRequest pedido) {
         return PedidoResponse.de(entregas.registrarPagamento(estabelecimentoId, pedidoId,

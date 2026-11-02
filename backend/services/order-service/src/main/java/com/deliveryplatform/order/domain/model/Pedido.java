@@ -277,6 +277,43 @@ public final class Pedido {
         this.atualizadoEm = agora;
     }
 
+    /**
+     * O entregador informa que o cliente pagou por Pix (02/11/2026). Fica registrado como Pix
+     * <b>a conferir</b>: o dinheiro cai na conta da loja, e só quem vê o extrato confirma. O
+     * pedido pode ser concluído — a entrega aconteceu —, mas o caixa do dia não fecha enquanto
+     * houver Pix a conferir ({@link FechamentoDoDia}).
+     */
+    public void registrarPixInformado(Instant agora) {
+        if (!status.aceitaPagamento()) {
+            throw new TransicaoInvalida(TransicaoInvalida.Motivo.PAGAMENTO_FORA_DE_HORA, status, null);
+        }
+        this.pagamentoRegistrado = new PagamentoRegistrado(FormaDePagamento.PIX, null, null, false,
+                Objects.requireNonNull(agora, "agora"));
+        this.atualizadoEm = agora;
+    }
+
+    /**
+     * A loja confirma, no extrato, o Pix que o entregador informou. Vale em qualquer estado —
+     * inclusive depois de entregue, que é quando a conferência costuma acontecer.
+     */
+    public void conferirPix(Instant agora) {
+        if (pagamentoRegistrado == null
+                || pagamentoRegistrado.formaEfetiva() != FormaDePagamento.PIX
+                || pagamentoRegistrado.pixConferido()) {
+            throw new RegraDoPedidoViolada(Motivo.NADA_A_CONFERIR, "sem pix a conferir");
+        }
+        this.pagamentoRegistrado = new PagamentoRegistrado(FormaDePagamento.PIX, null, null, true,
+                pagamentoRegistrado.registradoEm());
+        this.atualizadoEm = Objects.requireNonNull(agora, "agora");
+    }
+
+    /** O Pix informado pelo entregador que a loja ainda não conferiu. */
+    public boolean pixAConferir() {
+        return pagamentoRegistrado != null
+                && pagamentoRegistrado.formaEfetiva() == FormaDePagamento.PIX
+                && !pagamentoRegistrado.pixConferido();
+    }
+
     /** O número como o cliente e a loja falam: seis dígitos, com zeros à esquerda. */
     public String numeroLegivel() {
         return String.format("%06d", numero);

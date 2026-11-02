@@ -182,7 +182,7 @@ carrega o jar, não o compilador.
 | depois de mudar um arquivo de um serviço | **45 s** |
 | sem mudança nenhuma | **22 s** |
 
-Confira que cada um dos oito módulos executáveis (nove até o `payment` sair, em 01/11/2026) tem **um** jar, e que ele se
+Confira que cada um dos oito módulos executáveis tem **um** jar, e que ele se
 chama `app.jar`:
 
 ```bash

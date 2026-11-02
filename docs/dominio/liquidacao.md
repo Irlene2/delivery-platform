@@ -372,7 +372,6 @@ registro.
 | Evento | De | Efeito | Chave |
 |---|---|---|---|
 | `PedidoEntregueV1` | `order` | `ENTREGA_CONCLUIDA` e `LIQUIDACAO_DE_ENTREGA`, ou `NAO_LIQUIDADO` — §2 | `pedidoId` |
-| `LiquidacaoConfirmadaV1` | `payment` | Atualiza a situação do lançamento quando o Pix confirma depois | `liquidacaoId` |
 | `DevolucaoDevidaV1` | `order` | Só quando o valor devolvido passou pela mão do entregador. Jornada já fechada vira `AjusteDeFechamento` — §7 | `devolucaoId` |
 | `VinculoAlteradoV1` | `merchant` | Invalida a cache de autorização. Mecanismo em [`estabelecimento.md`](estabelecimento.md) §3 | — |
 
@@ -397,7 +396,7 @@ sustentava. Registradas como decisão para não voltarem como suspeita.
 |---|---|
 | `PedidoRetiradoV1` | Retirada não envolve entregador — não há jornada para lançar. §2 diz isso com todas as letras |
 | `PedidoCanceladoV1` | Cancelamento não produz nenhum dos dois lançamentos |
-| `PedidoPagoV1` | Marco 8, e redundante: a liquidação chega dentro do `PedidoEntregueV1` |
+| `PedidoPagoV1` | Fora da proposta atual (ADR-023), e redundante: a liquidação chega dentro do `PedidoEntregueV1` |
 | `PedidoSaiuParaEntregaV1` | A guarda do §3 **pergunta** em vez de escutar — ADR-032 |
 | `VinculoEntregadorAlteradoV1` | `vinculoSnapshot` é lido na abertura e congelado (J6). Alteração posterior **não deve** mudar jornada aberta — é exatamente o ponto da invariante |
 

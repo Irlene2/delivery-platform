@@ -28,9 +28,6 @@ pergunta)
 | `PedidoRetiradoV1` | `order` | `conversation` |
 | `PedidoCanceladoV1` | `order` | `delivery`, `conversation` |
 | `DevolucaoDevidaV1` | `order` | `settlement` |
-| ~~`LiquidacaoConfirmadaV1`~~ | ~~`payment`~~ | fora do produto (01/11/2026) — nunca publicado |
-| ~~`CobrancaExpiradaV1`~~ | ~~`payment`~~ | fora do produto (01/11/2026) — nunca publicado |
-| ~~`EstornoExecutadoV1`~~ | ~~`payment`~~ | fora do produto (01/11/2026) — nunca publicado |
 | `EstabelecimentoCriadoV1` | `merchant` | `conversation` |
 | `VinculoAlteradoV1` | `merchant` | **todos** |
 | `ConfiguracaoOperacionalAlteradaV1` | `merchant` | `order`, `delivery`, `conversation` |

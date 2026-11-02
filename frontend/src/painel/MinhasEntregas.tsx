@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
-import type { PedidoDaLoja } from '../api/pedidos';
+import type { FormaDePagamento, PedidoDaLoja } from '../api/pedidos';
 import { useSessao } from '../auth/useSessao';
 import { emDemonstracao } from '../aki/demo';
 import { dataEHora, dinheiro } from '../aki/formatos';
@@ -218,15 +218,15 @@ function CartaoDaEntrega({
   fonte: FonteDasEntregas;
   aoMudar: (pedido: PedidoDaLoja) => void;
 }) {
-  const [forma, definirForma] = useState<'DINHEIRO' | 'CARTAO'>(
-    pedido.pagamentoDeclarado.forma === 'CARTAO' ? 'CARTAO' : 'DINHEIRO',
-  );
+  // Começa no que o cliente disse, mas ele pode pagar de outro jeito na porta.
+  const [forma, definirForma] = useState<FormaDePagamento>(pedido.pagamentoDeclarado.forma);
   const [recebido, definirRecebido] = useState(
     pedido.pagamentoDeclarado.trocoPara === null ? '' : String(pedido.pagamentoDeclarado.trocoPara),
   );
   const [ocupado, definirOcupado] = useState(false);
   const [recusa, definirRecusa] = useState<string | null>(null);
-  const pix = pedido.pagamentoDeclarado.forma === 'PIX';
+  const pago = pedido.pagamentoRegistrado;
+  const pixAConferir = pago !== null && pago.formaEfetiva === 'PIX' && !pago.pixConferido;
   const endereco = pedido.endereco;
   const mapa =
     endereco === null
@@ -312,24 +312,26 @@ function CartaoDaEntrega({
         {pedido.pagamentoDeclarado.trocoPara !== null
           ? ` · levar troco para ${dinheiro(pedido.pagamentoDeclarado.trocoPara)}`
           : ''}
-        {pix && pedido.pagamentoRegistrado === null
-          ? ' · a loja confere o Pix antes de você marcar a entrega'
-          : ''}
-        {pedido.pagamentoRegistrado !== null && <b className="pedido-pago"> · recebido</b>}
+        {pixAConferir ? (
+          <b className="pedido-pago"> · Pix informado, a loja confere no extrato</b>
+        ) : (
+          pago !== null && <b className="pedido-pago"> · recebido</b>
+        )}
       </p>
 
       {pedido.status !== 'ENTREGUE' && pedido.status !== 'CANCELADO' && (
         <div className="pedido-acoes">
-          {!pix && pedido.status === 'SAIU_PARA_ENTREGA' && pedido.pagamentoRegistrado === null && (
+          {pedido.status === 'SAIU_PARA_ENTREGA' && pago === null && (
             <div className="pedido-campo">
               <select
                 className="select"
                 aria-label={`Como recebeu o pedido ${pedido.numero}`}
                 value={forma}
-                onChange={(evento) => definirForma(evento.target.value as 'DINHEIRO' | 'CARTAO')}
+                onChange={(evento) => definirForma(evento.target.value as FormaDePagamento)}
               >
                 <option value="DINHEIRO">Recebi em dinheiro</option>
                 <option value="CARTAO">Recebi no cartão</option>
+                <option value="PIX">Recebi por Pix (a loja confere)</option>
               </select>
               {forma === 'DINHEIRO' && (
                 <input

@@ -275,6 +275,22 @@ class PedidoTest {
     }
 
     @Test
+    @DisplayName("o Pix informado fica a conferir; conferir só vale para Pix pendente")
+    void pix_informado_e_conferido() {
+        Pedido pedido = pronto(entrega());
+
+        pedido.registrarPixInformado(AGORA);
+        assertThat(pedido.pixAConferir()).isTrue();
+        assertThat(pedido.getPagamentoRegistrado().formaEfetiva()).isEqualTo(FormaDePagamento.PIX);
+
+        pedido.conferirPix(AGORA);
+        assertThat(pedido.pixAConferir()).isFalse();
+        assertThatThrownBy(() -> pedido.conferirPix(AGORA))
+                .isInstanceOf(RegraDoPedidoViolada.class)
+                .hasMessageContaining("sem pix a conferir");
+    }
+
+    @Test
     void a_forma_efetiva_pode_ser_outra_que_a_declarada() {
         Pedido pedido = pronto(entrega(new PagamentoDeclarado(FormaDePagamento.DINHEIRO, Money.de("110"))));
 

@@ -19,6 +19,10 @@ export function Disponibilidade() {
   const { leitura, trocar } = useCatalogo(fonte);
   const [salvando, definirSalvando] = useState<string | null>(null);
   const [recusas, definirRecusas] = useState<Record<string, string>>({});
+  // Com muitos produtos, achar um pela lista não dá (02/11/2026): busca e filtros.
+  const [busca, definirBusca] = useState('');
+  const [secao, definirSecao] = useState('');
+  const [situacao, definirSituacao] = useState<'' | 'FALTANDO'>('');
   const podeMarcar = fonte.editaTudo || fonte.podeAlterar;
 
   async function marcar(item: ItemDoCatalogo, estado: EstadoDeDisponibilidade) {
@@ -48,6 +52,15 @@ export function Disponibilidade() {
         )
       : [];
   const acabando = itens.filter((item) => item.disponibilidade !== 'DISPONIVEL').length;
+  const secoes = [...new Set(itens.map((item) => item.tipo))];
+  const termo = busca.trim().toLowerCase();
+  const filtrados = itens.filter(
+    (item) =>
+      (termo === '' || `${item.nome} ${item.tipo}`.toLowerCase().includes(termo)) &&
+      (secao === '' || item.tipo === secao) &&
+      (situacao === '' || item.disponibilidade !== 'DISPONIVEL'),
+  );
+  const filtrando = termo !== '' || secao !== '' || situacao !== '';
 
   return (
     <CascaDaLoja
@@ -72,10 +85,45 @@ export function Disponibilidade() {
             <p className="admin-muted">
               {leitura.estado === 'carregando'
                 ? 'Carregando…'
-                : `${itens.length} produto(s), ${acabando} acabando ou esgotado(s)`}
+                : `${itens.length} produto(s), ${acabando} acabando ou esgotado(s)` +
+                  (filtrando ? ` · mostrando ${filtrados.length}` : '')}
             </p>
           </div>
           <span className="status orange">Volta sozinho no próximo expediente</span>
+        </div>
+        <div className="menu-toolbar">
+          <label className="search">
+            <span className="material-symbols-outlined">search</span>
+            <input
+              type="search"
+              placeholder="Buscar produto pelo nome"
+              aria-label="Buscar produto pelo nome"
+              value={busca}
+              onChange={(evento) => definirBusca(evento.target.value)}
+            />
+          </label>
+          <select
+            className="select"
+            aria-label="Filtrar por categoria"
+            value={secao}
+            onChange={(evento) => definirSecao(evento.target.value)}
+          >
+            <option value="">Todas as categorias</option>
+            {secoes.map((nome) => (
+              <option key={nome} value={nome}>
+                {nome}
+              </option>
+            ))}
+          </select>
+          <select
+            className="select"
+            aria-label="Filtrar por situação"
+            value={situacao}
+            onChange={(evento) => definirSituacao(evento.target.value as '' | 'FALTANDO')}
+          >
+            <option value="">Todas as situações</option>
+            <option value="FALTANDO">Só acabando ou esgotados</option>
+          </select>
         </div>
         <div className="table-scroll">
           <table className="orders-table prod-tabela">
@@ -88,16 +136,18 @@ export function Disponibilidade() {
               </tr>
             </thead>
             <tbody>
-              {itens.length === 0 ? (
+              {filtrados.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="prod-vazio">
                     {leitura.estado === 'carregando'
                       ? 'Carregando os produtos…'
-                      : 'Nenhum produto cadastrado ainda.'}
+                      : itens.length === 0
+                        ? 'Nenhum produto cadastrado ainda.'
+                        : 'Nenhum produto com esse filtro.'}
                   </td>
                 </tr>
               ) : (
-                itens.map((item) => (
+                filtrados.map((item) => (
                   <tr key={item.id}>
                     <td>
                       <div className="prod-nome">

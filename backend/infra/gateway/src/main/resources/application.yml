@@ -137,8 +137,6 @@ spring:
             # assinatura no corpo, validada DENTRO do serviço.
             # Prefixo próprio e exclusivo: nenhuma outra rota mora sob
             # /webhooks/, para que a exceção de segurança seja estreita.
-            # O webhook do PSP saiu em 01/11/2026 com o payment-service: não há
-            # pagamento pelo aplicativo (ADR-021, emenda).
             - id: webhook-channel
               uri: ${SERVICE_CONVERSATION_URI:http://localhost:8088}
               predicates:

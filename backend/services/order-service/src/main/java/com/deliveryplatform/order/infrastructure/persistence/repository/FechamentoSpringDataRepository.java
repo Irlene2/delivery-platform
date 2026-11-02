@@ -17,4 +17,7 @@ interface FechamentoSpringDataRepository extends JpaRepository<FechamentoJpaEnti
 
     List<FechamentoJpaEntity> findByEstabelecimentoIdOrderByDiaDesc(UUID estabelecimentoId,
                                                                    Pageable pagina);
+
+    List<FechamentoJpaEntity> findByEstabelecimentoIdAndDiaBetweenOrderByDiaDesc(
+            UUID estabelecimentoId, LocalDate de, LocalDate ate);
 }

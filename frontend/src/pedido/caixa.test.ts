@@ -1,5 +1,5 @@
 import type { PedidoDaLoja } from '../api/pedidos';
-import { apurar, fechamentoEmCsv } from './caixa';
+import { apurar, fechamentoEmCsv, periodoEmCsv, somaDoPeriodo } from './caixa';
 
 const entregue: PedidoDaLoja = {
   id: 'p',
@@ -52,5 +52,26 @@ describe('o caixa do dia na demonstração', () => {
     const csv = fechamentoEmCsv(apurar([entregue], { dia: '2026-11-05' }));
     expect(csv.includes('Vendas;45,00')).toBe(true);
     expect(csv.includes('"Carlos";1;5,00;45,00;0,00;40,00')).toBe(true);
+  });
+});
+
+describe('as vendas de um período', () => {
+  it('soma os dias fechados, sem erro de centavos', () => {
+    const um = apurar([entregue], { dia: '2026-11-04' });
+    const outro = apurar([{ ...entregue, total: 10.1 }], { dia: '2026-11-05' });
+    const soma = somaDoPeriodo([outro, um]);
+    expect(soma.dias).toBe(2);
+    expect(soma.vendas).toBe(55.1);
+    expect(soma.repasse).toBe(10);
+  });
+
+  it('o CSV do período tem um dia por linha, em ordem, e o total', () => {
+    const csv = periodoEmCsv([
+      apurar([entregue], { dia: '2026-11-05' }),
+      apurar([entregue], { dia: '2026-11-04' }),
+    ]);
+    const linhas = csv.split('\r\n');
+    expect(linhas[1]?.startsWith('04/11/2026;')).toBe(true);
+    expect(linhas[3]).toBe('Total (2 dias);2;0;90,00;90,00;0,00;0,00;10,00;10,00');
   });
 });

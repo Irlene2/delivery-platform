@@ -261,12 +261,24 @@ export function avancarEntrega(
 export function receberNaEntrega(
   estabelecimentoId: string,
   pedidoId: string,
-  recebimento: { readonly formaEfetiva: 'DINHEIRO' | 'CARTAO'; readonly valorRecebido?: number },
+  recebimento: { readonly formaEfetiva: FormaDePagamento; readonly valorRecebido?: number },
   token: string,
 ): Promise<PedidoDaLoja> {
   return chamar<PedidoDaLoja>(`${doPainel(estabelecimentoId)}/deliveries/${pedidoId}/settlement`, {
     metodo: 'PUT',
     corpo: recebimento,
+    token,
+  });
+}
+
+/** A loja confirma no extrato o Pix que o entregador informou (02/11/2026). */
+export function conferirPix(
+  estabelecimentoId: string,
+  pedidoId: string,
+  token: string,
+): Promise<PedidoDaLoja> {
+  return chamar<PedidoDaLoja>(`${doPainel(estabelecimentoId)}/${pedidoId}/pix-check`, {
+    metodo: 'PUT',
     token,
   });
 }
@@ -369,6 +381,19 @@ export async function lerFechamento(
     if (erro instanceof ErroDaApi && erro.status === 404) return null;
     throw erro;
   }
+}
+
+/** Os caixas fechados de `de` a `ate`, inclusive — as vendas de um período (02/11/2026). */
+export function fechamentosDoPeriodo(
+  estabelecimentoId: string,
+  de: string,
+  ate: string,
+  token: string,
+): Promise<FechamentoGravado[]> {
+  return chamar<FechamentoGravado[]>(
+    `${doPainel(estabelecimentoId)}/closings?de=${de}&ate=${ate}`,
+    { token },
+  );
 }
 
 export function historicoDeFechamentos(

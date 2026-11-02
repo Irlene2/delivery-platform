@@ -5,15 +5,15 @@
 - **Rodada:** entrega de 15/11
 - **Relacionada:** ADR-075 (o pedido nasce no canal — adiada por esta, não revogada), ADR-006
   (o rascunho pertence à conversa), ADR-009 (modelo de valores do pedido), ADR-021 (catálogo de
-  serviços), ADR-023 (o pedido é dono do registro), PRD §5 (P4) e §10
+  serviços), ADR-023 (o pedido registra o pagamento), PRD §5 (P4) e §10
 
 ## Contexto
 
 A entrega do curso é em **15/11/2026** (domingo e feriado; a última data útil é 13/11). Restam
 três semanas. O caminho da ADR-075 — o 7a de ponta a ponta na conversa, com webhook assinado,
 identidade de serviço, cotação, cardápio de quem compra e um número de WhatsApp de verdade —,
-seguido do marco 3, **não cabe nelas com qualidade**. Os cinco serviços que o marco 3 em diante
-usa (`order`, `payment`, `delivery`, `settlement`, `conversation`) são esqueleto.
+seguido do marco 3, **não cabe nelas com qualidade**. Os serviços que o marco 3 em diante
+usa (`order`, `delivery`, `settlement`, `conversation`) eram esqueleto.
 
 ## Decisão
 
@@ -22,8 +22,8 @@ usa (`order`, `payment`, `delivery`, `settlement`, `conversation`) são esquelet
 > montado e confirmado no cardápio público. O servidor calcula o total.
 
 1. **Um serviço só: o `order`.** Pagamento na entrega (forma, valor recebido, troco, Pix
-   conferido) e entregador (o nome) são **campos do pedido** nesta entrega. `payment`,
-   `delivery` e `settlement` continuam esqueleto.
+   conferido) e entregador (o nome) são **campos do pedido** nesta entrega. `delivery` e
+   `settlement` continuam esqueleto; o pagamento não é serviço (ADR-023).
 2. **O preço vem do `catalog`, por chamada síncrona** no momento de criar o pedido. Sem evento
    entre serviços nesta entrega.
 3. **Uma rota pública de leitura do cardápio**, só com o que está publicado, para o cardápio de
@@ -84,8 +84,16 @@ em [`docs/entrega-15-11/pedido.md`](../../entrega-15-11/pedido.md).
   cabe até 15/11. As emendas da ADR-037 (sessão de 12 horas) e da ADR-042 (o código na tela, só
   com a bandeira de desenvolvimento) são da mesma rodada.
 
-- **01/11/2026 — sem pagamento pelo aplicativo, e o `payment-service` sai** (ADR-021, emenda).
-  O pagamento é sempre na entrega ou na retirada, registrado no pedido.
+- **01/11/2026 — o pagamento é presencial.** O cliente paga na entrega ou na retirada, e a loja
+  registra no pedido; o produto não cobra (ADR-023, ADR-021).
+- **02/11/2026 — o entregador informa Pix.** Na porta, ele registra dinheiro, cartão ou Pix; o Pix
+  fica **a conferir** e a loja confirma em Pedidos, pela rota `PUT .../orders/{id}/pix-check`. O
+  caixa do dia não fecha com Pix a conferir.
+- **02/11/2026 — as vendas de um período.** O histórico do fechamento aceita `de` e `ate` (até um
+  ano) e soma os dias fechados; o CSV sai com um dia por linha.
+- **02/11/2026 — o sino do administrador.** Os avisos saem dos pedidos do dia, relidos a cada 30
+  segundos: pedido novo, saída e entrega, retirada, cancelamento, pagamento registrado e Pix a
+  conferir. O que a própria loja faz no painel não avisa. Sem serviço de notificação.
 - **01/11/2026 — a loja de teste é a da fixture.** O link "Ver as telas em modo demonstração"
   saiu da tela de entrada; o cardápio de exemplo do protótipo (seis seções, 24 produtos, fotos e
   as opções do hambúrguer) passou a ser gravado no banco da "Pizzaria da Fixture" pela

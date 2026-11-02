@@ -34,6 +34,9 @@ public class FechamentoDoDiaService implements FecharODia {
     static final int TETO = PedidosDaLojaService.TETO_DA_LISTA;
     static final int HISTORICO = 60;
 
+    /** Um ano, contando o dia de início: o histórico que o restaurante pede. */
+    static final int MAIOR_PERIODO = 365;
+
     private final Autorizador autorizador;
     private final PedidoRepositorio pedidos;
     private final FechamentoRepositorio fechamentos;
@@ -86,5 +89,15 @@ public class FechamentoDoDiaService implements FecharODia {
     public List<FechamentoDoDia> recentes(UUID estabelecimentoId) {
         autorizador.exigir(estabelecimentoId, PermissaoDoPedido.VER_VENDAS);
         return fechamentos.recentes(estabelecimentoId, HISTORICO);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<FechamentoDoDia> doPeriodo(UUID estabelecimentoId, LocalDate de, LocalDate ate) {
+        autorizador.exigir(estabelecimentoId, PermissaoDoPedido.VER_VENDAS);
+        if (de == null || ate == null || de.isAfter(ate) || de.plusDays(MAIOR_PERIODO).isBefore(ate)) {
+            throw new FechamentoRecusado(FechamentoRecusado.Motivo.PERIODO_INVALIDO, 0);
+        }
+        return fechamentos.entre(estabelecimentoId, de, ate);
     }
 }

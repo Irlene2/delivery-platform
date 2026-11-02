@@ -113,12 +113,14 @@ public class EntregadoresService implements EntregadoresDaLoja, MinhasEntregas {
     @Transactional
     public Pedido registrarPagamento(UUID estabelecimentoId, UUID pedidoId, FormaDePagamento forma,
                                      Money valorRecebido) {
-        if (forma == FormaDePagamento.PIX) {
-            throw new RecusaAoEntregador(RecusaAoEntregador.Motivo.PIX);
-        }
         Pedido pedido = minha(estabelecimentoId, pedidoId);
         trava.exigirAberto(pedido);
-        pedido.registrarPagamento(forma, valorRecebido, false, Instant.now(relogio));
+        if (forma == FormaDePagamento.PIX) {
+            // O Pix informado na porta fica a conferir pela loja (02/11/2026).
+            pedido.registrarPixInformado(Instant.now(relogio));
+        } else {
+            pedido.registrarPagamento(forma, valorRecebido, false, Instant.now(relogio));
+        }
         return pedidos.salvar(pedido);
     }
 

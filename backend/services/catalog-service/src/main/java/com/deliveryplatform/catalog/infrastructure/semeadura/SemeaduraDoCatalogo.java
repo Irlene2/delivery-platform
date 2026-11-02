@@ -15,7 +15,9 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -72,6 +74,9 @@ public class SemeaduraDoCatalogo implements ApplicationRunner {
 
     static final Duration IDADE_DO_CARIMBO = Duration.ofDays(30);
 
+    /** Mais que o cardápio inteiro; a loja da fixture não passa disso. */
+    static final int TETO_DA_LOJA = 200;
+
     private static final Logger log = LoggerFactory.getLogger(SemeaduraDoCatalogo.class);
 
     private final SemeaduraProperties propriedades;
@@ -100,6 +105,7 @@ public class SemeaduraDoCatalogo implements ApplicationRunner {
             semearAMargherita();
         }
         semearOCardapioDeDemonstracao();
+        completarAsFotos();
     }
 
     private void semearAMargherita() {
@@ -147,6 +153,35 @@ public class SemeaduraDoCatalogo implements ApplicationRunner {
         if (gravados > 0) {
             log.info("semeadura: {} produtos do cardápio de demonstração gravados na loja {}",
                     gravados, Fixture.LOJA);
+        }
+    }
+
+    /**
+     * O produto do cardápio de demonstração que está sem foto ganha a do cardápio. Cobre o banco
+     * semeado antes de as quatro fotos da Commons entrarem (02/11/2026): a idempotência por seção
+     * não regrava produto, então sem isto eles ficariam sem foto para sempre.
+     */
+    private void completarAsFotos() {
+        Map<String, String> fotos = new HashMap<>();
+        for (CardapioDeDemonstracao.Secao secao : CardapioDeDemonstracao.SECOES) {
+            for (CardapioDeDemonstracao.Item item : secao.itens()) {
+                if (item.imagem() != null) {
+                    fotos.put(item.nome(), item.imagem());
+                }
+            }
+        }
+        int completados = 0;
+        for (Produto produto : produtos.daLoja(Fixture.LOJA, PageRequest.of(0, TETO_DA_LOJA)).getContent()) {
+            String foto = fotos.get(produto.getNome());
+            if (foto != null && produto.getImagemRef() == null) {
+                produto.ilustrarCom(foto);
+                produtos.salvar(produto);
+                completados++;
+            }
+        }
+        if (completados > 0) {
+            log.info("semeadura: {} produtos da loja {} ganharam a foto do cardápio", completados,
+                    Fixture.LOJA);
         }
     }
 

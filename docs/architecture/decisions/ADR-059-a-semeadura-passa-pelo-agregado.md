@@ -252,6 +252,8 @@ renomeada pelo dono volta na subida seguinte — é fixture de desenvolvimento, 
 `delivery.semeadura.ligada`.
 
 **As fotos são links**, no `imagemRef`: só as do Unsplash e da Wikimedia Commons, de licença
-livre. Quatro produtos do protótipo usavam fotos de outros sites e ficaram sem foto.
+livre. As da Commons usam o endereço `Special:FilePath`, que redireciona para o arquivo. Desde
+02/11/2026, todo produto do cardápio tem foto, e a semeadura completa a foto do produto já gravado
+sem ela — o banco semeado antes ganha as que faltavam na próxima subida.
 
 **Gatilho escrito:** o mesmo da ADR — esta semeadura é andaime e sai com ela.

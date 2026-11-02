@@ -149,6 +149,7 @@ A permissão é resolvida no `merchant` a cada requisição (ADR-011), pelo mesm
 | `PUT /api/v1/merchants/{id}/orders/{pedidoId}/status` | `ALTERAR_STATUS` | `{ "status": "EM_PREPARO", "motivo": null }` — transição da §4 |
 | `PUT /api/v1/merchants/{id}/orders/{pedidoId}/courier` | `ALTERAR_STATUS` | `{ "nome": "Carlos" }` — o entregador, só em `ENTREGA` |
 | `PUT /api/v1/merchants/{id}/orders/{pedidoId}/settlement` | `ALTERAR_STATUS` | o pagamento registrado — §5 |
+| `PUT /api/v1/merchants/{id}/orders/{pedidoId}/pix-check` | `ALTERAR_STATUS` | a loja confirma no extrato o Pix que o entregador informou; vale em qualquer estado, inclusive entregue. **400** se não há Pix a conferir (02/11/2026) |
 | `GET` e `PUT /api/v1/merchants/{id}/orders/settings` | `CONFIGURAR_LOJA` | `{ "taxaDeEntrega": 5.00, "aceitaEntrega": true, "aceitaRetirada": true }` |
 
 O gateway já roteia `/api/v1/merchants/{merchantId}/orders/**` para o `order`.
@@ -165,7 +166,7 @@ equipe do `merchant` não guarda nome, e esta entrega não mexe nela.
 | `GET` e `PUT /api/v1/merchants/{id}/orders/couriers/me` | `VER_ENTREGA` | eu, como entregador (`204` se ainda não me apresentei); `{ "nome": "Carlos Moto" }` |
 | `GET /api/v1/merchants/{id}/orders/deliveries?dia=` | `VER_ENTREGA` | **as minhas** entregas do dia — o `usuarioId` sai do token, nunca da URL |
 | `PUT /api/v1/merchants/{id}/orders/deliveries/{pedidoId}/status` | `VER_ENTREGA` | só `SAIU_PARA_ENTREGA` e `ENTREGUE` |
-| `PUT /api/v1/merchants/{id}/orders/deliveries/{pedidoId}/settlement` | `VER_ENTREGA` | só `DINHEIRO` e `CARTAO`; o Pix é conferido pela loja |
+| `PUT /api/v1/merchants/{id}/orders/deliveries/{pedidoId}/settlement` | `VER_ENTREGA` | `DINHEIRO`, `CARTAO` ou `PIX`. O Pix fica **a conferir** pela loja (02/11/2026) |
 
 `PUT …/{pedidoId}/courier` aceita `{ "usuarioId": "…" }` (alguém da equipe; o nome vem do cadastro)
 ou `{ "nome": "…" }` (o entregador avulso, sem conta). Entrega que não está com quem pede é **404**.
@@ -183,11 +184,12 @@ o dinheiro contado e uma observação:
 | Rota | Permissão | O que faz |
 | --- | --- | --- |
 | `POST /api/v1/merchants/{id}/orders/closings` | `GERENCIAR_JORNADA` | `{ "dia": "2026-11-05", "dinheiroContado": 320.00, "observacao": "…" }` → **201** com o fechamento |
-| `GET /api/v1/merchants/{id}/orders/closings` | `VER_VENDAS` | o histórico, do mais recente ao mais antigo |
+| `GET /api/v1/merchants/{id}/orders/closings` | `VER_VENDAS` | o histórico, do mais recente ao mais antigo. Com `?de=AAAA-MM-DD&ate=AAAA-MM-DD`, os dias fechados do período, de até um ano — **400** se invertido ou maior (02/11/2026) |
 | `GET /api/v1/merchants/{id}/orders/closings/{dia}` | `VER_VENDAS` | o fechamento de um dia; **404** se ainda não fechou |
 
 - **Não fecha com pedido em andamento** (409, *"há 2 pedidos do dia em andamento; conclua ou
-  cancele antes de fechar o caixa"*), nem duas vezes o mesmo dia (409), nem dia futuro (400).
+  cancele antes de fechar o caixa"*), **nem com Pix informado pelo entregador ainda a conferir**
+  (409, desde 02/11/2026), nem duas vezes o mesmo dia (409), nem dia futuro (400).
 - **A conferência é opcional:** `diferencaDeCaixa = dinheiro contado − vendas em dinheiro`, só
   registrada, sem bloquear.
 - **Depois de fechado, o dia não muda:** os pedidos daquele dia não avançam, não trocam de
@@ -196,7 +198,7 @@ o dinheiro contado e uma observação:
 
 ## 4. Estados
 
-O recorte do `docs/dominio/pedido.md` §2. **Fora desta entrega:** `PAGO` (marco 8),
+O recorte do `docs/dominio/pedido.md` §2. **Fora desta entrega:** `PAGO` (só com pagamento online, fora da proposta — ADR-023),
 `AGUARDANDO_ESTOQUE` (marco 10), `NAO_ENTREGUE` e os subestados de `EM_PREPARO`.
 
 ```
@@ -235,6 +237,11 @@ Qualquer outra transição: **409**, com `detail` dizendo de onde para onde não
 
 A forma efetiva pode ser diferente da declarada no pedido (o cliente disse dinheiro e pagou no
 cartão); as duas ficam guardadas.
+
+**O Pix informado pelo entregador** (02/11/2026): pelo app de entregas, o entregador registra `PIX`
+sem conferência; o pedido fica com `pixConferido: false`, pode ser entregue, e aparece em Pedidos
+com o botão *"Conferi o Pix no extrato"* (`PUT …/pix-check`). O sino avisa, e o caixa do dia não
+fecha enquanto houver Pix a conferir.
 
 ## 6. Como testar
 

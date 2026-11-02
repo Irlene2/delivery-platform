@@ -65,7 +65,7 @@ a linha do outbox. Nunca em duas.
 |---|---|---|
 | `RECEBIDO` | Cliente confirmou. Ainda **não há compromisso** do estabelecimento | não |
 | `CONFIRMADO` | Compromisso presencial — **ato humano** do estabelecimento | não |
-| `PAGO` | Compromisso online — webhook do PSP. **Marco 8** | não |
+| `PAGO` | Compromisso online — só com pagamento pelo aplicativo, **fora da proposta atual** (ADR-023) | não |
 | `AGUARDANDO_ESTOQUE` | Reserva pendente. **Inalcançável no MVP** — marco 10 | não |
 | `EM_PREPARO` | Em produção ou separação. Tem subestado | não |
 | `PRONTO` | **Transação-pivô** (ADR-010). Existe fisicamente | não |
@@ -128,7 +128,7 @@ inválida** e lança `TransicaoInvalidaException` → HTTP 409.
 |---|---|---|---|---|---|
 | T01 | — | `RECEBIDO` | Cliente confirma por botão | Itens vendáveis · área atendida · invariantes de valor · regra do troco · **pedido mínimo da modalidade** | Congela itens, taxa, área e desconto. `PedidoRecebidoV1` |
 | T02 | `RECEBIDO` | `CONFIRMADO` | Estabelecimento aceita | Loja aberta **ou** aceite manual explícito · `ALTERAR_STATUS` | Compromisso. `PedidoConfirmadoV1` |
-| T03 | `RECEBIDO` | `PAGO` | Webhook do PSP | Assinatura válida · `txid` correlacionado. **Marco 8** | Compromisso. `PedidoPagoV1` |
+| T03 | `RECEBIDO` | `PAGO` | Webhook do PSP | Assinatura válida · `txid` correlacionado. **Fora da proposta atual** (ADR-023) | Compromisso. `PedidoPagoV1` |
 | T04 | `RECEBIDO` | `AGUARDANDO_ESTOQUE` | Aceite com item controlado | `∃ item.estoqueControladoSnapshot` — **falso no MVP** | Solicita reserva |
 | T05 | `AGUARDANDO_ESTOQUE` | `CONFIRMADO` | Reserva confirmada | — | Compromisso |
 | T06 | `AGUARDANDO_ESTOQUE` | `CANCELADO` | Reserva rejeitada | — | `ITEM_INDISPONIVEL` |
@@ -356,9 +356,8 @@ o outro, os dois existem ao mesmo tempo. A ADR-030 tem o raciocínio inteiro.
 
 No marco 4 **nenhuma** devolução é executada pelo sistema: a plataforma não
 custodiou o valor (P1), então `formaDeDevolucao = FORA_DO_SISTEMA` é o caso
-normal e `EXECUTADA` significa que alguém marcou. `ESTORNO_PSP` entra no marco 8.
-
-Detalhe dos quatro caminhos em [`pagamento.md`](pagamento.md) §6.
+normal e `EXECUTADA` significa que alguém marcou. O produto não custodia valor em nenhum caso
+(ADR-023), então não há estorno feito pelo sistema.
 
 ---
 
@@ -376,8 +375,8 @@ mudança de estado (invariante 7 do `CLAUDE.md`).
 | `PedidoSaiuParaEntregaV1` | T16 | `conversation` |
 | `PedidoEntregueV1` | T19, T22 | `settlement`, `conversation` |
 | `PedidoRetiradoV1` | T24 | `conversation` |
-| `PedidoCanceladoV1` | T06, T07, T08, T11, T12, T15, T18, T23, T25 | `delivery`, `payment`, `conversation` |
-| `DevolucaoDevidaV1` | Nasce uma `Devolucao` | `payment` (só quando `ESTORNO_PSP`), `settlement` |
+| `PedidoCanceladoV1` | T06, T07, T08, T11, T12, T15, T18, T23, T25 | `delivery`, `conversation` |
+| `DevolucaoDevidaV1` | Nasce uma `Devolucao` | `settlement` |
 
 `PedidoEntregueV1` e `PedidoRetiradoV1` **carregam a liquidação no payload**. O
 `settlement-service` não consulta o `order-service` para apurar (invariante 8).
@@ -386,9 +385,6 @@ mudança de estado (invariante 7 do `CLAUDE.md`).
 
 | Evento | Origem | O que o pedido faz |
 |---|---|---|
-| `LiquidacaoConfirmadaV1` | `payment` | Muda a `Liquidacao` para `CONFIRMADA`. Se o pedido estiver `CANCELADO`, confirma assim mesmo e gera `Devolucao` — ADR-030 §6 |
-| `CobrancaExpiradaV1` | `payment` | Registra que a cobrança venceu. **Não** muda estado do pedido |
-| `EstornoExecutadoV1` | `payment` | Muda a `Devolucao` para `EXECUTADA` — marco 8 |
 | `ConfiguracaoOperacionalAlteradaV1` | `merchant` | Modalidades, métodos e regra de troco aplicáveis ao pedido |
 | `JornadaAbertaV1` | `settlement` | **Invalida cache** de jornada aberta — não projeta |
 | `JornadaFechadaV1` | `settlement` | Idem |

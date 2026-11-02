@@ -24,4 +24,7 @@ public interface OperarPedido {
 
     Pedido registrarPagamento(UUID estabelecimentoId, UUID pedidoId, FormaDePagamento forma,
                               Money valorRecebido, boolean pixConferido);
+
+    /** A loja confirma no extrato o Pix que o entregador informou. */
+    Pedido conferirPix(UUID estabelecimentoId, UUID pedidoId);
 }

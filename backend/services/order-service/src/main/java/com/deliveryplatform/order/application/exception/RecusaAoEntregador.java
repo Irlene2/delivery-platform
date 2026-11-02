@@ -5,16 +5,17 @@ package com.deliveryplatform.order.application.exception;
  *
  * <ul>
  *   <li>{@link Motivo#STATUS}: ele só marca "saiu para entrega" e "entregue" — confirmar,
- *       preparar e cancelar são da loja;</li>
- *   <li>{@link Motivo#PIX}: o Pix cai na conta da loja, e só quem vê o extrato o confere
- *       (pedido.md §5).</li>
+ *       preparar e cancelar são da loja.</li>
  * </ul>
+ *
+ * <p>O Pix deixou de ser recusa em 02/11/2026: o entregador o informa, e ele fica a conferir
+ * pela loja ({@code Pedido#registrarPixInformado}).</p>
  */
 public class RecusaAoEntregador extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
 
-    public enum Motivo { STATUS, PIX }
+    public enum Motivo { STATUS }
 
     private final Motivo motivo;
 

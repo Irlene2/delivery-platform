@@ -1,5 +1,6 @@
 import {
   fecharCaixa,
+  fechamentosDoPeriodo,
   historicoDeFechamentos,
   lerFechamento,
   type FechamentoGravado,
@@ -19,6 +20,8 @@ export interface FonteDoCaixa {
   doDia(dia: string): Promise<FechamentoGravado | null>;
   fechar(novo: NovoFechamento): Promise<FechamentoGravado>;
   historico(): Promise<FechamentoGravado[]>;
+  /** Os dias fechados de `de` a `ate`, inclusive, do mais recente ao mais antigo. */
+  periodo(de: string, ate: string): Promise<FechamentoGravado[]>;
 }
 
 export function caixaDoServidor(estabelecimentoId: string, token: string): FonteDoCaixa {
@@ -26,6 +29,7 @@ export function caixaDoServidor(estabelecimentoId: string, token: string): Fonte
     doDia: (dia) => lerFechamento(estabelecimentoId, dia, token),
     fechar: (novo) => fecharCaixa(estabelecimentoId, novo, token),
     historico: () => historicoDeFechamentos(estabelecimentoId, token),
+    periodo: (de, ate) => fechamentosDoPeriodo(estabelecimentoId, de, ate, token),
   };
 }
 
@@ -100,10 +104,77 @@ export function caixaDaDemonstracao(): FonteDoCaixa {
       }
     },
     historico: () => Promise.resolve(todos()),
+    periodo: (de, ate) => Promise.resolve(todos().filter((um) => um.dia >= de && um.dia <= ate)),
   };
 }
 
 /** O fechamento em CSV, para abrir na planilha (separador `;`, decimal com vírgula). */
+/** A soma de um período: os totais dos dias fechados nele. */
+export interface SomaDoPeriodo {
+  readonly dias: number;
+  readonly concluidos: number;
+  readonly cancelados: number;
+  readonly vendas: number;
+  readonly dinheiro: number;
+  readonly cartao: number;
+  readonly pix: number;
+  readonly taxas: number;
+  readonly repasse: number;
+}
+
+const centavos = (valor: number) => Math.round(valor * 100);
+
+export function somaDoPeriodo(fechamentos: readonly FechamentoGravado[]): SomaDoPeriodo {
+  // Em centavos, para a soma de muitos dias não acumular erro de vírgula.
+  const soma = (campo: (f: FechamentoGravado) => number) =>
+    fechamentos.reduce((total, f) => total + centavos(campo(f)), 0) / 100;
+  return {
+    dias: fechamentos.length,
+    concluidos: fechamentos.reduce((total, f) => total + f.concluidos, 0),
+    cancelados: fechamentos.reduce((total, f) => total + f.cancelados, 0),
+    vendas: soma((f) => f.vendas),
+    dinheiro: soma((f) => f.dinheiro),
+    cartao: soma((f) => f.cartao),
+    pix: soma((f) => f.pix),
+    taxas: soma((f) => f.taxas),
+    repasse: soma((f) => f.repasseTotal),
+  };
+}
+
+/** O período numa planilha: uma linha por dia fechado e a linha do total. */
+export function periodoEmCsv(fechamentos: readonly FechamentoGravado[]): string {
+  const n = (valor: number) => valor.toFixed(2).replace('.', ',');
+  const total = somaDoPeriodo(fechamentos);
+  const linhas = [
+    ['Dia', 'Concluídos', 'Cancelados', 'Vendas', 'Dinheiro', 'Cartão', 'Pix', 'Taxas', 'Repasse'],
+    ...[...fechamentos]
+      .sort((a, b) => a.dia.localeCompare(b.dia))
+      .map((f) => [
+        f.dia.split('-').reverse().join('/'),
+        String(f.concluidos),
+        String(f.cancelados),
+        n(f.vendas),
+        n(f.dinheiro),
+        n(f.cartao),
+        n(f.pix),
+        n(f.taxas),
+        n(f.repasseTotal),
+      ]),
+    [
+      `Total (${total.dias} dias)`,
+      String(total.concluidos),
+      String(total.cancelados),
+      n(total.vendas),
+      n(total.dinheiro),
+      n(total.cartao),
+      n(total.pix),
+      n(total.taxas),
+      n(total.repasse),
+    ],
+  ];
+  return linhas.map((linha) => linha.join(';')).join('\r\n');
+}
+
 export function fechamentoEmCsv(f: FechamentoGravado): string {
   const n = (valor: number | null) => (valor === null ? '' : valor.toFixed(2).replace('.', ','));
   const texto = (valor: string) => `"${valor.replace(/"/g, '""')}"`;

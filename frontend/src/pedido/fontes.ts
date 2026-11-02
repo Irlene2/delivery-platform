@@ -2,6 +2,7 @@ import {
   acompanharPedido,
   apresentarComoEntregador,
   avancarEntrega,
+  conferirPix,
   definirConfiguracao,
   euComoEntregador,
   fazerPedido,
@@ -17,6 +18,7 @@ import {
   type ConfiguracaoDePedidos,
   type EntregadorDaEquipe,
   type EntregadorEscolhido,
+  type FormaDePagamento,
   type NovoPedido,
   type PagamentoInformado,
   type PedidoDaLoja,
@@ -37,6 +39,7 @@ import {
 import {
   acompanharNaDemonstracao,
   avancarNaDemonstracao,
+  conferirPixNaDemonstracao,
   configuracaoDaDemonstracao,
   definirConfiguracaoDaDemonstracao,
   ENTREGADORES_DA_DEMONSTRACAO,
@@ -44,6 +47,7 @@ import {
   fazerPedidoNaDemonstracao,
   pagamentoNaDemonstracao,
   pedidosDaDemonstracao,
+  pixInformadoNaDemonstracao,
   PREFIXO_DO_CODIGO_DEMO,
 } from './demonstracao';
 
@@ -150,6 +154,8 @@ export interface FonteDePedidos {
   /** Os entregadores da equipe, para escolher no pedido. */
   entregadores(): Promise<EntregadorDaEquipe[]>;
   pagamento(pedidoId: string, pagamento: PagamentoInformado): Promise<PedidoDaLoja>;
+  /** Confirma o Pix que o entregador informou na porta. */
+  conferirPix(pedidoId: string): Promise<PedidoDaLoja>;
   configuracao(): Promise<ConfiguracaoDePedidos>;
   definirConfiguracao(configuracao: ConfiguracaoDePedidos): Promise<ConfiguracaoDePedidos>;
 }
@@ -171,6 +177,7 @@ export function pedidosDaDemonstracaoComoFonte(): FonteDePedidos {
     entregador: (id, escolhido) => emPromessa(() => entregadorNaDemonstracao(id, escolhido)),
     entregadores: () => Promise.resolve([...ENTREGADORES_DA_DEMONSTRACAO]),
     pagamento: (id, pagamento) => emPromessa(() => pagamentoNaDemonstracao(id, pagamento)),
+    conferirPix: (id) => emPromessa(() => conferirPixNaDemonstracao(id)),
     configuracao: () => emPromessa(configuracaoDaDemonstracao),
     definirConfiguracao: (c) => emPromessa(() => definirConfiguracaoDaDemonstracao(c)),
   };
@@ -183,6 +190,7 @@ export function pedidosDoServidor(estabelecimentoId: string, token: string): Fon
     entregador: (id, escolhido) => informarEntregador(estabelecimentoId, id, escolhido, token),
     entregadores: () => listarEntregadores(estabelecimentoId, token),
     pagamento: (id, pagamento) => registrarPagamento(estabelecimentoId, id, pagamento, token),
+    conferirPix: (id) => conferirPix(estabelecimentoId, id, token),
     configuracao: () => lerConfiguracao(estabelecimentoId, token),
     definirConfiguracao: (c) => definirConfiguracao(estabelecimentoId, c, token),
   };
@@ -198,7 +206,7 @@ export interface FonteDasEntregas {
   avancar(pedidoId: string, status: 'SAIU_PARA_ENTREGA' | 'ENTREGUE'): Promise<PedidoDaLoja>;
   receber(
     pedidoId: string,
-    recebimento: { formaEfetiva: 'DINHEIRO' | 'CARTAO'; valorRecebido?: number },
+    recebimento: { formaEfetiva: FormaDePagamento; valorRecebido?: number },
   ): Promise<PedidoDaLoja>;
 }
 
@@ -223,6 +231,11 @@ export function entregasDaDemonstracao(): FonteDasEntregas {
         pedidosDaDemonstracao().filter((pedido) => pedido.entregadorId === eu?.usuarioId),
       ),
     avancar: (id, status) => emPromessa(() => avancarNaDemonstracao(id, status)),
-    receber: (id, recebimento) => emPromessa(() => pagamentoNaDemonstracao(id, recebimento)),
+    receber: (id, recebimento) =>
+      emPromessa(() =>
+        recebimento.formaEfetiva === 'PIX'
+          ? pixInformadoNaDemonstracao(id)
+          : pagamentoNaDemonstracao(id, recebimento),
+      ),
   };
 }

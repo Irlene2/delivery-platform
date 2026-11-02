@@ -273,6 +273,8 @@ function CartaoDoPedido({
   const precisaEntregador =
     entrega && !encerrado(pedido.status) && pedido.status !== 'SAIU_PARA_ENTREGA';
   const precisaPagamento = aceitaPagamento(pedido.status);
+  const pago = pedido.pagamentoRegistrado;
+  const pixAConferir = pago !== null && pago.formaEfetiva === 'PIX' && !pago.pixConferido;
 
   async function fazer(ato: () => Promise<PedidoDaLoja>, aviso: string) {
     definirOcupado(true);
@@ -368,9 +370,30 @@ function CartaoDoPedido({
             pedido.pagamentoRegistrado.trocoDevolvido > 0
               ? `, troco de ${dinheiro(pedido.pagamentoRegistrado.trocoDevolvido)}`
               : ''}
+            {pixAConferir ? ', informado pelo entregador' : ''}
           </b>
         )}
       </p>
+      {pixAConferir && (
+        <div className="pedido-campo">
+          <span className="admin-muted">
+            O entregador informou Pix. Confira no extrato da conta antes de fechar o caixa.
+          </span>
+          <button
+            type="button"
+            className="btn btn-primary"
+            disabled={ocupado}
+            onClick={() =>
+              void fazer(
+                () => fonte.conferirPix(pedido.id),
+                `Pix do pedido #${pedido.numero} conferido`,
+              )
+            }
+          >
+            <span className="material-symbols-outlined">verified</span>Conferi o Pix no extrato
+          </button>
+        </div>
+      )}
       {pedido.entregador !== null && (
         <p className="pedido-linha">
           <span className="material-symbols-outlined">sports_motorsports</span>

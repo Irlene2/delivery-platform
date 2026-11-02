@@ -31,6 +31,7 @@ public class RegraDoPedidoViolada extends RuntimeException {
         VALOR_RECEBIDO_OBRIGATORIO,
         VALOR_RECEBIDO_MENOR_QUE_O_TOTAL,
         PIX_NAO_CONFERIDO,
+        NADA_A_CONFERIR,
         ENTREGADOR_NA_RETIRADA,
         INTEGRIDADE
     }

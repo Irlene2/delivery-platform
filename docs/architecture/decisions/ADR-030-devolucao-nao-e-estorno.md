@@ -1,10 +1,11 @@
 # ADR-030 — Devolução não é estorno, e não é liquidação negativa
 
-**Status:** Aceita — 25/08/2026
+**Status:** Aceita — 25/08/2026 · **revisada em 02/11/2026**: na proposta atual o produto não
+custodia valor (ADR-023), então toda devolução é `FORA_DO_SISTEMA` — a loja devolve, e o sistema
+registra. As partes que tratam de estorno por provedor descrevem um caminho que esta proposta não tem
 **Fecha:** a promessa de devolução de H4.4 do PRD, que não tinha dono nem modelo
-**Relacionada:** ADR-009 (valores e liquidação), ADR-010 (saga e pivô), ADR-023 (fronteira order × payment)
-**Detalhada em:** `docs/dominio/pagamento.md` §5–§7
-**Precisa existir antes do marco 4** — o registro entra lá; a execução, no marco 8
+**Relacionada:** ADR-009 (valores e liquidação), ADR-010 (saga e pivô), ADR-023 (o pedido registra o pagamento)
+**Detalhada em:** `docs/dominio/pedido.md` §7
 
 ## Contexto
 
@@ -156,7 +157,7 @@ cancelado, e mesmo assim entrou dinheiro que precisa voltar.
 - **`situacao = DEVIDA` pode durar para sempre.** Não há prazo, alerta ou
   cobrança automática: é informação para o comerciante, não obrigação rastreada.
   Se na prática devolução devida virar devolução esquecida, isso vira decisão
-  nova — e está nomeado em `pagamento.md` §12.
+  nova.
 - **Alguém marca `EXECUTADA` sem prova.** Em `FORA_DO_SISTEMA` não há como o
   sistema verificar. O registro guarda quem marcou e quando, e é só isso que ele
   pode fazer.

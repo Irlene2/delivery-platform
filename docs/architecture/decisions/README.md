@@ -22,16 +22,16 @@
 | 018 | Snapshot de opções no item e cotação pelo catálogo | ✅ aceita |
 | 019 | `DeliveryQuotePort`: cotação por distância geodésica | ⛔ **revogada** — ver 020 |
 | 020 | Taxa de entrega por área nomeada (bairro / faixa de CEP) | ✅ aceita |
-| 021 | Catálogo de serviços do MVP — ~~oito~~ sete serviços | ✅ aceita · **emendada** (24/09/2026: `merchant` sem Redis; 26/09/2026: `order` e `delivery` sem Redis; 27/09/2026: `catalog` sem o starter, motivo mantido; **01/11/2026: o `payment` sai — não há pagamento pelo aplicativo**) |
+| 021 | Catálogo de serviços do produto — sete serviços e o gateway | ✅ aceita · **revisada** (02/11/2026: a proposta atual) · **emendada** (24/09/2026: `merchant` sem Redis; 26/09/2026: `order` e `delivery` sem Redis; 27/09/2026: `catalog` sem o starter, motivo mantido) |
 | 022 | A remuneração do entregador pertence ao vínculo | ✅ aceita |
-| 023 | Fronteira `order` × `payment`: pedido é dono do registro | ✅ aceita · **a fronteira com o PSP ficou sem objeto** (01/11/2026, ADR-021 emendada): o registro continua no pedido |
+| 023 | O pedido registra o pagamento; o produto não cobra | ✅ aceita · **revisada** (02/11/2026: pagamento presencial; o Pix informado pelo entregador fica a conferir pela loja) |
 | 024 | Desconto de retirada, não preço por modalidade | ✅ aceita · **emendada** (07/10/2026: o `cotar` é marco 3, e o prazo desta decisão vai com ele) |
 | 025 | Fuso horário do estabelecimento e o dia operacional | ✅ aceita · **emendada** (26/09/2026: um evento de abertura por dia operacional — ADR-046) |
 | 026 | Fila morta, retentativa e reprocessamento | ✅ aceita · **emendada** (29/09/2026: consumidor de invalidação não tem retentativa nem fila morta) · **emendada** (10/10/2026: recusa definitiva vai à fila morta na primeira entrega) |
 | 027 | O que conta como mudança compatível num evento | ✅ aceita · **emendada** (17/10/2026: a exceção do §2, medida no primeiro valor novo num enum publicado) |
 | 028 | Pedido mínimo por modalidade, sobre o subtotal dos itens | ✅ aceita |
 | 029 | Recuperação do administrador único | ✅ aceita |
-| 030 | Devolução não é estorno | ✅ aceita |
+| 030 | Devolução não é estorno | ✅ aceita · **revisada** (02/11/2026: toda devolução é fora do sistema) |
 | 031 | Nome de evento é único no repositório | ✅ aceita |
 | 032 | A guarda da conferência pergunta, não escuta | ✅ aceita |
 | 033 | O estado da jornada é perguntado | ✅ aceita |

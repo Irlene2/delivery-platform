@@ -82,6 +82,52 @@ class FechamentoDoDiaServiceTest {
     }
 
     @Test
+    @DisplayName("as vendas de um período: os dias fechados entre as datas, inclusive (02/11/2026)")
+    void vendas_de_um_periodo() {
+        caixa.fechar(LOJA, HOJE.minusDays(2), null, null);
+        caixa.fechar(LOJA, HOJE.minusDays(1), null, null);
+        caixa.fechar(LOJA, HOJE, null, null);
+
+        List<FechamentoDoDia> periodo = caixa.doPeriodo(LOJA, HOJE.minusDays(1), HOJE);
+        assertThat(periodo.stream().map(FechamentoDoDia::getDia).toList())
+                .isEqualTo(List.of(HOJE, HOJE.minusDays(1)));
+
+        assertThatThrownBy(() -> caixa.doPeriodo(LOJA, HOJE, HOJE.minusDays(1)))
+                .isInstanceOfSatisfying(FechamentoRecusado.class,
+                        e -> assertThat(e.motivo()).isEqualTo(FechamentoRecusado.Motivo.PERIODO_INVALIDO));
+        assertThatThrownBy(() -> caixa.doPeriodo(LOJA, HOJE.minusDays(400), HOJE))
+                .isInstanceOf(FechamentoRecusado.class);
+    }
+
+    @Test
+    @DisplayName("Pix informado pelo entregador e não conferido segura o fechamento (02/11/2026)")
+    void pix_a_conferir_segura_o_fechamento() {
+        Pedido p = vitrine.fazer(LOJA, new Solicitacao("Maria", "21999990000", Modalidade.ENTREGA,
+                new EnderecoInformado("Rua A, 1", "Centro", null),
+                List.of(new ItemSolicitado(PIZZA, 1, null)), FormaDePagamento.DINHEIRO, null));
+        UUID id = p.getId();
+        loja.avancar(LOJA, id, StatusDoPedido.CONFIRMADO, null);
+        loja.avancar(LOJA, id, StatusDoPedido.EM_PREPARO, null);
+        loja.avancar(LOJA, id, StatusDoPedido.PRONTO, null);
+        loja.informarEntregador(LOJA, id, null, "Carlos");
+        loja.avancar(LOJA, id, StatusDoPedido.SAIU_PARA_ENTREGA, null);
+        Pedido naPorta = pedidos.buscarPorId(id).orElseThrow();
+        naPorta.registrarPixInformado(AGORA);
+        pedidos.salvar(naPorta);
+        loja.avancar(LOJA, id, StatusDoPedido.ENTREGUE, null);
+
+        assertThatThrownBy(() -> caixa.fechar(LOJA, null, Money.ZERO, null))
+                .isInstanceOfSatisfying(FechamentoRecusado.class, e -> {
+                    assertThat(e.motivo()).isEqualTo(FechamentoRecusado.Motivo.PIX_A_CONFERIR);
+                    assertThat(e.quantos()).isEqualTo(1);
+                });
+
+        loja.conferirPix(LOJA, id);
+        FechamentoDoDia f = caixa.fechar(LOJA, null, Money.ZERO, null);
+        assertThat(f.getPix()).isEqualTo(Money.de("45"));
+    }
+
+    @Test
     @DisplayName("apura no servidor: vendas por forma, e o repasse de cada entregador é a taxa de cada entrega")
     void apura_o_dia() {
         entregue("Carlos", FormaDePagamento.DINHEIRO);

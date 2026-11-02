@@ -18,13 +18,15 @@ faz nele, o estado de cada etapa e como testar. As rotas e regras do pedido est�
    `/pedido/:codigo`.
 4. **A loja opera o pedido no painel** (`.../pedidos`): aceita, prepara, deixa pronto, entrega a
    um entregador da equipe (ou avulso, pelo nome) e avisa o cliente pelo link `wa.me` com a
-   mensagem pronta.
+   mensagem pronta. O **sino** do topo avisa de pedido novo, saída, entrega, cancelamento e Pix a
+   conferir.
 5. **O entregador, com a conta dele** (`.../entregas`), vê só as entregas que estão com ele,
-   marca a saída e a entrega, e registra quanto recebeu em dinheiro ou cartão. O Pix é
-   conferido pela loja.
+   marca a saída e a entrega, e registra como recebeu: dinheiro, cartão ou Pix. O Pix fica **a
+   conferir**, e a loja confirma no extrato, em Pedidos.
 6. **No fim do dia, o administrador abre o fechamento** (`.../fechamento`): total por forma de
    pagamento, por horário, e o **acerto de cada entregador** — repasse = a taxa de cada entrega
-   feita; acerto = dinheiro recebido − repasse.
+   feita; acerto = dinheiro recebido − repasse. O caixa não fecha com pedido em andamento nem com
+   Pix a conferir. O histórico mostra as **vendas de um período**, com planilha.
 
 O dashboard da loja mostra as vendas e os pedidos recentes do dia, a partir dos mesmos pedidos.
 
@@ -38,9 +40,8 @@ O dashboard da loja mostra as vendas e os pedidos recentes do dia, a partir dos 
 | `catalog` (8083) | Seções e produtos, publicação, disponibilidade, correção do cadastro e **foto**; serve o **cardápio público** e o preço que o `order` congela no item |
 | `order` (8085) | **O único serviço novo.** O pedido e seus estados, a taxa da loja, o entregador e o pagamento registrado, as entregas de cada entregador e o **caixa do dia** fechado e gravado. Pergunta ao `merchant` se a loja está aberta |
 
-`delivery`, `settlement` e `conversation` continuam esqueleto: nesta entrega, pagamento na
-entrega e entregador são campos do pedido. **O `payment` saiu em 01/11/2026** — não há pagamento
-pelo aplicativo (ADR-021, emenda).
+`delivery`, `settlement` e `conversation` continuam esqueleto: nesta entrega, o entregador e o
+pagamento registrado são campos do pedido. O pagamento é presencial e o produto não cobra (ADR-023).
 
 ## As etapas
 
@@ -52,7 +53,8 @@ pelo aplicativo (ADR-021, emenda).
 | 4 | Front ligado ao `order`: vitrine, checkout, acompanhamento, painel de pedidos, dashboard com dados reais, entregador com conta, fechamento do dia, configurações | ✅ passagem humana até o pedido entregue; o entregador e o fechamento ainda esperam a passagem humana |
 | 5 | WhatsApp: a resposta automática do WhatsApp Business com o link do cardápio, e o aviso ao cliente pelo `wa.me` | ⏳ |
 | 4b | O pacote até o marco 6 (01/11/2026): loja fechada não recebe pedido, corrigir produto, foto do produto, sessão de 12 horas, código do cadastro na tela (local), caixa do dia gravado | ✅ testes de unidade e de tela; espera os testes do Gradle e a passagem humana |
-| 4c | Limpeza de 01/11/2026: o modo demonstração sai da tela de entrada, a "Pizzaria da Fixture" ganha o cardápio do protótipo (24 produtos, fotos e opções), o `payment-service` sai e a hospedagem de teste fica escrita | ✅ testes de unidade; espera a subida com a semeadura ligada |
+| 4c | A loja de teste (01/11/2026): a "Pizzaria da Fixture" com o cardápio do protótipo — 24 produtos, fotos e opções —, a tela de entrada sem o modo demonstração e a hospedagem de teste escrita | ✅ testes de unidade; o cardápio conferido no navegador em 02/11 |
+| 4d | Os ajustes da passagem de 02/11/2026: o sino de notificações, o Pix informado pelo entregador e conferido pela loja, a busca e os filtros do estoque, as vendas por período no fechamento, o menu da loja em "Minhas lojas", a conta nova levada ao "Cadastrar minha loja" e as fotos no painel | ✅ testes de unidade e de tela; espera os testes do Gradle e a passagem humana |
 | 6 | Testes que faltam (contrato e integração do `order`), passagem completa no navegador, ensaio da demonstração e vídeo de reserva | ⏳ |
 
 Pendente fora das etapas: a aprovação da ADR-077 pelo grupo. O que foi assumido como dívida
@@ -95,13 +97,13 @@ colaborar"*).
 | # | Tarefa | Por quê | Esforço | Quem |
 | --- | --- | --- | --- | --- |
 | 1 | Rodar os testes do Gradle numa máquina com folga de memória, um serviço por vez (`--max-workers=1`) | Ainda não houve uma rodada inteira verde com o Testcontainers | P | |
-| 2 | Regenerar os contratos do `merchant`, `catalog` e `identity` (`-Dopenapi.atualizar=true`) e os tipos do front (`npm run tipos`) | As rotas novas de 01/11 não estão no contrato | P | |
-| 3 | Contrato OpenAPI e testes de integração do `order` | Os tipos do pedido no front são escritos à mão (`src/api/pedidos.ts`) | M | |
-| 4 | Passagem completa no navegador, com a fixture, anotando cada achado | Entregador, fechamento, loja fechada, foto e correção de produto só passaram em testes de tela | M | |
+| 2 | Regenerar os contratos do `merchant`, `catalog` e `identity` (`-Dopenapi.atualizar=true`) e os tipos do front (`npm run tipos`) | As rotas novas de 01/11 ainda não estão no contrato | P | |
+| 3 | Contrato OpenAPI e testes de integração do `order` | Os tipos do pedido no front são escritos à mão (`src/api/pedidos.ts`), inclusive as rotas de 02/11 (`pix-check` e o período do fechamento) | M | |
+| 4 | Passagem completa no navegador, com a fixture, anotando cada achado | Entregador, Pix a conferir, sino, fechamento por período, loja fechada, foto e correção de produto só passaram em testes de tela | M | |
 | 5 | Hospedagem de teste pelo túnel da Cloudflare, e liberar `.trycloudflare.com` no `preview.allowedHosts` do Vite | O link precisa abrir no celular de outra pessoa | P | |
 | 6 | Configurar a resposta automática do WhatsApp Business com o link do cardápio, e escrever o passo a passo | Etapa 5: sem código, só configuração no celular da loja | P | |
 | 7 | Roteiro da apresentação, ensaio e vídeo de reserva | O modo demonstração saiu; sem rede, o vídeo é a reserva | M | |
-| 8 | Ler e aprovar a ADR-077 (e as emendas de 01/11) em grupo | É a decisão do recorte, ainda *proposta* | P | |
+| 8 | Ler e aprovar a ADR-077 (com as decisões de 01/11 e 02/11) em grupo | É a decisão do recorte, ainda *proposta* | P | |
 
 ### Melhorias que podem entrar, se sobrar tempo — validem o esforço
 
@@ -116,8 +118,8 @@ colaborar"*).
 
 | # | Item | Esforço | Observação |
 | --- | --- | --- | --- |
-| 13 | Enviar o código de verificação por SMS ou WhatsApp | M | **Tem custo por mensagem**; hoje o código aparece na tela, só no teste |
-| 14 | Aviso automático ao cliente a cada mudança de status | G | Precisa da API oficial do WhatsApp (marco 7) |
+| 13 | Enviar o código de verificação | M a G | SMS e mensagem enviada pela empresa no WhatsApp **custam por mensagem**. O caminho gratuito é o cliente **mandar** o código pelo WhatsApp (mensagem do cliente não é cobrada), com a API oficial. Hoje o código aparece na tela, só no teste |
+| 14 | Aviso automático ao cliente a cada mudança de status | G | Precisa da API oficial do WhatsApp (conta Meta Business verificada, número próprio, modelos de mensagem aprovados e endereço público com HTTPS). Hoje a loja clica e o WhatsApp abre com a mensagem pronta |
 | 15 | Hospedagem de produção: servidor, domínio, HTTPS, cópia de segurança | G | A opção gratuita da Oracle serve para teste, sem garantia |
 | 16 | Termos de uso e política de privacidade | M | Pauta em `docs/operacao/revisao-juridica.md` |
 | 17 | Estoque por quantidade (marco 10) e atendimento com IA (marco 9) | G | Planejados na tabela de marcos |

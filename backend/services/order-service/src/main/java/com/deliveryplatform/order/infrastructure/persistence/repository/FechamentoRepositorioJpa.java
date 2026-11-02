@@ -57,6 +57,14 @@ public class FechamentoRepositorioJpa implements FechamentoRepositorio {
                 .toList();
     }
 
+    @Override
+    public List<FechamentoDoDia> entre(UUID estabelecimentoId, LocalDate de, LocalDate ate) {
+        return springData.findByEstabelecimentoIdAndDiaBetweenOrderByDiaDesc(estabelecimentoId, de, ate)
+                .stream()
+                .map(FechamentoRepositorioJpa::paraDominio)
+                .toList();
+    }
+
     private static Money dinheiro(BigDecimal valor) {
         return valor == null ? null : Money.de(valor);
     }

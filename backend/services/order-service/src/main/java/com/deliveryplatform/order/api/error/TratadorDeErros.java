@@ -89,6 +89,12 @@ public class TratadorDeErros {
                     "não dá para fechar um dia que ainda não chegou");
             case CONTAGEM_NEGATIVA -> ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
                     "o dinheiro contado no caixa não pode ser negativo");
+            case PIX_A_CONFERIR -> ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT,
+                    (excecao.quantos() == 1 ? "há 1 Pix informado pelo entregador"
+                            : "há " + excecao.quantos() + " Pix informados pelo entregador")
+                            + " a conferir no extrato; confira em Pedidos antes de fechar o caixa");
+            case PERIODO_INVALIDO -> ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
+                    "escolha um período de até um ano, com o início antes do fim");
         };
     }
 
@@ -167,8 +173,6 @@ public class TratadorDeErros {
         String frase = switch (excecao.motivo()) {
             case STATUS -> "pelo app de entregas você marca só a saída e a entrega; o resto é "
                     + "com a loja";
-            case PIX -> "o Pix cai na conta da loja e é conferido por ela; registre só dinheiro "
-                    + "ou cartão";
         };
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, frase);
     }
@@ -224,6 +228,7 @@ public class TratadorDeErros {
                     + ") é menor que o total do pedido (" + reais(d.get(1)) + ")";
             case PIX_NAO_CONFERIDO -> "confira o Pix no extrato da conta antes de registrar; "
                     + "comprovante na tela do cliente não vale";
+            case NADA_A_CONFERIR -> "este pedido não tem Pix a conferir";
             case ENTREGADOR_NA_RETIRADA -> "este pedido é de retirada e não tem entregador";
             case INTEGRIDADE -> "não foi possível completar a operação";
         };

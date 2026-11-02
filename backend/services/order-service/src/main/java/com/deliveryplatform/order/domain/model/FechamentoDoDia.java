@@ -104,6 +104,13 @@ public final class FechamentoDoDia {
         if (emAndamento > 0) {
             throw new FechamentoRecusado(FechamentoRecusado.Motivo.EM_ANDAMENTO, (int) emAndamento);
         }
+        long pixAConferir = pedidosDoDia.stream()
+                .filter(p -> p.getStatus() != StatusDoPedido.CANCELADO)
+                .filter(Pedido::pixAConferir)
+                .count();
+        if (pixAConferir > 0) {
+            throw new FechamentoRecusado(FechamentoRecusado.Motivo.PIX_A_CONFERIR, (int) pixAConferir);
+        }
 
         Money vendas = Money.ZERO;
         Money taxas = Money.ZERO;

@@ -112,6 +112,12 @@ public class PedidosDaLojaService implements ListarPedidos, ConsultarPedido, Ope
                 p -> p.registrarPagamento(forma, valorRecebido, pixConferido, Instant.now(relogio)));
     }
 
+    @Override
+    @Transactional
+    public Pedido conferirPix(UUID estabelecimentoId, UUID pedidoId) {
+        return operar(estabelecimentoId, pedidoId, p -> p.conferirPix(Instant.now(relogio)));
+    }
+
     private Pedido operar(UUID estabelecimentoId, UUID pedidoId, Consumer<Pedido> ato) {
         Pedido pedido = autorizador.pedidoDaLoja(
                 estabelecimentoId, pedidoId, PermissaoDoPedido.ALTERAR_STATUS);

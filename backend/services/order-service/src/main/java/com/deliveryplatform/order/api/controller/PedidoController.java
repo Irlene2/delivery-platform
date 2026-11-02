@@ -175,4 +175,21 @@ public class PedidoController {
                 pedido.valorRecebido() == null ? null : Money.de(pedido.valorRecebido()),
                 Boolean.TRUE.equals(pedido.pixConferido())));
     }
+
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "O Pix conferido"),
+            @ApiResponse(responseCode = "400", description = "O pedido não tem Pix a conferir", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Sem token, ou token inválido", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Sem vínculo, sem ALTERAR_STATUS, loja inexistente ou merchant indisponível — a mesma recusa", content = @Content),
+            @ApiResponse(responseCode = "404", description = "O pedido não existe nesta loja", content = @Content),
+            @ApiResponse(responseCode = "409", description = "O caixa do dia deste pedido já foi fechado, ou o pedido mudou enquanto você mexia", content = @Content)
+    })
+    @PutMapping(path = "/{pedidoId}/pix-check", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Confirma o Pix que o entregador informou",
+            description = "Exige ALTERAR_STATUS. Vale em qualquer estado, inclusive depois de "
+                    + "entregue: é quando a loja costuma olhar o extrato.")
+    public PedidoResponse conferirPix(@PathVariable UUID estabelecimentoId,
+                                      @PathVariable UUID pedidoId) {
+        return PedidoResponse.de(operacao.conferirPix(estabelecimentoId, pedidoId));
+    }
 }

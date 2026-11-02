@@ -6,10 +6,12 @@ import com.deliveryplatform.catalog.config.SemeaduraProperties;
 import com.deliveryplatform.catalog.domain.model.Categoria;
 import com.deliveryplatform.catalog.domain.model.EstadoDeDisponibilidade;
 import com.deliveryplatform.catalog.domain.model.EstadoDePublicacao;
+import com.deliveryplatform.catalog.domain.model.ModoDeControle;
 import com.deliveryplatform.catalog.domain.model.Opcao;
 import com.deliveryplatform.catalog.domain.model.Produto;
 import com.deliveryplatform.catalog.infrastructure.semeadura.SemeaduraDoCatalogo;
 import com.deliveryplatform.catalog.support.ProdutoDeTeste;
+import com.deliveryplatform.valuetypes.Money;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -124,11 +126,11 @@ class SemeaduraDoCatalogoTest {
             assertThat(produto.vendavel()).isTrue();
             assertThat(produto.getDescricao()).isNotBlank();
         });
-        // Só fotos de licença livre; as outras ficam sem foto.
-        assertThat(cardapio).extracting(Produto::getImagemRef).filteredOn(ref -> ref != null)
-                .hasSize(20)
+        // Todo produto tem foto, e só de licença livre: Unsplash ou Wikimedia Commons.
+        assertThat(cardapio).extracting(Produto::getImagemRef)
                 .allSatisfy(ref -> assertThat(ref).matches(
-                        "https://(images\\.unsplash\\.com|upload\\.wikimedia\\.org)/.*"));
+                        "https://(images\\.unsplash\\.com|upload\\.wikimedia\\.org"
+                                + "|commons\\.wikimedia\\.org/wiki/Special:FilePath)/.*"));
 
         Produto classico = cardapio.get(0);
         assertThat(classico.getNome()).isEqualTo("Aki Classic");
@@ -161,6 +163,21 @@ class SemeaduraDoCatalogoTest {
         assertThat(gravados.getAllValues()).extracting(Produto::getNome)
                 .doesNotContain("Pizza margherita")
                 .contains("Pudim de Leite");
+    }
+
+    @Test
+    void produto_do_cardapio_gravado_sem_foto_ganha_a_foto() {
+        Produto semFoto = Produto.rascunho(LOJA, UUID.randomUUID(), "Pudim de Leite",
+                Money.de("10.90"), ModoDeControle.QUALITATIVO, 0);
+        when(produtos.daLoja(eq(LOJA), any())).thenReturn(new PageImpl<>(List.of(semFoto)));
+        when(categorias.daLoja(LOJA)).thenReturn(List.of(
+                "Pizzas", "Hambúrgueres", "Porções", "Hot Dogs", "Combos", "Bebidas", "Sobremesas")
+                .stream().map(nome -> Categoria.nova(LOJA, nome, 0)).toList());
+
+        semeadura(true).run(new DefaultApplicationArguments());
+
+        verify(produtos).salvar(semFoto);
+        assertThat(semFoto.getImagemRef()).contains("Special:FilePath/Pudim_de_Leite.jpg");
     }
 
     @Test

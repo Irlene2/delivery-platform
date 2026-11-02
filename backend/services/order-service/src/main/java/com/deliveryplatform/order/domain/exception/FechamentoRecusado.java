@@ -18,7 +18,11 @@ public class FechamentoRecusado extends RuntimeException {
         /** Contagem de caixa negativa. */
         CONTAGEM_NEGATIVA,
         /** O pedido é de um dia já fechado e não muda mais. */
-        DIA_FECHADO
+        DIA_FECHADO,
+        /** Há Pix informado pelo entregador que a loja ainda não conferiu. dado: quantos. */
+        PIX_A_CONFERIR,
+        /** O período pedido está invertido, incompleto ou passa de um ano. */
+        PERIODO_INVALIDO
     }
 
     private final Motivo motivo;

@@ -1,12 +1,8 @@
-# ADR-021 — Catálogo de serviços do MVP
+# ADR-021 — Catálogo de serviços do produto
 
-**Status:** Aceita — 21/08/2026 · **emendada em 24/09/2026**: o `merchant` não
-tem Redis, e a persistência além do banco principal passa a apontar a decisão
-que a pôs ali (ver "Emenda de 24/09/2026") · **emendada em 26/09/2026**: o `order` e o
-`delivery` também não têm Redis (ver "Emenda de 26/09/2026") · **emendada em
-27/09/2026**: o `catalog` perde o starter do Redis, e o motivo escrito dele continua de pé
-(ver "Emenda de 27/09/2026") · **emendada em 01/11/2026**: o `payment` sai do catálogo — não há
-pagamento pelo aplicativo (ver "Emenda de 01/11/2026")
+**Status:** Aceita — 21/08/2026 · **revisada em 02/11/2026** para descrever o catálogo da
+proposta atual: sete serviços de negócio e o gateway · emendas de 24/09, 26/09 e 27/09/2026 sobre o
+Redis (abaixo)
 **Relacionada:** ADR-004 (um estabelecimento por pedido), ADR-020 (taxa por área), ADR-022 (remuneração)
 **Fonte:** Resposta ao Adendo Crítico · Arquitetura v1.1, §5.3
 **Premissas do PRD que sustentam esta decisão:** P1, P2, P3, P5, P6
@@ -17,7 +13,8 @@ O esqueleto do repositório foi criado sob a arquitetura v1.0: nove serviços de
 negócio desenhados para um marketplace de delivery. O adendo crítico mostrou que
 a premissa estava errada — o cliente é o **comerciante**, a plataforma não
 custodia o dinheiro, o entregador é da casa, o pedido nasce numa conversa. A
-resposta v1.1 aceitou o diagnóstico e reduziu o catálogo a oito serviços.
+resposta v1.1 aceitou o diagnóstico e reduziu o catálogo a oito serviços — sete na
+proposta atual (revisão de 02/11/2026).
 
 Só que **o esqueleto continuou como estava**. Durante três dias o repositório
 teve documentação v1.1 e estrutura v1.0 — e isso já custou uma decisão errada:
@@ -31,7 +28,7 @@ verdade concorrente, e ela vence — porque o código é o que a pessoa abre.
 
 ## Decisão
 
-Oito serviços de negócio e um gateway.
+Sete serviços de negócio e um gateway.
 
 | Serviço | Porta | Persistência | Por quê | O que é dele |
 |---|---:|---|---|---|
@@ -40,21 +37,24 @@ Oito serviços de negócio e um gateway.
 | `merchant` | 8082 | PostgreSQL | | Estabelecimento, equipe, permissões, áreas e taxas, vínculo de entregador |
 | `catalog` | 8083 | MongoDB | Redis: **motivo escrito** — cache do cardápio público, ADR-005 e `catalogo.md` §7. **Starter removido em 27/09/2026 (G-B1)**: o leitor desse cache é do marco 7. **Gatilho:** volta com o primeiro leitor, com contêiner nos testes | Produto, opções, disponibilidade qualitativa, cotação |
 | `settlement` | 8084 | PostgreSQL | | Jornada, custódia, divergência, extrato, fechamento |
-| `order` | 8085 | PostgreSQL | | Pedido, valores, liquidação registrada, Saga |
-| `payment` | 8086 | PostgreSQL | | Fronteira com o PSP: Pix com `txid`, webhook |
+| `order` | 8085 | PostgreSQL | | Pedido, valores, pagamento registrado, entregas da equipe, caixa do dia |
 | `delivery` | 8087 | PostgreSQL | | Atribuição, rodízio, posição do entregador, retorno |
 | `conversation` | 8088 | MongoDB | | Canal, conversa, interpretação. Absorve a notificação ao cliente |
 
-Seis bancos PostgreSQL e dois MongoDB. **Nenhum serviço acessa o banco de
+Cinco bancos PostgreSQL e dois MongoDB. **Nenhum serviço acessa o banco de
 outro.**
+
+**O pagamento não é um serviço.** O cliente paga na entrega ou na retirada — dinheiro, cartão na
+maquininha da loja ou Pix na conta da loja — e a loja registra no pedido como foi pago (ADR-023).
+O produto não cobra, não processa e não guarda dado de pagamento, então não há provedor com quem
+conversar nem serviço que faça essa fronteira.
 
 **Regra da coluna "Por quê":** toda linha que declare persistência além do banco
 principal aponta a decisão que a pôs ali. Assim, apagar a razão deixa uma
 referência pendurada, que alguém vê, em vez de uma célula órfã, que ninguém vê.
 
-As portas dos serviços que permaneceram **não mudaram**. `settlement` ocupa a
-vaga do `inventory` e `conversation` a do `geolocation`, o que mantém o diff
-pequeno e não obriga a revisar documentação de serviço que não mudou.
+As portas são fixas por serviço e não se renumeram: `settlement` ocupa a vaga do `inventory`,
+`conversation` a do `geolocation`, e a 8086 fica livre.
 
 ### O que sai, e como
 
@@ -105,22 +105,11 @@ e push, não antes.
   o `merchant` (ADR-022) e a apuração para o `settlement`. A discussão está
   registrada em `docs/dominio/entrega.md` §11.
 
-## Ponto em aberto que esta ADR não fecha
+## Onde mora o registro do pagamento
 
-O §5.3 da resposta v1.1 descreve o `payment` como "registro de liquidações". Mas
-`docs/dominio/pedido.md` §1 coloca `Liquidacao` **dentro do agregado `Pedido`**,
-no `order-service` — porque a invariante 1 do `CLAUDE.md` (nenhuma conclusão sem
-liquidação registrada) só é verificável se quem controla a transição também
-controla o registro.
-
-As duas leituras não podem estar certas ao mesmo tempo. A proposta é: **o
-`order` é dono do registro; o `payment` é a fronteira com o PSP** — gera a
-cobrança Pix com `txid`, valida a assinatura do webhook, publica
-`LiquidacaoConfirmadaV1`, e no marco 8 trata cartão e Pix online. Isso preserva a
-invariante e dá ao `payment` um recorte claro em vez de um espelho do pedido.
-
-**Resolvido pela ADR-023** (23/08/2026): o `order` é dono do registro de
-liquidação, o `payment` é a fronteira com o PSP.
+`docs/dominio/pedido.md` §1 coloca o registro do pagamento **dentro do agregado `Pedido`**, no
+`order-service`: a invariante 1 do `CLAUDE.md` — nenhuma conclusão sem pagamento registrado — só
+é verificável se quem controla a transição também controla o registro. A ADR-023 fixa isso.
 
 ## Emenda de 24/09/2026 — o `merchant` não tem Redis
 
@@ -230,31 +219,12 @@ consumidor. Ele não foi tocado nesta rodada, e a decisão — tirá-lo junto co
 variável `REDIS_PASSWORD` e a linha do perfil `core` no README, ou mantê-lo até
 o marco 7 — fica registrada aqui para não se perder.
 
-## Emenda de 01/11/2026 — o `payment` sai: não há pagamento pelo aplicativo
+## Revisão de 02/11/2026 — o catálogo da proposta atual
 
-**Decisão do produto, 31/10 e 01/11/2026.** O cliente paga na entrega ou na retirada — dinheiro
-com troco, cartão na maquininha da loja ou Pix conferido pela loja — e a loja **registra** como
-foi pago no pedido (marco 4). O marco 8, *pagamento online e emissão fiscal*, saiu do produto
-(emenda ao PRD §10). Sem cobrança online, o `payment` não tem o que fazer: ele era **a fronteira
-com o PSP** (ADR-023), e não há PSP.
-
-**O que saiu, e por quê o esqueleto não fica.** O módulo `services/payment-service` (era só a
-classe de subida e o teste de arquitetura), o contêiner do Compose, o `payment_db`, as rotas
-`payments` e `webhook-psp` do gateway com os casos do `RoteamentoIT`, e o workflow do CI. É a
-mesma razão da alternativa rejeitada abaixo, *"manter os módulos vazios já que não
-atrapalham"*: esqueleto aparece no README, no build, no Compose e no CI, e é dessas fontes que
-se tira decisão. **O catálogo passa a sete serviços de negócio e o gateway**, com as portas como
-estavam — a 8086 fica vaga, sem renumerar (alternativa rejeitada abaixo).
-
-**O que não muda.** O registro do pagamento continua no pedido, como a ADR-023 já dizia: *"o
-pedido é dono do registro"*. A parte dela que falava da fronteira com o PSP — cobrança Pix,
-webhook, estorno — fica **sem objeto**, e o `docs/dominio/pagamento.md` e o
-`docs/operacao/reconciliacao-de-pagamento.md` ficam como registro, marcados *fora do produto*.
-Os eventos `LiquidacaoConfirmadaV1`, `CobrancaExpiradaV1` e `EstornoExecutadoV1` do
-`contracts/eventos.md` nunca foram publicados por ninguém.
-
-**Gatilho para voltar:** uma loja pedir cobrança online. Aí a ADR-023 volta a ter objeto, e o
-serviço nasce de novo, com o código que a cobrança pedir — não do esqueleto.
+O texto acima descreve a proposta atual. A versão de 21/08 tinha um oitavo serviço, a fronteira
+com um provedor de pagamento online; na proposta atual o pagamento é presencial e registrado no
+pedido, e esse serviço não existe — o histórico está no Git. Se um dia uma loja pedir cobrança
+online, a decisão volta a ser tomada do zero, com o código que a cobrança pedir.
 
 ## Alternativas consideradas
 

@@ -1,134 +1,88 @@
-# delivery-platform
+# AKI Delivery — delivery-platform
 
-Plataforma de delivery para **comércio de bairro**, em microsserviços. Sete
-serviços de negócio e um gateway, cada um com processo, banco, migrations,
-testes, container, contrato e pipeline próprios.
+Plataforma de pedidos e operação para **comércio de bairro**: a pizzaria, a lanchonete, o
+restaurante que hoje recebe pedido pelo WhatsApp, anota no caderno e fecha o caixa no fim da noite
+sem saber direito quanto vendeu e quanto o entregador tem a acertar.
 
-> **O cliente é o comerciante, não o consumidor.** A plataforma frequentemente
-> não custodia o dinheiro, o entregador pertence ao estabelecimento e o pedido
-> nasce numa conversa de WhatsApp. Se uma decisão parecer estranha, confira as
-> premissas em [`docs/PRD.md`](docs/PRD.md) §5 antes de "corrigir".
-
-> **Entrega do curso, 15/11/2026 — o que mudou no fluxo (ADR-077, proposta).** Até essa data o
-> pedido **não** nasce dentro da conversa: o cliente chama a loja no WhatsApp, a resposta
-> automática manda o link do cardápio público, e o pedido é montado e confirmado ali. O `order`
-> é o único serviço novo; pagamento na entrega e entregador são campos do pedido. O passo a
-> passo, por etapa, está em [`docs/entrega-15-11/README.md`](docs/entrega-15-11/README.md).
-
-**Estado: 01/11/2026.** O `PRD.md` §10 define cada marco por uma coluna —
-*"o comerciante consegue"* —, e é por ela que este parágrafo se mede. A linha dos marcos 1 e
-2 é a de 19/10/2026, em `5208ae6`.
-
-- **Marco 1, *cadastrar a loja e o time*:** a loja, **sim** — cumprida no navegador em
-  10/10, com os semeadores desligados, e cadastrada outra vez por uma pessoa no navegador em
-  19/10/2026, sem semeador. O time foi **exercido** em 19/10/2026, por uma pessoa em duas
-  contas: convite emitido, aceito, e a permissão filtrando o cardápio na tela — **com o
-  caminho do convite quebrado**: o aceite só registrou depois de a pessoa entrar na conta. Os
-  achados estão em [`docs/operacao/passagem-humana.md`](docs/operacao/passagem-humana.md).
-- **Marco 2, *publicar o cardápio e marcar o que acabou*:** **cumprido**, no navegador,
-  em 15/10.
-- **Recorte de 15/11 (ADR-077), *receber o pedido pelo link e acompanhá-lo numa tela*:**
-  exercido no navegador por uma pessoa — pedido feito no cardápio público, aceito no painel,
-  levado até entregue, com o pagamento registrado. O entregador na conta dele e o fechamento do
-  dia passam nos testes de tela e **ainda esperam a passagem humana**. **Não** é o marco 3 do
-  PRD: o pedido ainda não nasce na conversa (ADR-075, adiada).
-
-O `identity` cadastra com verificação por telefone e emite o token. O `merchant` guarda
-estabelecimento, disponibilidade, áreas de entrega, equipe e convite, cria a loja e o
-convite por rota, e publica pelo outbox. O `catalog` tem o cardápio — categoria, produto,
-publicação e a marcação do que acabou —, com persistência em MongoDB e o primeiro
-consumidor deste projeto que escreve em banco, e serve o cardápio público. O `order` recebe
-o pedido do cardápio público (preço lido do `catalog` na hora), leva o pedido pelos estados,
-registra entregador e pagamento, e atende o entregador da equipe na conta dele. O gateway
-autentica e roteia, com teste para cada rota. `delivery`, `settlement` e `conversation`
-continuam esqueleto. **O `payment` saiu em 01/11/2026:** não há pagamento pelo aplicativo — o
-cliente paga na entrega ou na retirada, e a loja registra no pedido (ADR-021, emenda).
-
-**Até 15/10 este parágrafo dizia *"marco 1 concluído (26/09/2026)"*, e isso nunca foi
-verdade:** o marco foi declarado medindo o que estava pronto, e não o que a coluna pedia.
-O erro está nomeado na ADR-060 e no registro do marco 1.
-
-**Este parágrafo leva data e commit porque ele envelhece.** Sem eles, ele carregava três
-números vencidos ao mesmo tempo. Para saber o estado de hoje, e não o do último commit que
-tocou este arquivo, a pergunta é a da coluna: *existe caminho da pessoa até o ato, sem
-bandeira ligada e sem semeador?*
+> **O cliente do produto é o comerciante, não o consumidor.** Não é marketplace, não cobra
+> comissão sobre a venda e não fica com o dinheiro: o cliente paga direto à loja, e o sistema
+> registra. O entregador é da loja. Se uma decisão parecer estranha, as premissas estão em
+> [`docs/PRD.md`](docs/PRD.md) §5.
 
 ---
 
-## Requisitos
+## Como funciona
 
-- JDK 21 **instalado** — o build declara o toolchain, mas não tem resolvedor que o baixe
-- Docker e Docker Compose
-- ~12 GB de RAM se subir tudo — mas o dia a dia usa o perfil `marco2` (mais `pedidos`), ou só o `core`
-- No Windows, com Docker Desktop: rode os comandos do Compose no PowerShell — o caminho está em
-  [`docs/como-subir-local.md`](docs/como-subir-local.md)
+1. **A loja se cadastra e monta o cardápio** — seções, produtos com foto, opções (como ponto da
+   carne e adicionais), horário de funcionamento, taxa de entrega e a equipe com permissões.
+2. **O link do cardápio vai na resposta automática do WhatsApp Business** da loja. Quem chama a
+   loja recebe o link.
+3. **O cliente faz o pedido pelo link, sem criar conta**: carrinho, entrega ou retirada, endereço
+   e como vai pagar (dinheiro com troco, cartão ou Pix). O servidor calcula o total com o preço do
+   cardápio. Fora do horário, a loja aparece fechada e não recebe pedido.
+4. **A loja opera o pedido no painel**: aceita, prepara, deixa pronto, entrega a um entregador da
+   equipe e avisa o cliente pelo WhatsApp com a mensagem pronta. O sino do topo avisa de pedido
+   novo e do que mudou.
+5. **O entregador, com a conta dele**, vê só as entregas dele, marca a saída e a entrega e registra
+   como recebeu: dinheiro, cartão ou Pix. O Pix a loja confere no extrato.
+6. **O cliente acompanha** o pedido pelo link que recebeu.
+7. **No fim do dia, o administrador fecha o caixa**: total por forma de pagamento, conferência do
+   dinheiro contado, acerto de cada entregador (o repasse é a taxa de cada entrega) e o histórico,
+   com as vendas de qualquer período e a planilha para a contabilidade.
 
-## Primeiros passos
+### O que o aplicativo não faz, por decisão
 
-```bash
-cp .env.example .env          # preencha os valores; .env está no .gitignore
-docker compose --profile core up -d
-cd backend && ./gradlew build
-```
-
-> **Windows:** mantenha o repositório **fora** do perfil do usuário — em
-> `C:\dev\`, não em `Documents`. Sincronização de nuvem e antivírus corporativo
-> apagam os arquivos que o Kotlin DSL gera em `build/`, e o sintoma é um build
-> que falha em arquivos diferentes a cada tentativa. Aponte também
-> `GRADLE_USER_HOME` para fora do perfil.
-
-## Como se trabalha aqui
-
-Você **não** sobe os oito aplicativos. Sobe a infraestrutura e roda pelo IDE
-apenas o serviço em que está mexendo:
-
-```bash
-docker compose --profile core up -d           # bancos, brokers, storage
-./gradlew :services:order-service:bootRun     # só o que interessa agora
-```
-
-| Perfil do Compose | Sobe |
+| Fora do escopo | Por quê |
 |---|---|
-| `core` | PostgreSQL, MongoDB, Redis, RabbitMQ, MinIO |
-| `marco2` | PostgreSQL, MongoDB e RabbitMQ, e os quatro serviços com código: gateway, `identity`, `merchant` e `catalog` — é o que sobe hoje ([`docs/como-subir-local.md`](docs/como-subir-local.md)) |
-| `pedidos` | o `order-service`, somado ao `marco2` para a entrega de 15/11: `docker compose --profile marco2 --profile pedidos up -d` (ou `scripts/subir-local.sh --com-pedidos`) |
-| `services` | gateway e os oito microsserviços |
-| `full` | tudo |
-
-Comandos úteis:
-
-```bash
-./gradlew build                              # backend inteiro
-./gradlew :services:order-service:test       # testes de um serviço
-./gradlew printModules                       # lista os módulos
-```
+| Cobrar ou processar pagamento | O cliente paga direto à loja; o sistema registra como foi pago (ADR-023) |
+| Emitir nota fiscal | A loja emite no sistema fiscal que já usa; o pedido traz os dados |
+| Marketplace e comissão | O cliente é o comerciante (PRD §7) |
+| Entregador de plataforma | O entregador pertence à loja |
+| Mapa em tempo real | O cliente acompanha pelo status; o mapa é melhoria futura |
 
 ---
 
-## Estrutura
+## Funcionalidades
 
-```
-delivery-platform/
-├── backend/                    build Gradle multi-projeto (Kotlin DSL)
-│   ├── build-logic/            convention plugins — toda configuração compartilhada
-│   ├── gradle/libs.versions.toml
-│   ├── infra/gateway/
-│   └── services/               os oito microsserviços
-├── contracts/                  OpenAPI, AsyncAPI e JSON Schema dos eventos
-├── docs/
-│   ├── PRD.md                  o que o produto é e para quem
-│   ├── dominio/                as REGRAS vigentes — leia antes de codificar
-│   ├── architecture/decisions/ ADRs
-│   └── referencia/             PDFs publicados
-├── infra/                      configuração de Postgres e Mongo
-├── frontend/                   o painel do comerciante — React e Vite (ADR-016)
-└── .github/workflows/          um pipeline por serviço + workflow reutilizável
-```
+| Para quem | O que já funciona |
+|---|---|
+| **Dono / administrador** | Cadastro da conta e de uma ou mais lojas, com o passo a passo inicial · cardápio com seções, foto, descrição, opções e publicação · estoque do dia com busca e filtros · horário e loja fechada · equipe com convite e permissões · pedidos do dia, despacho e mensagem pronta para o WhatsApp · sino de notificações · conferência do Pix · dashboard de vendas · fechamento do caixa com histórico, período e CSV · link do cardápio |
+| **Colaborador** | O painel com o que a permissão dele deixa: pedidos, cardápio, estoque |
+| **Entregador** | Conta própria, "minhas entregas", saída, entrega e registro do recebimento (dinheiro, cartão ou Pix) |
+| **Cliente** | Cardápio pelo link, sem conta · carrinho, entrega ou retirada, troco · acompanhamento do pedido |
+
+---
+
+## Arquitetura
+
+Microsserviços com **arquitetura hexagonal**, um banco por serviço e um gateway como porta única
+do front.
+
+| Serviço | Porta | Banco | O que faz |
+|---|---:|---|---|
+| `gateway` | 8080 | — | Porta única do front: autentica o token, roteia por recurso e libera sem token só o cardápio público e o acompanhamento |
+| `identity-service` | 8081 | PostgreSQL | Conta, verificação do telefone, login e emissão do token (JWT) |
+| `merchant-service` | 8082 | PostgreSQL | A loja, o horário, a equipe, o convite e as permissões; diz se a loja está aberta |
+| `catalog-service` | 8083 | MongoDB | Seções, produtos, fotos, opções, publicação, disponibilidade e o cardápio público |
+| `order-service` | 8085 | PostgreSQL | O pedido e seus estados, a taxa da loja, o entregador, o pagamento registrado, as entregas e o caixa do dia |
+| `settlement-service` | 8084 | PostgreSQL | *Planejado:* jornada e custódia do entregador. Hoje o caixa do dia mora no `order` |
+| `delivery-service` | 8087 | PostgreSQL | *Planejado:* rodízio e retorno do entregador |
+| `conversation-service` | 8088 | MongoDB | *Planejado:* o pedido nascendo dentro da conversa do WhatsApp (marcos 7 e 9) |
+
+**Nenhum serviço acessa o banco de outro.** Os serviços planejados têm o esqueleto, o teste de
+arquitetura e o pipeline prontos, e ganham código no marco deles.
+
+### Stack
+
+- **Back-end:** Java 21, Spring Boot 4, Gradle (Kotlin DSL), PostgreSQL com Flyway, MongoDB com
+  Mongock, RabbitMQ com Outbox, JWT assinado pelo `identity`.
+- **Front-end:** React 19, Vite, TypeScript estrito, com o visual do protótipo `aki_delivery`
+  ([`frontend/README.md`](frontend/README.md)).
+- **Qualidade:** ArchUnit vigiando as camadas, Testcontainers nos testes de banco, contratos
+  OpenAPI gerados do código e conferidos no CI, um pipeline por serviço e varredura de segredos
+  em todo push.
 
 ### Dentro de cada serviço
-
-Arquitetura hexagonal. A divisão é por **anel de dependência**, não por camada
-técnica:
 
 ```
 api ────────────────┐
@@ -137,213 +91,145 @@ infrastructure -> application -> domain
 ```
 
 - `domain` não conhece Spring, JPA nem MongoDB;
-- `application` orquestra casos de uso e depende de interfaces (`port/out`);
+- `application` orquestra os casos de uso e depende de interfaces (`port/out`);
 - `infrastructure` implementa persistência, mensageria e clientes;
-- `api` traduz HTTP em comando;
-- entidades JPA vivem em `infrastructure/persistence/entity`, nunca em `domain`.
+- `api` traduz HTTP em comando.
 
-**Isso é verificado, não combinado.** Cada serviço tem um
-`HexagonalArchitectureTest` (ArchUnit) que quebra o build se a regra for violada.
-Em revisão manual, a arquitetura erode em duas semanas.
+Cada serviço tem um `HexagonalArchitectureTest` que quebra o build se a regra for violada.
+
+### Estrutura do repositório
+
+```
+delivery-platform/
+├── backend/                    build Gradle multi-projeto
+│   ├── build-logic/            convention plugins — a configuração compartilhada
+│   ├── infra/gateway/
+│   ├── value-types/            os tipos de valor compartilhados, como Money
+│   └── services/               os sete serviços
+├── contracts/                  OpenAPI dos serviços e o catálogo de eventos
+├── docs/                       produto, domínio, decisões, operação e a entrega
+├── frontend/                   o painel, o cardápio público e o app do entregador
+├── infra/                      configuração de PostgreSQL e MongoDB
+└── .github/workflows/          um pipeline por serviço, front, contratos e segurança
+```
 
 ---
 
-## Serviços e portas
+## Como rodar
 
-| Serviço | Porta | Persistência | Documento de domínio |
-|---|---:|---|---|
-| gateway | 8080 | — | — |
-| identity-service | 8081 | PostgreSQL | [`usuario.md`](docs/dominio/usuario.md) |
-| merchant-service | 8082 | PostgreSQL | [`estabelecimento.md`](docs/dominio/estabelecimento.md) |
-| catalog-service | 8083 | MongoDB | [`catalogo.md`](docs/dominio/catalogo.md) |
-| settlement-service | 8084 | PostgreSQL | [`liquidacao.md`](docs/dominio/liquidacao.md) |
-| order-service | 8085 | PostgreSQL | [`pedido.md`](docs/dominio/pedido.md) |
-| delivery-service | 8087 | PostgreSQL | [`entrega.md`](docs/dominio/entrega.md) |
-| conversation-service | 8088 | MongoDB | [`conversa.md`](docs/dominio/conversa.md) |
+**Requisitos:** JDK 21, Docker com Docker Compose, Node 22 ou mais novo. No Windows, Docker
+Desktop e PowerShell — os comandos estão em [`docs/como-subir-local.md`](docs/como-subir-local.md)
+§0.1.
 
-Cinco bancos PostgreSQL e dois MongoDB — sete bancos lógicos. A porta 8086 era do `payment`, que
-saiu em 01/11/2026, e fica vaga (ADR-021).
-**Nenhum serviço acessa o banco de outro.**
+```bash
+cp .env.example .env                       # preencha as senhas; o .env nunca vai para o Git
+cd backend && ./gradlew bootJar && cd ..   # os jars que as imagens usam
+docker compose --profile marco2 --profile pedidos up -d --build --wait
+cd frontend && npm ci && npm run dev       # http://localhost:5173
+```
 
-> **Não há coluna "publica eventos" nesta tabela, de propósito.** A anterior
-> tinha, estava desatualizada, e um agente tomou uma decisão de build lendo ela.
-> Quem publica o quê está em `docs/dominio/<serviço>.md`, na seção de eventos,
-> que é onde a informação é mantida.
-
-### A documentação viva (Swagger UI)
-
-Fechada por padrão. Com `DELIVERY_DOCS_ABERTAS=true` no `.env`, só no seu
-computador (ADR-050):
-
-| Serviço | Página |
+| Perfil do Compose | Sobe |
 |---|---|
-| merchant-service | `http://127.0.0.1:8082/swagger-ui.html` |
-| catalog-service | `http://127.0.0.1:8083/swagger-ui.html` |
-| order-service | `http://127.0.0.1:8085/swagger-ui.html` |
+| `marco2` | PostgreSQL, MongoDB, RabbitMQ, gateway, `identity`, `merchant` e `catalog` |
+| `pedidos` | o `order-service`, somado ao `marco2` — **é o que se usa hoje** |
+| `core` | só a infraestrutura, para rodar um serviço pelo IDE |
+| `services` / `full` | todos os serviços, inclusive os planejados |
 
-Não passa pelo gateway, de propósito. O token para as rotas protegidas vem de
-`POST /api/v1/auth/login` no gateway (8080) e vai no botão **Authorize**. O
-`identity-service` ainda não tem a página — gatilho na ADR-050 §1.
+**Loja de teste pronta:** com `DELIVERY_SEMEADURA=true` e uma senha em `DELIVERY_SEMEADURA_SENHA`,
+a subida grava a **"Pizzaria da Fixture"**, com 24 produtos, fotos e opções. Entre com
+`+5511999990001` e ajuste o Horário para o dia do teste. Para cadastrar contas novas sem SMS, no
+ambiente local, use `DELIVERY_CODIGO_NA_TELA=true`: o código aparece na tela. O passo a passo está
+em [`docs/como-subir-local.md`](docs/como-subir-local.md).
 
-### Serviços adiados
+**Testes:**
 
-| Serviço | Volta em | Por quê saiu |
-|---|---|---|
-| `inventory` | marco 10 | A maioria dos produtos opera em disponibilidade qualitativa (P6) |
-| `geolocation` | marco 11 | Taxa é por bairro, não por distância (P5, ADR-020) |
+```bash
+cd backend && ./gradlew :services:order-service:test     # um serviço (no Windows: .\gradlew.bat)
+cd frontend && npm run typecheck && npm run lint && npm test
+npm ci && npm run contracts                                # na raiz: os contratos
+```
 
-`notification` foi **absorvido** pelo `conversation-service` e não volta —
-ADR-021.
-
----
-
-## Decisões que já moldam este esqueleto
-
-| Decisão | Onde aparece |
-|---|---|
-| **ADR-014** — sem H2 | Um único profile `dev`; Testcontainers em todo teste de banco; `maximum-pool-size: 5` em cada serviço relacional |
-| **ADR-015** — JWT com `NimbusJwtEncoder` | Todos os serviços são Resource Server; só o `identity-service` emite |
-| **ADR-016** — front mínimo antes da PWA | `frontend/` é o painel mínimo, desde o marco 2 (emenda de 29/09/2026) |
-| **ADR-017** — MongoDB como aprendizado | Mongock nos serviços documentais; MongoDB sobe como **replica set de nó único**, sem o qual não há transação multi-documento e portanto não há Outbox |
-| **ADR-020** — taxa por área nomeada | Sem PostGIS, sem MQTT, sem motor de rotas |
-| **ADR-021** — sete serviços no MVP (o `payment` saiu em 01/11/2026) | Este `settings.gradle.kts`, este Compose, esta tabela |
-| **ADR-022** — remuneração no vínculo | Não existe campo de pagamento do entregador no pedido |
-| **ADR-012** — rotas por recurso | `application.yml` do gateway reescrito: rotas por recurso, não por serviço |
-
-Índice completo em [`docs/architecture/decisions/`](docs/architecture/decisions/README.md).
-
-## Documentos
-
-| Arquivo | O que responde |
-|---|---|
-| [`docs/PRD.md`](docs/PRD.md) | O que o produto é, para quem, e o que está fora de escopo |
-| [`docs/dominio/`](docs/dominio/README.md) | **As regras vigentes** — agregados, invariantes, tabelas de transição, fórmulas |
-| [`CLAUDE.md`](CLAUDE.md) | Invariantes e convenções — leitura obrigatória antes do primeiro commit |
-| [`docs/architecture/decisions/`](docs/architecture/decisions/README.md) | Por que cada decisão foi tomada, com alternativas e consequências |
-| [`docs/entrega-15-11/`](docs/entrega-15-11/README.md) | **O recorte da entrega de 15/11** — fluxo, etapas, rotas do pedido e como testar |
-| [`docs/como-subir-local.md`](docs/como-subir-local.md) | Como subir tudo no seu computador, e o que fazer quando não sobe |
-| `docs/referencia/*.pdf` | Versões publicadas da arquitetura, do PRD e da revisão de escopo |
-| [`docs/operacao/metodo-das-rodadas.md`](docs/operacao/metodo-das-rodadas.md) | Como uma rodada de trabalho funciona, e onde cada papel erra |
-
----
-
-## As ADRs vieram antes da primeira classe de negócio
-
-Isso é deliberado, e o objeto de estudo aqui é o raciocínio de projeto.
-
-Em 07/09/2026 a primeira classe de negócio passou a existir: o agregado
-`Usuario`, no `identity-service`, com migration, teste de integração contra
-Postgres de verdade e três regras de `ArchUnit` vigiando as camadas. Ela
-nasceu **depois** das decisões que a cercam — o `usuario.md` foi escrito para
-fechar uma lacuna que cinco documentos já citavam sem definir, e a ADR-036
-decidiu o identificador de login que a primeira migration precisava indexar.
-
-Três práticas sustentam o resto:
-
-- **ADR não se reescreve.** A regra está em
-  [`docs/architecture/decisions/README.md`](docs/architecture/decisions/README.md), e só lá
-  (ADR-071). A ADR-018 tem uma seção inteira descrevendo um fluxo da v1.0 que o produto não tem
-  mais — ela fica, com a emenda explicando.
-- **Nome de evento é único no repositório inteiro** (ADR-031). Quando dois
-  serviços colidiram, o desempate foi: quem nomeou um *atributo* em vez de um
-  *fato* é quem renomeia.
-- **O domínio fala português, o meio fala inglês, o adaptador traduz** (ADR-035).
-  O critério é uma pergunta: *a Marli usaria essa palavra?* Ela diz troco,
-  bairro, jornada, comanda. Não diz `money` nem `repository` — e por isso `Money`
-  e `Repository` ficam, porque são nomes de padrão e não palavras de negócio.
-
-O ganho apareceu de forma mensurável. As últimas revisões acharam, entre outras:
-
-- uma invariante que prendia dois de três campos e deixava o terceiro livre;
-- um valor de entrega guardado em dois campos — um congelado, o outro cobrado — e
-  nenhuma regra ligando os dois;
-- uma ADR de 16/08 contradizendo outra de 23/08 que a citava entre as
-  relacionadas e não a emendou;
-- duas ADRs com garantia viva escrita sobre nome de campo, que nenhuma emenda de
-  modelo saberia visitar.
-
-Nada disso custa em documento. Tudo isso custaria migration depois de existir em
-código.
-
-E o contrapeso, que também está no histórico: sete rodadas varrendo documentos
-acharam defeitos reais, e **dez minutos lendo o `docker-compose.yml` acharam dois
-bancos sem senha publicados em `0.0.0.0`**. Documento só mente quando alguém lê;
-infraestrutura mente até alguém ligar.
-
-O número de ADRs escritas, e das duas numeradas que ficaram sem objeto, mora no
-[índice](docs/architecture/decisions/README.md) — que é onde ele é mantido. Até 15/10
-este parágrafo dizia *"trinta e nove"*, quando já eram sessenta e sete.
-
----
-
-## Regras que valem desde a primeira linha
-
-- **Migrations, sempre.** `ddl-auto: validate` em todo serviço relacional; toda
-  estrutura nasce em Flyway (SQL) ou Mongock (MongoDB).
-- **Publica → Outbox. Consome → `processed_messages`.** Salvo as **duas exceções
-  escritas** na invariante 7 do [`CLAUDE.md`](CLAUDE.md), que são critério e não lista
-  de casos. Retrofit de Outbox significa revisitar todo ponto de publicação.
-- **Nenhum segredo no Git.** Só `.env.example`, com nomes. Gitleaks roda em
-  **todo push**, no workflow `security` — sem filtro de caminho, porque o
-  commit que só mexe em documentação é exatamente onde um `.env` vazaria.
-- **Timeout em toda chamada entre serviços.** O default é esperar para sempre, e
-  a primeira chamada sem timeout é uma indisponibilidade latente.
-- **`correlationId` desde o começo.** É código, não infraestrutura — e precisa
-  estar no payload do evento desde o primeiro evento.
-- **Valor cobrado vem do pedido.** Nunca de um número enviado pelo cliente, e
-  nunca calculado pela interpretação automática do canal.
-- **Nenhuma entrega ou retirada conclui sem liquidação registrada.**
+**Hospedagem de teste sem custo:** [`docs/operacao/hospedagem-de-teste.md`](docs/operacao/hospedagem-de-teste.md).
 
 ---
 
 ## Marcos
 
-A numeração é a de [`docs/PRD.md`](docs/PRD.md) §10, e é a única que vale. A coluna
-*Situação* é a de **01/11/2026**, medida pela coluna do PRD — *o comerciante consegue?* — e
-não pelo código que existe. 🟡 quer dizer: funciona no recorte de 15/11 (ADR-077), mas não é o
-marco inteiro do PRD.
+A numeração é a do [`docs/PRD.md`](docs/PRD.md) §10, medida pela pergunta *"o comerciante
+consegue?"*. Situação em **02/11/2026**. 🟡 = funciona no recorte da entrega de 15/11 (ADR-077), mas
+não é o marco inteiro.
 
-| Marco | Entrega | O comerciante consegue | Situação em 01/11/2026 |
-|---|---|---|---|
-| 0 | Esqueleto: build, módulos, Compose, CI | — | ✅ |
-| 1 | Conta, estabelecimento, equipe e permissões | Cadastrar a loja e o time, com poderes diferentes | ✅ a loja do zero em "Minhas lojas", o convite e as permissões; a sessão vale um expediente (12 horas, ADR-037 emendada). **Falta:** enviar o código de verificação por SMS ou WhatsApp — hoje ele aparece na tela só no ambiente local e no de teste (ADR-042 emendada) |
-| 2 | Cardápio com opções e disponibilidade qualitativa | Publicar o cardápio e marcar o que acabou | ✅ inclusive corrigir nome, preço, descrição e seção de produto já criado, e a foto do produto. A loja de teste ("Pizzaria da Fixture") já vem com o cardápio do protótipo: 24 produtos, fotos e opções. **Falta:** criar e editar grupos de opções pelo painel |
-| 3 | Painel de pedidos e ciclo de preparo | Receber e acompanhar pedidos numa tela | 🟡 o pedido vem do cardápio público, o painel leva por todos os estados e o cliente acompanha pelo código; fora do horário a vitrine avisa e o pedido é recusado. **Falta:** o pedido nascer na conversa (ADR-075) |
-| 4 | Liquidação presencial, troco e Pix confirmado | Registrar como cada pedido foi pago de verdade | ✅ dinheiro com troco, cartão (na maquininha da loja) e Pix conferido pela loja, registrados no pedido. O pagamento é sempre presencial, e **não há pagamento pelo aplicativo**: o `payment-service` saiu do projeto em 01/11/2026 (ADR-021, emenda) |
-| 5 | Entregadores, vínculo, remuneração e despacho | Despachar e saber quem está com cada pedido | ✅ o entregador da equipe com conta própria, o despacho e "minhas entregas". **Remuneração decidida em 31/10/2026: por entrega, igual à taxa de entrega cobrada do cliente** |
-| **6** | **Fechamento de expediente** | **Fechar o dia com extrato por entregador** | ✅ o caixa do dia é apurado e gravado no `order` (o `settlement` continua esqueleto): não fecha com pedido em andamento, confere o dinheiro contado, guarda o histórico, exporta CSV e trava os pedidos do dia fechado |
-| 7 | Canal WhatsApp determinístico | Receber pedido pelo WhatsApp com menu numerado | ⏳ nesta entrega: a resposta automática do WhatsApp Business manda o link do cardápio, e o aviso ao cliente é o link `wa.me` (etapa 5) |
-| 8 | ~~Pagamento online e emissão fiscal~~ | — | **Fora do produto (31/10/2026).** O pagamento é na maquininha da loja, sem pagamento online; a nota fiscal a loja emite no sistema que já usa |
-| 9 | Atendimento assistido e escalonamento | Atender sozinho a maior parte dos pedidos | ⏳ melhoria futura: inteligência artificial no atendimento pelo WhatsApp |
-| 10 | Controle quantitativo e substituição de item | Operar com contagem de estoque | ⏳ planejado: ao cadastrar o produto, a loja diz se ele **pode acabar**; se pode, informa a **quantidade** em estoque, que baixa a cada pedido |
-| 11 | Rastreamento e telemetria | Mostrar a entrega no mapa | ⏳ melhoria futura. Hoje o cliente acompanha pelo **status**: a cada mudança, a loja manda o aviso pelo WhatsApp e o cliente consulta o link do pedido. Próximo passo: o aviso sair automático |
+| Marco | O comerciante consegue | Situação |
+|---|---|---|
+| 0 | — (esqueleto: build, módulos, Compose, CI) | ✅ |
+| 1 | Cadastrar a loja e o time, com poderes diferentes | ✅ loja do zero, convite, permissões, sessão de 12 horas. **Falta:** enviar o código de verificação por SMS ou WhatsApp |
+| 2 | Publicar o cardápio e marcar o que acabou | ✅ cardápio com foto, descrição e opções, correção de produto, estoque do dia com busca. **Falta:** criar grupos de opções pelo painel |
+| 3 | Receber e acompanhar pedidos numa tela | 🟡 o pedido vem do link do cardápio, o painel leva por todos os estados, o cliente acompanha, a loja fechada não recebe, o sino avisa. **Falta:** o pedido nascer dentro da conversa (ADR-075) |
+| 4 | Registrar como cada pedido foi pago de verdade | ✅ dinheiro com troco, cartão e Pix, registrados no pedido; o Pix informado pelo entregador a loja confere no extrato |
+| 5 | Despachar e saber quem está com cada pedido | ✅ entregador da equipe com conta, despacho e "minhas entregas"; repasse por entrega, igual à taxa de entrega |
+| **6** | **Fechar o dia com extrato por entregador** | ✅ caixa apurado e gravado, conferência do dinheiro, acerto por entregador, histórico, vendas por período e CSV |
+| 7 | Receber pedido pelo WhatsApp | 🟡 a resposta automática do WhatsApp Business manda o link; o aviso ao cliente é a mensagem pronta (`wa.me`). **Falta:** o aviso sair automático |
+| 9 | Atender sozinho a maior parte dos pedidos | ⏳ futuro: atendimento com IA no WhatsApp |
+| 10 | Operar com contagem de estoque | ⏳ planejado: o produto que pode acabar ganha quantidade, que baixa a cada pedido |
+| 11 | Mostrar a entrega no mapa | ⏳ futuro. Hoje o cliente acompanha pelo status |
 
-**Ao fim do marco 6 existe produto completo e vendável.** A loja cadastra equipe
-e cardápio, recebe e prepara pedidos, despacha com entregador próprio, registra
-como cada pedido foi liquidado e fecha o expediente com extrato. Os marcos 7 a 9
-ampliam o alcance; 10 e 11 abrem segmentos novos.
+Pagamento e nota fiscal acontecem na loja, e por isso não há marco 8 (PRD §7). **Ao fim do marco 6
+existe produto completo:** a loja cadastra equipe e cardápio, recebe e prepara pedidos, despacha com
+entregador próprio, registra como cada pedido foi pago e fecha o caixa com extrato.
 
-### O que falta para ser um projeto completo
+### O que falta
 
-**Para a entrega** (a lista com esforço e quem ajuda está em
-[`docs/entrega-15-11/README.md`](docs/entrega-15-11/README.md), *"O que falta, e onde o time
-pode ajudar"*):
+**Para a entrega de 15/11** — a lista com esforço e responsáveis está em
+[`docs/entrega-15-11/README.md`](docs/entrega-15-11/README.md):
 
-- os testes do Gradle verdes numa máquina do time, os contratos regenerados e o contrato e os
+- os testes do Gradle verdes numa máquina do time, os contratos regenerados, e o contrato e os
   testes de integração do `order`;
-- a passagem completa no navegador — entregador, fechamento, loja fechada, foto e correção de
-  produto —, o ensaio da apresentação e um vídeo de reserva (o modo demonstração saiu da tela);
-- a **hospedagem de teste, sem custo**: um túnel da Cloudflare a partir do computador de quem
-  apresenta, ou a VM gratuita da Oracle — [`docs/operacao/hospedagem-de-teste.md`](docs/operacao/hospedagem-de-teste.md);
-- a resposta automática do WhatsApp Business configurada com o link do cardápio (etapa 5) e a
-  aprovação da ADR-077 pelo grupo.
+- a passagem completa no navegador, o ensaio da apresentação e um vídeo de reserva;
+- a hospedagem de teste e a resposta automática do WhatsApp Business com o link;
+- a aprovação da ADR-077 pelo grupo.
 
-**Para vender**, depois da entrega: enviar o código de verificação por SMS ou WhatsApp (tem
-custo por mensagem), recuperar a senha, criar grupos de opções pelo painel, o aviso ao cliente
-sair sozinho a cada mudança de status, a hospedagem de produção (servidor, domínio, HTTPS e
-cópia de segurança), os termos de uso e a política de privacidade
-([`docs/operacao/revisao-juridica.md`](docs/operacao/revisao-juridica.md)), e os marcos 7, 9, 10 e
-11 da tabela. As dívidas assumidas estão em [`docs/dividas.md`](docs/dividas.md).
+**Para vender, depois:** o código de verificação por SMS ou WhatsApp, recuperar a senha, grupos de
+opções pelo painel, o aviso automático ao cliente, a hospedagem de produção (domínio, HTTPS e cópia
+de segurança), os termos de uso e a política de privacidade, e os marcos 7, 9, 10 e 11. As dívidas
+assumidas estão em [`docs/dividas.md`](docs/dividas.md).
+
+---
+
+## Documentação
+
+| Onde | O que responde |
+|---|---|
+| [`docs/PRD.md`](docs/PRD.md) | O produto: para quem, o problema, o escopo, o que fica fora e os marcos |
+| [`docs/entrega-15-11/`](docs/entrega-15-11/README.md) | A entrega de 15/11: o fluxo, as etapas, as rotas do pedido, como testar e o que falta |
+| [`docs/dominio/`](docs/dominio/README.md) | As regras de cada serviço: agregados, invariantes, estados |
+| [`docs/architecture/decisions/`](docs/architecture/decisions/README.md) | As decisões de arquitetura (ADRs), com alternativas e consequências |
+| [`docs/como-subir-local.md`](docs/como-subir-local.md) | Como subir tudo no seu computador, e o que fazer quando não sobe |
+| [`docs/operacao/`](docs/operacao/README.md) | Procedimentos: hospedagem de teste, exclusão de dados, fila morta |
+| [`frontend/README.md`](frontend/README.md) | As telas, as rotas do front e o que cada uma chama |
+| [`CLAUDE.md`](CLAUDE.md) | Invariantes e convenções — leitura obrigatória antes do primeiro commit |
+
+### Decisões que mais moldam o código
+
+| ADR | Decisão |
+|---|---|
+| 021 | Sete serviços de negócio e o gateway, um banco por serviço |
+| 023 | O pedido registra o pagamento; o produto não cobra |
+| 012 | O gateway roteia por recurso, não por serviço |
+| 015 | Só o `identity` emite token; todos os serviços validam |
+| 035 | O domínio fala português; o meio técnico, inglês |
+| 059 | A loja de teste é semeada pelo agregado, nunca pelas tabelas |
+| 077 | O recorte da entrega de 15/11: o pedido nasce pelo link do cardápio |
+
+---
+
+## Regras do projeto
+
+- **Migrations, sempre.** Toda estrutura nasce em Flyway (SQL) ou Mongock (MongoDB).
+- **Quem publica evento usa Outbox; quem consome guarda o que já processou.**
+- **Nenhum segredo no Git.** Só o `.env.example`, com os nomes; a varredura roda em todo push.
+- **Timeout em toda chamada entre serviços.**
+- **O valor cobrado vem do servidor**, nunca de um número enviado pela tela.
+- **Nenhuma entrega ou retirada conclui sem o pagamento registrado.**
 
 ---
 
@@ -351,16 +237,15 @@ cópia de segurança), os termos de uso e a política de privacidade
 
 1. **Peça acesso** a quem administra o repositório (GitHub → *Settings → Collaborators*).
 2. **Clone e suba local** pelo [`docs/como-subir-local.md`](docs/como-subir-local.md). Leia o
-   [`CLAUDE.md`](CLAUDE.md) antes do primeiro commit: ele tem as regras que quebram o build.
+   [`CLAUDE.md`](CLAUDE.md) antes do primeiro commit.
 3. **Uma branch por tarefa**, a partir da `main` atualizada:
    `git switch main; git pull; git switch -c <tipo>/<assunto>` — por exemplo
-   `feat/editar-produto` ou `fix/loja-fechada`.
+   `feat/grupos-de-opcoes` ou `fix/loja-fechada`.
 4. **Antes do push**, o que o CI vai rodar:
    - back: `.\gradlew.bat :services:<servico>:test`, em `backend`;
    - front: `npm run format`, `npm run lint`, `npm run typecheck` e `npm test`, em `frontend`;
    - contratos: `npm ci` e `npm run contracts`, na raiz.
-5. **Abra um Pull Request para a `main`** e espere o CI verde e uma revisão. Nada vai direto
-   na `main`.
+5. **Abra um Pull Request para a `main`** e espere o CI verde e uma revisão.
 6. **Mensagens de commit** no formato do histórico: `feat(order): …`, `fix(front): …`,
    `docs: …`, em português.
-7. **Nunca suba** `.env`, `secrets/` nem chave `.pem` — o workflow `security` reprova o push.
+7. **Nunca suba** `.env`, `secrets/` nem chave `.pem`.

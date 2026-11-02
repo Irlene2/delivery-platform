@@ -1,5 +1,6 @@
 import { Link, Navigate, useLocation } from 'react-router';
 import { Casca } from '../aki/Casca';
+import { menuDa } from './CascaDaLoja';
 import { caminhoDaLoja, NOVA_LOJA } from './caminhos';
 import { useContextoDoPainel } from './contextoDoPainel';
 
@@ -11,14 +12,21 @@ import { useContextoDoPainel } from './contextoDoPainel';
 export function InicioDoPainel() {
   const { lojas } = useContextoDoPainel();
   // `?todas=1` (o "Minhas lojas" do menu) mostra a lista mesmo com uma loja só.
-  const todas = new URLSearchParams(useLocation().search).has('todas');
+  const parametros = new URLSearchParams(useLocation().search);
+  const todas = parametros.has('todas');
+  // Vindo de uma loja ("Minhas lojas" do menu dela), a lateral continua com o menu dela.
+  const deOnde = lojas.find((loja) => loja.estabelecimentoId === parametros.get('de'));
   const unica = lojas.length === 1 ? lojas[0] : undefined;
   if (unica !== undefined && !todas)
     return <Navigate to={caminhoDaLoja(unica.estabelecimentoId)} replace />;
 
   return (
     <Casca
-      menu={[{ chave: 'lojas', rotulo: 'Minhas lojas', icone: 'storefront', para: '/painel' }]}
+      menu={
+        deOnde !== undefined
+          ? menuDa(deOnde)
+          : [{ chave: 'lojas', rotulo: 'Minhas lojas', icone: 'storefront', para: '/painel' }]
+      }
       atual="lojas"
       titulo="Painel"
       subtitulo={
@@ -26,7 +34,7 @@ export function InicioDoPainel() {
       }
       rodape={
         <>
-          <b>AKI Delivery</b>
+          <b>{deOnde?.nome ?? 'AKI Delivery'}</b>
           <br />
           Gestão da operação
         </>

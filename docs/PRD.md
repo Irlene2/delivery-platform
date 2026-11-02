@@ -6,7 +6,7 @@ Uma pizzaria de bairro recebe pedidos pelo WhatsApp, anota no caderno, calcula o
 
 Este produto transforma esse WhatsApp em sistema — sem tirar o comerciante do canal onde o pedido já acontece, sem cobrar comissão sobre a venda e sem exigir que ele aprenda um software novo.
 
-A funcionalidade que vende o produto não é o cardápio digital nem o rastreamento no mapa. É o **fechamento de expediente**: ao fim do turno, uma tela mostra quanto entrou por método, quanto cada entregador recebeu e deve, qual a divergência de caixa e quanto ele tem a pagar de diária e comissão. O que hoje leva trinta minutos de papel e termina em desconfiança passa a levar dois minutos e terminar em extrato.
+A funcionalidade que vende o produto não é o cardápio digital nem o rastreamento no mapa. É o **fechamento de expediente**: ao fim do turno, uma tela mostra quanto entrou por método, quanto cada entregador recebeu e deve, qual a divergência de caixa e quanto ele tem a receber pelas entregas do dia. O que hoje leva trinta minutos de papel e termina em desconfiança passa a levar dois minutos e terminar em extrato.
 
 **Não somos um marketplace.** Não intermediamos a escolha do consumidor, não cobramos percentual da venda e não somos donos do cliente. O comerciante é o cliente do produto; o consumidor é usuário.
 
@@ -198,9 +198,9 @@ pedido que chega por telefone ou no balcão não tem história em marco nenhum**
 ### E5 — Liquidação e troco
 
 **H5.1** Como comerciante, quero registrar como cada pedido foi efetivamente pago.
-- Momento do pagamento: online, na entrega ou na retirada
+- Momento do pagamento: na entrega ou na retirada, direto à loja — **o aplicativo registra, não cobra** (ADR-023)
 - **Método declarado** — o que o cliente disse que pagaria — registrado separadamente do **método liquidado** — o que de fato aconteceu
-- Métodos presenciais: dinheiro, cartão na maquininha, Pix na entrega
+- Métodos: dinheiro, cartão na maquininha da loja e Pix na conta da loja
 - Não recebido é registro válido e explícito, nunca ausência de registro
 
 > Declarado e liquidado divergem no caso normal, não na exceção: o cliente pede dinheiro e acaba pagando no cartão porque o entregador não tinha troco. Um campo só destrói a informação de que era preciso levar troco — e com ela a medição de acerto do preparo de caixa.
@@ -211,11 +211,11 @@ pedido que chega por telefone ou no balcão não tem história em marco nenhum**
 - Sobra por indisponibilidade de moeda é registrada como ajuste de arredondamento, não como gorjeta
 - Gorjeta é campo próprio e explícito
 
-**H5.3** Como comerciante, quero que Pix na entrega seja confirmado de verdade.
-- Cobrança gera identificador próprio por pedido, com QR dinâmico
+**H5.3** Como comerciante, quero que o Pix seja confirmado de verdade.
+- O Pix cai na conta da loja, e **quem confirma é a loja, no extrato**
 - **Comprovante em imagem apresentado ao entregador não confirma pagamento**
-- Estado só passa a liquidado com a confirmação do provedor
-- A tela do entregador mostra a situação de forma inequívoca, sem texto ambíguo
+- O entregador pode informar que recebeu por Pix; o pedido fica com o Pix **a conferir** até a loja confirmar
+- O caixa do dia não fecha enquanto houver Pix a conferir
 
 ### E6 — Entregadores e despacho
 
@@ -298,9 +298,9 @@ pedido que chega por telefone ou no balcão não tem história em marco nenhum**
 ### E10 — Obrigações fiscais
 
 **H10.1** Como comerciante, preciso emitir documento fiscal do pedido.
-- Emissão a partir do pedido concluído
-- Contingência quando o serviço de emissão estiver indisponível
-- *Entra a partir do marco 8*
+- A loja emite a nota no sistema fiscal que já usa; o aplicativo não emite
+- O pedido concluído traz o que a nota precisa: itens, quantidades, valores e a forma de pagamento
+- O fechamento do dia exporta em planilha os totais por forma de pagamento, para a contabilidade
 
 ---
 
@@ -316,6 +316,8 @@ Registrados explicitamente para evitar retorno em cada revisão de escopo.
 | Aplicativo nativo para consumidor | O canal é o WhatsApp; aplicativo compete por instalação |
 | Rastreamento em mapa em tempo real | O comerciante conhece o entregador e o alcança por telefone; entra apenas se houver operação que justifique |
 | Repasse financeiro e conciliação bancária | O produto registra o acerto operacional; não movimenta valor |
+| Cobrança e pagamento pelo aplicativo | O cliente paga na entrega ou na retirada, direto à loja; o produto registra como foi pago (ADR-023) |
+| Emissão de nota fiscal | A loja emite no sistema fiscal que já usa; o produto entrega os dados do pedido (E10) |
 | Cupons, promoções e precificação dinâmica | Campos existem no modelo com valor neutro; regra fica para depois |
 | Operação em múltiplas cidades ou regiões | Fora do perfil-alvo inicial |
 | Avaliações e reputação | Não resolve a dor que decide a compra |
@@ -370,14 +372,15 @@ Cada marco entrega valor operável, não uma camada técnica.
 | **1** | Conta, estabelecimento, equipe e permissões | Cadastrar a loja e o time, com poderes diferentes |
 | **2** | Cardápio com opções e disponibilidade qualitativa | Publicar o cardápio e marcar o que acabou |
 | **3** | Painel de pedidos e ciclo de preparo | Receber e acompanhar pedidos numa tela |
-| **4** | Liquidação presencial, troco e Pix confirmado | Registrar como cada pedido foi pago de verdade |
-| **5** | Entregadores, vínculo, remuneração e despacho | Despachar e saber quem está com cada pedido |
+| **4** | Pagamento presencial, troco e Pix conferido pela loja | Registrar como cada pedido foi pago de verdade |
+| **5** | Entregadores, vínculo, repasse por entrega e despacho | Despachar e saber quem está com cada pedido |
 | **6** | **Fechamento de expediente** | Fechar o dia com extrato por entregador |
 | **7** | Canal WhatsApp determinístico — **o 7a vem antes do marco 3** (ADR-075) | Receber pedido pelo WhatsApp com menu numerado |
-| **8** | Pagamento online e emissão fiscal | Cobrar antecipado e emitir documento |
-| **9** | Atendimento assistido e escalonamento | Atender sozinho a maior parte dos pedidos |
+| **9** | Atendimento assistido por IA no WhatsApp | Atender sozinho a maior parte dos pedidos |
 | **10** | Controle quantitativo e substituição de item | Operar minimercado com contagem de estoque |
 | **11** | Rastreamento e telemetria — **condicionado pelo §7** | Mostrar a entrega no mapa |
+
+Não há marco 8: pagamento e nota fiscal acontecem na loja, e o aplicativo registra (§7, E5, E10).
 
 **A ordem não é a dos números.** O marco 7 se parte em **7a** — o menu numerado de ponta a ponta,
 até o pedido confirmado — e **7b**, o resto. O 7a é executado **antes do marco 3**, porque é ele
@@ -394,16 +397,15 @@ ampliação: ele é a entrada de pedido do produto, como a P4 do §5 já dizia. 
 existe produto completo"* continua verdadeiro — e passa a incluir o 7a e a H4.5, o lançamento
 manual. *"Os marcos 7 a 9 ampliam o alcance"* vale para o 7b, o 8 e o 9.
 
-**Emenda de 31/10/2026 — proposta, para o grupo aprovar junto com a ADR-077.** Decisões de
-produto tomadas na entrega de 15/11:
+**Decisões de produto de 31/10 a 02/11/2026** (com a ADR-077, para o grupo aprovar):
 
-- **Marco 4:** o pagamento é sempre presencial — dinheiro, cartão na maquininha da loja ou Pix
-  conferido pela loja — e fica registrado no pedido.
+- **Marco 4:** o pagamento é presencial — dinheiro, cartão na maquininha da loja ou Pix na conta
+  da loja — e fica registrado no pedido. O entregador pode informar Pix; a loja confere no extrato.
 - **Marco 5:** o entregador recebe **por entrega**, e o valor é **a taxa de entrega cobrada do
   cliente** naquele pedido. Isso fixa uma modalidade só no lugar das que a ADR-022 deixava em
   aberto.
-- **Marco 8 sai do produto:** não haverá pagamento online, e a nota fiscal a loja emite no
-  sistema que já usa.
+- **Marco 6:** o caixa do dia é apurado, conferido e gravado, com histórico e as vendas de um
+  período.
 - **Marco 9:** atendimento com inteligência artificial no WhatsApp, como melhoria futura.
 - **Marco 10:** ao cadastrar o produto, a loja diz se ele pode acabar e, se pode, a quantidade
   em estoque. Convive com a P6: o produto sem quantidade continua na disponibilidade
@@ -447,7 +449,7 @@ Detalhados no documento de arquitetura; resumidos aqui pelo que afeta a experiê
 | **Estabelecimento** | A loja. Unidade de isolamento de dados, equipe e cardápio |
 | **Vínculo** | Relação entre uma pessoa e um estabelecimento, com papel e permissões próprios |
 | **Modalidade** | Entrega ou retirada no balcão |
-| **Momento do pagamento** | Online, na entrega ou na retirada |
+| **Momento do pagamento** | Na entrega ou na retirada, direto à loja |
 | **Método declarado** | O que o cliente disse que pagaria |
 | **Método liquidado** | O que de fato aconteceu |
 | **Liquidação** | Registro de que um pedido foi pago, com método, valor e responsável pela custódia |

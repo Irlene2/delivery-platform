@@ -9,10 +9,10 @@ import java.util.List;
  * passou a ser a da fixture.
  *
  * <p><b>As fotos são links, não arquivos.</b> O {@code imagemRef} do produto aceita uma URL
- * absoluta, e o front a usa como está ({@code urlDaApi}). Ficaram só as fotos do Unsplash e da
- * Wikimedia Commons, de licença livre; as de outros sites do protótipo ficaram sem foto, e o
- * dono põe a dele pelo painel. Sem internet a foto não carrega, e o cardápio mostra o
- * espaço vazio — o resto funciona.
+ * absoluta, e o front a usa como está ({@code urlDaApi}). Todas são de licença livre: Unsplash ou
+ * Wikimedia Commons. As da Commons usam o endereço {@code Special:FilePath}, que a própria
+ * Commons mantém e que redireciona para o arquivo. Sem internet a foto não carrega, e o cardápio
+ * mostra a imagem padrão — o resto funciona.
  */
 final class CardapioDeDemonstracao {
 
@@ -46,9 +46,9 @@ final class CardapioDeDemonstracao {
             )),
             new Secao("Hot Dogs", List.of(
                     new Item("Hot Dog Especial", "Salsicha, purê, queijo, milho, batata palha e molhos.", "22.90",
-                            null),
+                            "https://commons.wikimedia.org/wiki/Special:FilePath/Hot_Dog_with_Fries_(5076896494)_(2).jpg?width=600"),
                     new Item("Hot Dog Bacon", "Salsicha, bacon, queijo, milho, ervilha e batata palha.", "26.90",
-                            null)
+                            "https://commons.wikimedia.org/wiki/Special:FilePath/Chicago-style_Hot_Dog.jpg?width=600")
             )),
             new Secao("Combos", List.of(
                     new Item("Combo Aki Classic", "Aki Classic, batata frita e refrigerante lata.", "36.90",
@@ -72,7 +72,7 @@ final class CardapioDeDemonstracao {
                     new Item("Suco de Morango", "Suco cremoso de morango, servido gelado — 300 ml.", "10.90",
                             "https://images.unsplash.com/photo-1553530666-ba11a7da3888?auto=format&fit=crop&w=600&q=75"),
                     new Item("Suco de Abacaxi com Hortelã", "Suco natural de abacaxi com hortelã — 300 ml.", "9.90",
-                            null)
+                            "https://commons.wikimedia.org/wiki/Special:FilePath/Pineapple.jpg?width=600")
             )),
             new Secao("Sobremesas", List.of(
                     new Item("Açaí Especial", "Açaí com banana, morango, granola e leite em pó.", "21.90",
@@ -80,7 +80,7 @@ final class CardapioDeDemonstracao {
                     new Item("Sorvete Cremoso", "Duas bolas de sorvete cremoso nos sabores chocolate, morango ou creme.", "12.90",
                             "https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Ice_Cream_Scoops.JPG/600px-Ice_Cream_Scoops.JPG"),
                     new Item("Pudim de Leite", "Pudim de leite condensado cremoso com calda de caramelo.", "10.90",
-                            null),
+                            "https://commons.wikimedia.org/wiki/Special:FilePath/Pudim_de_Leite.jpg?width=600"),
                     new Item("Brownie com Sorvete", "Brownie de chocolate com sorvete e calda.", "19.90",
                             "https://images.unsplash.com/photo-1564355808539-22fda35bed7e?auto=format&fit=crop&w=600&q=75")
             ))

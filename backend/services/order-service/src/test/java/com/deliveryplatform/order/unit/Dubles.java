@@ -144,6 +144,15 @@ final class Dubles {
         }
 
         @Override
+        public List<FechamentoDoDia> entre(UUID loja, java.time.LocalDate de, java.time.LocalDate ate) {
+            return gravados.values().stream()
+                    .filter(f -> f.getEstabelecimentoId().equals(loja))
+                    .filter(f -> !f.getDia().isBefore(de) && !f.getDia().isAfter(ate))
+                    .sorted(Comparator.comparing(FechamentoDoDia::getDia).reversed())
+                    .toList();
+        }
+
+        @Override
         public List<FechamentoDoDia> recentes(UUID loja, int limite) {
             return gravados.values().stream()
                     .filter(f -> f.getEstabelecimentoId().equals(loja))

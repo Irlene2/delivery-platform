@@ -23,6 +23,20 @@
 /* A loja fechada (ADR-077, 01/11/2026): o botão de finalizar fica visivelmente inativo. */
 .checkout-btn:disabled{opacity:.55;cursor:not-allowed}
 
+/* O sino do administrador (02/11/2026): a lista abre sob o botão, nas cores do painel. */
+.notificacoes{position:relative}
+.notificacoes-lista{position:absolute;right:0;top:46px;z-index:60;width:340px;max-width:calc(100vw - 32px);max-height:420px;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 18px 40px #18203026}
+.notificacoes-topo{display:flex;justify-content:space-between;align-items:center;padding:13px 15px;border-bottom:1px solid var(--line);font-size:13px}
+.notificacoes-topo a{color:var(--orange);font-size:11px;font-weight:700;text-decoration:none}
+.notificacoes-lista ul{list-style:none;margin:0;padding:0}
+.notificacoes-lista li a{display:flex;gap:10px;align-items:flex-start;padding:11px 15px;border-bottom:1px solid var(--line);color:var(--text);text-decoration:none}
+.notificacoes-lista li a:hover{background:var(--orange-soft)}
+.notificacoes-lista li .material-symbols-outlined{color:var(--orange);font-size:20px}
+.notificacoes-lista li b{display:block;font-size:12px}
+.notificacoes-lista li small{display:block;color:var(--muted);font-size:10px;margin-top:3px}
+.notificacoes-lista li.nova a{background:var(--orange-soft)}
+.notificacoes-vazio{padding:16px 15px;margin:0;color:var(--muted);font-size:12px}
+
 @media (max-width:700px){
   .pedido-campo .select,.pedido-campo .btn{width:100%;flex:1 1 100%}
 }

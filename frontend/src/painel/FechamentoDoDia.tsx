@@ -3,7 +3,7 @@ import { emDemonstracao } from '../aki/demo';
 import { dinheiro } from '../aki/formatos';
 import { toast } from '../aki/toast';
 import type { FechamentoGravado } from '../api/pedidos';
-import { fechamentoEmCsv } from '../pedido/caixa';
+import { fechamentoEmCsv, periodoEmCsv, somaDoPeriodo } from '../pedido/caixa';
 import { acertosDosEntregadores, resumoDoDia } from '../pedido/fechamento';
 import { hojeLocal, ROTULO_DA_FORMA } from '../pedido/regras';
 import { lerPreco, mensagemDoErro } from './catalogo';
@@ -28,14 +28,18 @@ interface LinhaDoAcerto {
 const dataBr = (dia: string) => dia.split('-').reverse().join('/');
 
 function baixarCsv(fechamento: FechamentoGravado) {
+  baixar(fechamentoEmCsv(fechamento), `fechamento-${fechamento.dia}.csv`);
+}
+
+function baixar(conteudo: string, nome: string) {
   // O BOM faz a planilha abrir os acentos certos.
-  const arquivo = new Blob(['﻿', fechamentoEmCsv(fechamento)], {
+  const arquivo = new Blob(['﻿', conteudo], {
     type: 'text/csv;charset=utf-8',
   });
   const url = URL.createObjectURL(arquivo);
   const link = document.createElement('a');
   link.href = url;
-  link.download = `fechamento-${fechamento.dia}.csv`;
+  link.download = nome;
   link.click();
   // Revogar na hora pode cortar o download em alguns navegadores.
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
@@ -67,6 +71,11 @@ export function FechamentoDoDia() {
 
   const [gravado, definirGravado] = useState<FechamentoGravado | null>(null);
   const [historico, definirHistorico] = useState<FechamentoGravado[]>([]);
+  // As vendas de um período (02/11/2026): do primeiro dia do mês até hoje, para começar.
+  const [de, definirDe] = useState(() => `${hojeLocal().slice(0, 8)}01`);
+  const [ate, definirAte] = useState(hojeLocal());
+  const [recusaDoPeriodo, definirRecusaDoPeriodo] = useState<string | null>(null);
+  const soma = useMemo(() => somaDoPeriodo(historico), [historico]);
   const [contado, definirContado] = useState('');
   const [observacao, definirObservacao] = useState('');
   const [fechando, definirFechando] = useState(false);
@@ -84,16 +93,21 @@ export function FechamentoDoDia() {
           if (atual) definirGravado(null);
         });
       caixa
-        .historico()
+        .periodo(de, ate)
         .then((lidos) => {
-          if (atual) definirHistorico(lidos);
+          if (atual) {
+            definirHistorico(lidos);
+            definirRecusaDoPeriodo(null);
+          }
         })
-        .catch(() => undefined);
+        .catch((erro: unknown) => {
+          if (atual) definirRecusaDoPeriodo(mensagemDoErro(erro));
+        });
     }
     return () => {
       atual = false;
     };
-  }, [caixa, dia, podeVerHistorico]);
+  }, [caixa, dia, de, ate, podeVerHistorico]);
 
   useEffect(() => carregarCaixa(), [carregarCaixa]);
 
@@ -386,12 +400,75 @@ export function FechamentoDoDia() {
         <section className="panel table-panel" id="historico">
           <div className="table-title">
             <div>
-              <h2>Caixas fechados</h2>
+              <h2>Vendas por período</h2>
               <p className="admin-muted">
-                Os fechamentos gravados, do mais recente ao mais antigo.
+                Os caixas fechados entre as datas, do mais recente ao mais antigo. Dia que não foi
+                fechado não entra na soma.
               </p>
             </div>
           </div>
+          <div className="menu-toolbar">
+            <label className="pedido-confere">
+              De
+              <input
+                className="select"
+                type="date"
+                value={de}
+                max={ate}
+                onChange={(evento) => definirDe(evento.target.value)}
+              />
+            </label>
+            <label className="pedido-confere">
+              Até
+              <input
+                className="select"
+                type="date"
+                value={ate}
+                min={de}
+                max={hojeLocal()}
+                onChange={(evento) => definirAte(evento.target.value)}
+              />
+            </label>
+            <button
+              type="button"
+              className="btn btn-light"
+              disabled={historico.length === 0}
+              onClick={() => baixar(periodoEmCsv(historico), `vendas-${de}-a-${ate}.csv`)}
+            >
+              <span className="material-symbols-outlined">download</span>CSV do período
+            </button>
+          </div>
+          {recusaDoPeriodo !== null && (
+            <p className="prod-msg erro" role="alert">
+              {recusaDoPeriodo}
+            </p>
+          )}
+          {historico.length > 0 && (
+            <div className="stats" style={{ marginBottom: '15px' }}>
+              <div className="panel stat">
+                <div className="stat-top">Vendas no período</div>
+                <strong>{dinheiro(soma.vendas)}</strong>
+                <small>
+                  {soma.dias} dia(s) fechado(s) · {soma.concluidos} pedido(s)
+                </small>
+              </div>
+              <div className="panel stat">
+                <div className="stat-top">Dinheiro</div>
+                <strong>{dinheiro(soma.dinheiro)}</strong>
+              </div>
+              <div className="panel stat">
+                <div className="stat-top">Cartão e Pix</div>
+                <strong>{dinheiro(soma.cartao + soma.pix)}</strong>
+                <small>
+                  Cartão {dinheiro(soma.cartao)} · Pix {dinheiro(soma.pix)}
+                </small>
+              </div>
+              <div className="panel stat">
+                <div className="stat-top">Repasse aos entregadores</div>
+                <strong>{dinheiro(soma.repasse)}</strong>
+              </div>
+            </div>
+          )}
           <div className="table-scroll">
             <table className="orders-table">
               <thead>
@@ -407,7 +484,7 @@ export function FechamentoDoDia() {
               <tbody>
                 {historico.length === 0 ? (
                   <tr>
-                    <td colSpan={6}>Nenhum caixa fechado ainda.</td>
+                    <td colSpan={6}>Nenhum caixa fechado neste período.</td>
                   </tr>
                 ) : (
                   historico.map((um) => (

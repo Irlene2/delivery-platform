@@ -17,7 +17,6 @@ e sem improviso. É o terceiro tipo de documento do repositório:
 | [`mensagem-na-fila-morta.md`](mensagem-na-fila-morta.md) | o alerta de fila morta disparou — ou apareceu sobra no fechamento | ADR-026 |
 | [`recuperacao-de-acesso.md`](recuperacao-de-acesso.md) | o administrador de uma loja perdeu o acesso e o canal não resolve | ADR-029 |
 | [`hospedagem-de-teste.md`](hospedagem-de-teste.md) | o link do cardápio precisa abrir fora da rede de casa — teste ou apresentação, sem custo | ADR-077 |
-| ~~[`reconciliacao-de-pagamento.md`](reconciliacao-de-pagamento.md)~~ | **fora do produto desde 01/11/2026**: não há pagamento pelo aplicativo | ADR-021 (emenda) |
 
 ## Material de apoio
 
