@@ -1,6 +1,8 @@
 # ADR-023 — Fronteira entre `order` e `payment`: o pedido é dono do registro, o pagamento é a fronteira com o PSP
 
-**Status:** Aceita — 23/08/2026
+**Status:** Aceita — 23/08/2026 · **a parte da fronteira com o PSP ficou sem objeto em
+01/11/2026**: não há pagamento pelo aplicativo, e o `payment-service` saiu (ADR-021, emenda de
+01/11/2026). O que continua valendo é a primeira metade do título: o pedido é dono do registro.
 **Fecha o "ponto em aberto" da:** ADR-021
 **Relacionada:** ADR-009 (valores e liquidação), ADR-010 (Saga do pedido)
 **Detalha:** `docs/dominio/pedido.md` §7, `docs/dominio/liquidacao.md` §2

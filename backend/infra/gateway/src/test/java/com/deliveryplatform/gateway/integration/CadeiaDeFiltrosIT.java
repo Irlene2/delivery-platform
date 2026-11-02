@@ -37,10 +37,11 @@ class CadeiaDeFiltrosIT extends GatewayNoAr {
     }
 
     @Test
-    void o_webhook_do_psp_passa_sem_token() {
-        // O PSP não tem token nosso: a autenticação dele é assinatura no corpo,
-        // conferida dentro do payment-service.
-        cliente().post().uri("/api/v1/webhooks/psp/pix").exchange().expectStatus().isOk();
+    void o_webhook_do_canal_passa_sem_token() {
+        // O provedor do canal não tem token nosso: a autenticação dele é assinatura no
+        // corpo, conferida dentro do conversation-service. (Até 01/11/2026 a prova era o
+        // webhook do PSP, que saiu com o payment-service.)
+        cliente().post().uri("/api/v1/webhooks/channel/whatsapp").exchange().expectStatus().isOk();
     }
 
     @Test

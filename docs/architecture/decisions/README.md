@@ -22,9 +22,9 @@
 | 018 | Snapshot de opções no item e cotação pelo catálogo | ✅ aceita |
 | 019 | `DeliveryQuotePort`: cotação por distância geodésica | ⛔ **revogada** — ver 020 |
 | 020 | Taxa de entrega por área nomeada (bairro / faixa de CEP) | ✅ aceita |
-| 021 | Catálogo de serviços do MVP — oito serviços | ✅ aceita · **emendada** (24/09/2026: `merchant` sem Redis; 26/09/2026: `order` e `delivery` sem Redis; 27/09/2026: `catalog` sem o starter, motivo mantido) |
+| 021 | Catálogo de serviços do MVP — ~~oito~~ sete serviços | ✅ aceita · **emendada** (24/09/2026: `merchant` sem Redis; 26/09/2026: `order` e `delivery` sem Redis; 27/09/2026: `catalog` sem o starter, motivo mantido; **01/11/2026: o `payment` sai — não há pagamento pelo aplicativo**) |
 | 022 | A remuneração do entregador pertence ao vínculo | ✅ aceita |
-| 023 | Fronteira `order` × `payment`: pedido é dono do registro | ✅ aceita |
+| 023 | Fronteira `order` × `payment`: pedido é dono do registro | ✅ aceita · **a fronteira com o PSP ficou sem objeto** (01/11/2026, ADR-021 emendada): o registro continua no pedido |
 | 024 | Desconto de retirada, não preço por modalidade | ✅ aceita · **emendada** (07/10/2026: o `cotar` é marco 3, e o prazo desta decisão vai com ele) |
 | 025 | Fuso horário do estabelecimento e o dia operacional | ✅ aceita · **emendada** (26/09/2026: um evento de abertura por dia operacional — ADR-046) |
 | 026 | Fila morta, retentativa e reprocessamento | ✅ aceita · **emendada** (29/09/2026: consumidor de invalidação não tem retentativa nem fila morta) · **emendada** (10/10/2026: recusa definitiva vai à fila morta na primeira entrega) |
@@ -60,7 +60,7 @@
 | 056 | Recurso de outra loja é 404, e o 403 fica com um significado só | ✅ aceita |
 | 057 | A idempotência natural por chave de domínio, e a segunda exceção à invariante 7 | ✅ aceita · **emenda a 048** |
 | 058 | O limite do contêiner dimensiona o JVM, e a pilha sobe em grupos | ✅ aceita |
-| 059 | A semeadura passa pelo agregado, e não pelas tabelas | ✅ aceita · **emendada** (10/10/2026: o terceiro semeador, e o vínculo; 16/10/2026: a condição era uma aproximação; 17/10/2026: a lista é estado, e estado não mora em ADR) |
+| 059 | A semeadura passa pelo agregado, e não pelas tabelas | ✅ aceita · **emendada** (10/10/2026: o terceiro semeador, e o vínculo; 16/10/2026: a condição era uma aproximação; 17/10/2026: a lista é estado, e estado não mora em ADR; 01/11/2026: o cardápio de demonstração) |
 | 060 | A primeira rota de escrita, e o que o agregado exige para a loja nascer | ✅ aceita |
 | 061 | A loja escolhida mora na URL | ✅ aceita |
 | 063 | O erro do catálogo diz de quem é a culpa | ✅ aceita |

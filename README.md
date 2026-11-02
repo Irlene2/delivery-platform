@@ -1,6 +1,6 @@
 # delivery-platform
 
-Plataforma de delivery para **comércio de bairro**, em microsserviços. Oito
+Plataforma de delivery para **comércio de bairro**, em microsserviços. Sete
 serviços de negócio e um gateway, cada um com processo, banco, migrations,
 testes, container, contrato e pipeline próprios.
 
@@ -15,7 +15,7 @@ testes, container, contrato e pipeline próprios.
 > é o único serviço novo; pagamento na entrega e entregador são campos do pedido. O passo a
 > passo, por etapa, está em [`docs/entrega-15-11/README.md`](docs/entrega-15-11/README.md).
 
-**Estado: 31/10/2026.** O `PRD.md` §10 define cada marco por uma coluna — O `PRD.md` §10 define cada marco por uma coluna —
+**Estado: 01/11/2026.** O `PRD.md` §10 define cada marco por uma coluna —
 *"o comerciante consegue"* —, e é por ela que este parágrafo se mede. A linha dos marcos 1 e
 2 é a de 19/10/2026, em `5208ae6`.
 
@@ -40,8 +40,9 @@ publicação e a marcação do que acabou —, com persistência em MongoDB e o 
 consumidor deste projeto que escreve em banco, e serve o cardápio público. O `order` recebe
 o pedido do cardápio público (preço lido do `catalog` na hora), leva o pedido pelos estados,
 registra entregador e pagamento, e atende o entregador da equipe na conta dele. O gateway
-autentica e roteia, com teste para cada rota. `payment`, `delivery`, `settlement` e
-`conversation` continuam esqueleto.
+autentica e roteia, com teste para cada rota. `delivery`, `settlement` e `conversation`
+continuam esqueleto. **O `payment` saiu em 01/11/2026:** não há pagamento pelo aplicativo — o
+cliente paga na entrega ou na retirada, e a loja registra no pedido (ADR-021, emenda).
 
 **Até 15/10 este parágrafo dizia *"marco 1 concluído (26/09/2026)"*, e isso nunca foi
 verdade:** o marco foi declarado medindo o que estava pronto, e não o que a coluna pedia.
@@ -78,7 +79,7 @@ cd backend && ./gradlew build
 
 ## Como se trabalha aqui
 
-Você **não** sobe os nove aplicativos. Sobe a infraestrutura e roda pelo IDE
+Você **não** sobe os oito aplicativos. Sobe a infraestrutura e roda pelo IDE
 apenas o serviço em que está mexendo:
 
 ```bash
@@ -157,11 +158,11 @@ Em revisão manual, a arquitetura erode em duas semanas.
 | catalog-service | 8083 | MongoDB | [`catalogo.md`](docs/dominio/catalogo.md) |
 | settlement-service | 8084 | PostgreSQL | [`liquidacao.md`](docs/dominio/liquidacao.md) |
 | order-service | 8085 | PostgreSQL | [`pedido.md`](docs/dominio/pedido.md) |
-| payment-service | 8086 | PostgreSQL | — (fronteira com o PSP; ver ADR-021) |
 | delivery-service | 8087 | PostgreSQL | [`entrega.md`](docs/dominio/entrega.md) |
 | conversation-service | 8088 | MongoDB | [`conversa.md`](docs/dominio/conversa.md) |
 
-Seis bancos PostgreSQL e dois MongoDB — oito bancos lógicos.
+Cinco bancos PostgreSQL e dois MongoDB — sete bancos lógicos. A porta 8086 era do `payment`, que
+saiu em 01/11/2026, e fica vaga (ADR-021).
 **Nenhum serviço acessa o banco de outro.**
 
 > **Não há coluna "publica eventos" nesta tabela, de propósito.** A anterior
@@ -205,7 +206,7 @@ ADR-021.
 | **ADR-016** — front mínimo antes da PWA | `frontend/` é o painel mínimo, desde o marco 2 (emenda de 29/09/2026) |
 | **ADR-017** — MongoDB como aprendizado | Mongock nos serviços documentais; MongoDB sobe como **replica set de nó único**, sem o qual não há transação multi-documento e portanto não há Outbox |
 | **ADR-020** — taxa por área nomeada | Sem PostGIS, sem MQTT, sem motor de rotas |
-| **ADR-021** — oito serviços no MVP | Este `settings.gradle.kts`, este Compose, esta tabela |
+| **ADR-021** — sete serviços no MVP (o `payment` saiu em 01/11/2026) | Este `settings.gradle.kts`, este Compose, esta tabela |
 | **ADR-022** — remuneração no vínculo | Não existe campo de pagamento do entregador no pedido |
 | **ADR-012** — rotas por recurso | `application.yml` do gateway reescrito: rotas por recurso, não por serviço |
 
@@ -298,17 +299,17 @@ este parágrafo dizia *"trinta e nove"*, quando já eram sessenta e sete.
 ## Marcos
 
 A numeração é a de [`docs/PRD.md`](docs/PRD.md) §10, e é a única que vale. A coluna
-*Situação* é a de **31/10/2026**, medida pela coluna do PRD — *o comerciante consegue?* — e
+*Situação* é a de **01/11/2026**, medida pela coluna do PRD — *o comerciante consegue?* — e
 não pelo código que existe. 🟡 quer dizer: funciona no recorte de 15/11 (ADR-077), mas não é o
 marco inteiro do PRD.
 
-| Marco | Entrega | O comerciante consegue | Situação em 31/10/2026 |
+| Marco | Entrega | O comerciante consegue | Situação em 01/11/2026 |
 |---|---|---|---|
 | 0 | Esqueleto: build, módulos, Compose, CI | — | ✅ |
-| 1 | Conta, estabelecimento, equipe e permissões | Cadastrar a loja e o time, com poderes diferentes | ✅ a loja do zero em "Minhas lojas", o convite e as permissões; a sessão vale um expediente (12 horas, ADR-037 emendada). **Falta:** enviar o código de verificação por SMS ou WhatsApp — hoje ele aparece na tela só no ambiente local e na demonstração (ADR-042 emendada) |
-| 2 | Cardápio com opções e disponibilidade qualitativa | Publicar o cardápio e marcar o que acabou | ✅ inclusive corrigir nome, preço, descrição e seção de produto já criado, e a foto do produto |
+| 1 | Conta, estabelecimento, equipe e permissões | Cadastrar a loja e o time, com poderes diferentes | ✅ a loja do zero em "Minhas lojas", o convite e as permissões; a sessão vale um expediente (12 horas, ADR-037 emendada). **Falta:** enviar o código de verificação por SMS ou WhatsApp — hoje ele aparece na tela só no ambiente local e no de teste (ADR-042 emendada) |
+| 2 | Cardápio com opções e disponibilidade qualitativa | Publicar o cardápio e marcar o que acabou | ✅ inclusive corrigir nome, preço, descrição e seção de produto já criado, e a foto do produto. A loja de teste ("Pizzaria da Fixture") já vem com o cardápio do protótipo: 24 produtos, fotos e opções. **Falta:** criar e editar grupos de opções pelo painel |
 | 3 | Painel de pedidos e ciclo de preparo | Receber e acompanhar pedidos numa tela | 🟡 o pedido vem do cardápio público, o painel leva por todos os estados e o cliente acompanha pelo código; fora do horário a vitrine avisa e o pedido é recusado. **Falta:** o pedido nascer na conversa (ADR-075) |
-| 4 | Liquidação presencial, troco e Pix confirmado | Registrar como cada pedido foi pago de verdade | ✅ dinheiro com troco, cartão (na maquininha da loja) e Pix conferido pela loja, registrados no pedido. O pagamento é sempre presencial, então o `payment-service` não é necessário para este marco |
+| 4 | Liquidação presencial, troco e Pix confirmado | Registrar como cada pedido foi pago de verdade | ✅ dinheiro com troco, cartão (na maquininha da loja) e Pix conferido pela loja, registrados no pedido. O pagamento é sempre presencial, e **não há pagamento pelo aplicativo**: o `payment-service` saiu do projeto em 01/11/2026 (ADR-021, emenda) |
 | 5 | Entregadores, vínculo, remuneração e despacho | Despachar e saber quem está com cada pedido | ✅ o entregador da equipe com conta própria, o despacho e "minhas entregas". **Remuneração decidida em 31/10/2026: por entrega, igual à taxa de entrega cobrada do cliente** |
 | **6** | **Fechamento de expediente** | **Fechar o dia com extrato por entregador** | ✅ o caixa do dia é apurado e gravado no `order` (o `settlement` continua esqueleto): não fecha com pedido em andamento, confere o dinheiro contado, guarda o histórico, exporta CSV e trava os pedidos do dia fechado |
 | 7 | Canal WhatsApp determinístico | Receber pedido pelo WhatsApp com menu numerado | ⏳ nesta entrega: a resposta automática do WhatsApp Business manda o link do cardápio, e o aviso ao cliente é o link `wa.me` (etapa 5) |
@@ -322,13 +323,27 @@ e cardápio, recebe e prepara pedidos, despacha com entregador próprio, registr
 como cada pedido foi liquidado e fecha o expediente com extrato. Os marcos 7 a 9
 ampliam o alcance; 10 e 11 abrem segmentos novos.
 
-### O que separa o recorte de hoje de um produto vendável
+### O que falta para ser um projeto completo
 
-Além do *Falta* de cada linha acima, uma coisa que não é marco: **hospedagem**. Hoje a pilha
-roda só no computador de quem desenvolve; para o link do cardápio abrir no celular do
-cliente, ela precisa de servidor, domínio e HTTPS. As etapas da entrega de 15/11 e o que cada
-uma já fez estão em [`docs/entrega-15-11/README.md`](docs/entrega-15-11/README.md); as
-dívidas assumidas, em [`docs/dividas.md`](docs/dividas.md).
+**Para a entrega** (a lista com esforço e quem ajuda está em
+[`docs/entrega-15-11/README.md`](docs/entrega-15-11/README.md), *"O que falta, e onde o time
+pode ajudar"*):
+
+- os testes do Gradle verdes numa máquina do time, os contratos regenerados e o contrato e os
+  testes de integração do `order`;
+- a passagem completa no navegador — entregador, fechamento, loja fechada, foto e correção de
+  produto —, o ensaio da apresentação e um vídeo de reserva (o modo demonstração saiu da tela);
+- a **hospedagem de teste, sem custo**: um túnel da Cloudflare a partir do computador de quem
+  apresenta, ou a VM gratuita da Oracle — [`docs/operacao/hospedagem-de-teste.md`](docs/operacao/hospedagem-de-teste.md);
+- a resposta automática do WhatsApp Business configurada com o link do cardápio (etapa 5) e a
+  aprovação da ADR-077 pelo grupo.
+
+**Para vender**, depois da entrega: enviar o código de verificação por SMS ou WhatsApp (tem
+custo por mensagem), recuperar a senha, criar grupos de opções pelo painel, o aviso ao cliente
+sair sozinho a cada mudança de status, a hospedagem de produção (servidor, domínio, HTTPS e
+cópia de segurança), os termos de uso e a política de privacidade
+([`docs/operacao/revisao-juridica.md`](docs/operacao/revisao-juridica.md)), e os marcos 7, 9, 10 e
+11 da tabela. As dívidas assumidas estão em [`docs/dividas.md`](docs/dividas.md).
 
 ---
 

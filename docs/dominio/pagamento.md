@@ -1,6 +1,11 @@
 # Domínio — Cobrança, confirmação e devolução
 
-**Serviço:** `payment-service` · **Status:** vigente (v1, 25/08/2026)
+> **Fora do produto desde 01/11/2026.** Não há pagamento pelo aplicativo: o cliente paga na
+> entrega ou na retirada, e a loja registra como foi pago no pedido. O `payment-service` saiu
+> do repositório (ADR-021, emenda de 01/11/2026). Este documento fica como registro do desenho,
+> para o dia em que uma loja pedir cobrança online.
+
+**Serviço:** ~~`payment-service`~~ (saiu em 01/11/2026) · **Status:** fora do produto (v1, 25/08/2026)
 **Fontes:** PRD §5 (P1), PRD §6 H4.4 e E5, Resposta v1.1 §5.3, ADR-023, ADR-009, ADR-010, ADR-030
 **Invariantes do `CLAUDE.md` que este documento detalha:** 1, 6, 7, 8
 **Entra no marco 4** — Pix confirmado de verdade. Cresce no marco 8 — cartão e cobrança antecipada

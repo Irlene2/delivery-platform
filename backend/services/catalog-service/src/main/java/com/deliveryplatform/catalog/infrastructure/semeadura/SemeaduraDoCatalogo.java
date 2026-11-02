@@ -16,6 +16,8 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
@@ -31,7 +33,8 @@ import org.springframework.stereotype.Component;
  * esta fixture grava e a API não escreve.
  *
  * <p>Atrás de {@code delivery.semeadura.ligada}, falsa por padrão. Grava
- * <b>uma</b> categoria e <b>um</b> produto nela, na loja da {@link Fixture}. A
+ * <b>uma</b> categoria e <b>um</b> produto nela (e, desde 01/11/2026, o cardápio de
+ * demonstração — abaixo), na loja da {@link Fixture}. A
  * categoria é gravada desde a E-3b (ADR-064); até lá o produto apontava para um id
  * constante sem linha nenhuma, "solto de propósito". O produto: publicado, {@code ESGOTADO_HOJE},
  * e com uma opção do grupo também {@code ESGOTADO_HOJE} — a reativação trata
@@ -54,6 +57,15 @@ import org.springframework.stereotype.Component;
  *
  * <p><b>Não espera a loja abrir e não sabe de expediente.</b> Grava e termina.
  * Quem reativa é o consumidor, quando o evento chegar.
+ *
+ * <h2>O cardápio de demonstração — emenda de 01/11/2026</h2>
+ *
+ * Depois da margherita, grava o {@link CardapioDeDemonstracao}: as seis seções do protótipo,
+ * 24 produtos publicados e disponíveis, com descrição e foto, e os grupos "Ponto da carne" e
+ * "Adicionais" no {@value CardapioDeDemonstracao#COM_OPCOES}. A idempotência dele é por
+ * <b>seção</b>, pelo nome: a seção que a loja já tem não é gravada de novo, nem os produtos
+ * dela. É por isso que um banco antigo, que já tem a margherita, ganha o cardápio na próxima
+ * subida, sem precisar apagar o volume.
  */
 @Component
 public class SemeaduraDoCatalogo implements ApplicationRunner {
@@ -83,9 +95,14 @@ public class SemeaduraDoCatalogo implements ApplicationRunner {
             return;
         }
         if (produtos.daLoja(Fixture.LOJA, PageRequest.of(0, 1)).hasContent()) {
-            log.info("semeadura: a loja da fixture já tem produto — nada a fazer");
-            return;
+            log.info("semeadura: a loja da fixture já tem produto — a margherita não é gravada");
+        } else {
+            semearAMargherita();
         }
+        semearOCardapioDeDemonstracao();
+    }
+
+    private void semearAMargherita() {
         Instant marcadoEm = relogio.instant().minus(IDADE_DO_CARIMBO);
         LocalDate carimbo = LocalDate.ofInstant(marcadoEm, ZoneOffset.UTC);
         Disponibilidade esgotado = Disponibilidade.esgotadoHoje(marcadoEm, carimbo);
@@ -106,5 +123,48 @@ public class SemeaduraDoCatalogo implements ApplicationRunner {
         Produto salvo = produtos.salvar(produto);
         log.info("semeadura: produto {} gravado na loja {}, ESGOTADO_HOJE com carimbo {}",
                 salvo.getId(), Fixture.LOJA, carimbo);
+    }
+
+    private void semearOCardapioDeDemonstracao() {
+        Set<String> jaTem = categorias.daLoja(Fixture.LOJA).stream()
+                .map(Categoria::getNome)
+                .collect(Collectors.toSet());
+        // A margherita fica na seção 0; o cardápio vem depois dela.
+        int ordemDaSecao = 1;
+        int gravados = 0;
+        for (CardapioDeDemonstracao.Secao secao : CardapioDeDemonstracao.SECOES) {
+            int ordem = ordemDaSecao++;
+            if (jaTem.contains(secao.nome())) {
+                continue;
+            }
+            Categoria categoria = categorias.salvar(Categoria.nova(Fixture.LOJA, secao.nome(), ordem));
+            int ordemDoItem = 0;
+            for (CardapioDeDemonstracao.Item item : secao.itens()) {
+                produtos.salvar(produtoDoCardapio(categoria, item, ordemDoItem++));
+                gravados++;
+            }
+        }
+        if (gravados > 0) {
+            log.info("semeadura: {} produtos do cardápio de demonstração gravados na loja {}",
+                    gravados, Fixture.LOJA);
+        }
+    }
+
+    private static Produto produtoDoCardapio(Categoria categoria, CardapioDeDemonstracao.Item item,
+                                             int ordem) {
+        Produto produto = Produto.rascunho(Fixture.LOJA, categoria.getId(), item.nome(),
+                Money.de(item.preco()), ModoDeControle.QUALITATIVO, ordem);
+        produto.descreverCom(item.descricao());
+        produto.ilustrarCom(item.imagem());
+        if (item.nome().equals(CardapioDeDemonstracao.COM_OPCOES)) {
+            produto.acrescentarGrupo(GrupoDeOpcoes.novo("Ponto da carne", 1, 1, 0, List.of(
+                    Opcao.nova("Ao ponto", Money.ZERO, 0),
+                    Opcao.nova("Bem passado", Money.ZERO, 1))));
+            produto.acrescentarGrupo(GrupoDeOpcoes.novo("Adicionais", 0, 2, 1, List.of(
+                    Opcao.nova("Bacon", Money.de("6.00"), 0),
+                    Opcao.nova("Cheddar", Money.de("4.00"), 1))));
+        }
+        produto.publicar();
+        return produto;
     }
 }

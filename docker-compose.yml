@@ -155,7 +155,6 @@ services:
       SERVICE_CATALOG_URI: http://catalog-service:8083
       SERVICE_SETTLEMENT_URI: http://settlement-service:8084
       SERVICE_ORDER_URI: http://order-service:8085
-      SERVICE_PAYMENT_URI: http://payment-service:8086
       SERVICE_DELIVERY_URI: http://delivery-service:8087
       SERVICE_CONVERSATION_URI: http://conversation-service:8088
     ports:
@@ -332,29 +331,6 @@ services:
         condition: service_healthy
     restart: "on-failure:3"
     mem_limit: 512m
-
-  payment-service:
-    profiles: ["services", "full"]
-    build:
-      context: ./backend
-      dockerfile: services/payment-service/Dockerfile
-    environment:
-      SERVER_PORT: "8086"
-      DB_URL: jdbc:postgresql://postgres:5432/payment_db
-      DB_USERNAME: ${POSTGRES_USER}
-      DB_PASSWORD: ${POSTGRES_PASSWORD}
-      RABBITMQ_ADDRESSES: rabbitmq:5672
-      RABBITMQ_USERNAME: ${RABBITMQ_USER}
-      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
-      JWT_JWKS_URI: http://identity-service:8081/.well-known/jwks.json
-    ports:
-      - "127.0.0.1:8086:8086"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-    restart: unless-stopped
 
   delivery-service:
     profiles: ["services", "full"]

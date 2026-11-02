@@ -45,11 +45,11 @@ porque os serviços dependem do `postgres`. É sempre:
 ```bash
 docker compose --profile marco2 ...                   # o marco 2: postgres, mongodb, rabbitmq e os quatro serviços
 docker compose --profile core ...                     # só a infraestrutura, inclusive redis e minio
-docker compose --profile core --profile services ...  # infraestrutura e os nove serviços
+docker compose --profile core --profile services ...  # infraestrutura e os oito serviços
 ```
 
-O `marco2` existe desde a I-B: é o que o marco 2 usa de verdade. Os quatro
-esqueletos (`settlement`, `payment`, `delivery`, `conversation`) só
+O `marco2` existe desde a I-B: é o que o marco 2 usa de verdade. Os três
+esqueletos (`settlement`, `delivery`, `conversation`) só
 ligam uma JVM — o `order` deixou de ser esqueleto na entrega de 15/11 e sobe pelo perfil
 `pedidos`, e o `redis` e o `minio` não têm usuário no repositório — o cache
 de autorização é em processo (ADR-011).
@@ -182,7 +182,7 @@ carrega o jar, não o compilador.
 | depois de mudar um arquivo de um serviço | **45 s** |
 | sem mudança nenhuma | **22 s** |
 
-Confira que cada um dos nove módulos executáveis tem **um** jar, e que ele se
+Confira que cada um dos oito módulos executáveis (nove até o `payment` sair, em 01/11/2026) tem **um** jar, e que ele se
 chama `app.jar`:
 
 ```bash
@@ -196,7 +196,7 @@ convenção não o gera mais. `.\gradlew.bat clean bootJar` resolve.
 
 ```bash
 docker compose --profile marco2 build                      # as quatro do marco 2
-docker compose --profile core --profile services build     # as nove
+docker compose --profile core --profile services build     # as oito
 ```
 
 | Medido com | Tempo |
@@ -296,7 +296,7 @@ Para sair dele, se os esqueletos ainda o armarem:
 ```bash
 docker compose --profile core --profile services stop \
   gateway identity-service merchant-service catalog-service settlement-service \
-  order-service payment-service delivery-service conversation-service
+  order-service delivery-service conversation-service
 ```
 
 ```powershell
@@ -335,7 +335,6 @@ O Swagger em contêiner, medido na mesma data: `merchant` e `catalog` respondem
 | catalog | 8083 | `/swagger-ui.html` |
 | settlement | 8084 | — |
 | order | 8085 | — |
-| payment | 8086 | — |
 | delivery | 8087 | — |
 | conversation | 8088 | — |
 
@@ -417,6 +416,23 @@ fundador — `ADMINISTRADOR`, todas as permissões —, então o painel abre as 
 Sem a senha, com a bandeira ligada, o `identity` **não sobe**, e diz por quê:
 `delivery.semeadura.ligada=true exige a senha do usuário da fixture em
 DELIVERY_SEMEADURA_SENHA` (medido em 10/10/2026).
+
+#### Testar pedidos com a Pizzaria da Fixture (desde 01/11/2026)
+
+A tela de entrada não tem mais o modo demonstração: **a loja de teste é esta.** Além da
+margherita, a semeadura grava o cardápio de exemplo do protótipo — seis seções, 24 produtos
+publicados, com descrição, foto e as opções do "Aki Classic" (ADR-059, emenda de 01/11/2026). Um
+banco antigo ganha o cardápio na próxima subida com a bandeira ligada, sem apagar o volume: a
+idempotência é por seção.
+
+1. No `.env`: `DELIVERY_SEMEADURA=true` e `DELIVERY_SEMEADURA_SENHA=<uma senha sua>`.
+2. Suba com `marco2` e `pedidos`, e entre com `+5511999990001` e essa senha.
+3. **Ajuste o Horário da loja.** A fixture abre só uma faixa de três horas, cinco minutos depois
+   da primeira subida — é a prova da reativação. Fora dela a vitrine avisa *"loja fechada"* e o
+   pedido é recusado (409). Em **Horário**, ponha a faixa do dia em que vai testar.
+4. Em **Configurações**, defina a taxa de entrega e copie o link do cardápio.
+
+As fotos são links do Unsplash e da Wikimedia: sem internet não carregam, e o resto funciona.
 
 Medido em 10/10/2026, pela API, com as chamadas que o painel faz: entrar `200`, minhas
 lojas `200` com uma loja, a lista `200`, o produto aberto `200`. E o circuito visto

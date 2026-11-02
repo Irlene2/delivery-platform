@@ -38,7 +38,6 @@ public abstract class GatewayNoAr {
         registro.add("SERVICE_CATALOG_URI", () -> UPSTREAMS.uriDe(UpstreamsDeMentira.CATALOG));
         registro.add("SERVICE_SETTLEMENT_URI", () -> UPSTREAMS.uriDe(UpstreamsDeMentira.SETTLEMENT));
         registro.add("SERVICE_ORDER_URI", () -> UPSTREAMS.uriDe(UpstreamsDeMentira.ORDER));
-        registro.add("SERVICE_PAYMENT_URI", () -> UPSTREAMS.uriDe(UpstreamsDeMentira.PAYMENT));
         registro.add("SERVICE_DELIVERY_URI", () -> UPSTREAMS.uriDe(UpstreamsDeMentira.DELIVERY));
         registro.add("SERVICE_CONVERSATION_URI",
                 () -> UPSTREAMS.uriDe(UpstreamsDeMentira.CONVERSATION));

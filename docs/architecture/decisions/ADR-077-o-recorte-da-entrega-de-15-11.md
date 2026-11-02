@@ -84,6 +84,13 @@ em [`docs/entrega-15-11/pedido.md`](../../entrega-15-11/pedido.md).
   cabe até 15/11. As emendas da ADR-037 (sessão de 12 horas) e da ADR-042 (o código na tela, só
   com a bandeira de desenvolvimento) são da mesma rodada.
 
+- **01/11/2026 — sem pagamento pelo aplicativo, e o `payment-service` sai** (ADR-021, emenda).
+  O pagamento é sempre na entrega ou na retirada, registrado no pedido.
+- **01/11/2026 — a loja de teste é a da fixture.** O link "Ver as telas em modo demonstração"
+  saiu da tela de entrada; o cardápio de exemplo do protótipo (seis seções, 24 produtos, fotos e
+  as opções do hambúrguer) passou a ser gravado no banco da "Pizzaria da Fixture" pela
+  semeadura do `catalog` (ADR-059, emenda).
+
 ## Alternativas consideradas
 
 - **A ADR-075 completa antes de 15/11.** Recusada pelo prazo.

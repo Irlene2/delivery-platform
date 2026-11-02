@@ -229,7 +229,9 @@ export function fonteDoServidor(
       situacao: produto.estadoDePublicacao ?? 'RASCUNHO',
       disponibilidade: estadoConhecido(produto.disponibilidade) ?? 'DISPONIVEL',
       vendavel: produto.vendavel === true,
-      imagem: '',
+      // A foto enviada pelo painel (caminho da API) ou um link absoluto, como o do
+      // cardápio de demonstração da fixture.
+      imagem: urlDaApi(produto.imagem),
       selo: '',
       grupos: gruposDoContrato(produto),
     };

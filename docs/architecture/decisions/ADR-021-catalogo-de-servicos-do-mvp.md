@@ -5,7 +5,8 @@ tem Redis, e a persistência além do banco principal passa a apontar a decisão
 que a pôs ali (ver "Emenda de 24/09/2026") · **emendada em 26/09/2026**: o `order` e o
 `delivery` também não têm Redis (ver "Emenda de 26/09/2026") · **emendada em
 27/09/2026**: o `catalog` perde o starter do Redis, e o motivo escrito dele continua de pé
-(ver "Emenda de 27/09/2026")
+(ver "Emenda de 27/09/2026") · **emendada em 01/11/2026**: o `payment` sai do catálogo — não há
+pagamento pelo aplicativo (ver "Emenda de 01/11/2026")
 **Relacionada:** ADR-004 (um estabelecimento por pedido), ADR-020 (taxa por área), ADR-022 (remuneração)
 **Fonte:** Resposta ao Adendo Crítico · Arquitetura v1.1, §5.3
 **Premissas do PRD que sustentam esta decisão:** P1, P2, P3, P5, P6
@@ -228,6 +229,32 @@ desligado.
 consumidor. Ele não foi tocado nesta rodada, e a decisão — tirá-lo junto com a
 variável `REDIS_PASSWORD` e a linha do perfil `core` no README, ou mantê-lo até
 o marco 7 — fica registrada aqui para não se perder.
+
+## Emenda de 01/11/2026 — o `payment` sai: não há pagamento pelo aplicativo
+
+**Decisão do produto, 31/10 e 01/11/2026.** O cliente paga na entrega ou na retirada — dinheiro
+com troco, cartão na maquininha da loja ou Pix conferido pela loja — e a loja **registra** como
+foi pago no pedido (marco 4). O marco 8, *pagamento online e emissão fiscal*, saiu do produto
+(emenda ao PRD §10). Sem cobrança online, o `payment` não tem o que fazer: ele era **a fronteira
+com o PSP** (ADR-023), e não há PSP.
+
+**O que saiu, e por quê o esqueleto não fica.** O módulo `services/payment-service` (era só a
+classe de subida e o teste de arquitetura), o contêiner do Compose, o `payment_db`, as rotas
+`payments` e `webhook-psp` do gateway com os casos do `RoteamentoIT`, e o workflow do CI. É a
+mesma razão da alternativa rejeitada abaixo, *"manter os módulos vazios já que não
+atrapalham"*: esqueleto aparece no README, no build, no Compose e no CI, e é dessas fontes que
+se tira decisão. **O catálogo passa a sete serviços de negócio e o gateway**, com as portas como
+estavam — a 8086 fica vaga, sem renumerar (alternativa rejeitada abaixo).
+
+**O que não muda.** O registro do pagamento continua no pedido, como a ADR-023 já dizia: *"o
+pedido é dono do registro"*. A parte dela que falava da fronteira com o PSP — cobrança Pix,
+webhook, estorno — fica **sem objeto**, e o `docs/dominio/pagamento.md` e o
+`docs/operacao/reconciliacao-de-pagamento.md` ficam como registro, marcados *fora do produto*.
+Os eventos `LiquidacaoConfirmadaV1`, `CobrancaExpiradaV1` e `EstornoExecutadoV1` do
+`contracts/eventos.md` nunca foram publicados por ninguém.
+
+**Gatilho para voltar:** uma loja pedir cobrança online. Aí a ADR-023 volta a ter objeto, e o
+serviço nasce de novo, com o código que a cobrança pedir — não do esqueleto.
 
 ## Alternativas consideradas
 

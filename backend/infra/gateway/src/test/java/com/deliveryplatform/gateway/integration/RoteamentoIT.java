@@ -75,7 +75,6 @@ class RoteamentoIT extends GatewayNoAr {
             new Caso("/api/v1/merchants/{loja}/catalog/produtos", "catalog", "catalog"),
             new Caso("/api/v1/merchants/{loja}/shifts", "settlement", "shifts"),
             new Caso("/api/v1/merchants/{loja}/orders", "order", "orders"),
-            new Caso("/api/v1/merchants/{loja}/payments", "payment", "payments"),
             new Caso("/api/v1/merchants/{loja}/deliveries", "delivery", "deliveries"),
             new Caso("/api/v1/couriers/me/entregas", "delivery", "courier-self"),
             new Caso("/api/v1/convites/um-token-qualquer", "merchant", "convites"),
@@ -95,7 +94,6 @@ class RoteamentoIT extends GatewayNoAr {
             new Caso("/api/v1/auth/qualquer-rota-que-ainda-nao-existe", "identity", "auth"));
 
     private static final List<Caso> WEBHOOKS = List.of(
-            new Caso("/api/v1/webhooks/psp/pix", "payment", "webhook-psp"),
             new Caso("/api/v1/webhooks/channel/whatsapp", "conversation", "webhook-channel"));
 
     static Stream<Arguments> recursos() {

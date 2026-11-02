@@ -39,12 +39,11 @@ public final class UpstreamsDeMentira implements AutoCloseable {
     public static final String CATALOG = "catalog";
     public static final String SETTLEMENT = "settlement";
     public static final String ORDER = "order";
-    public static final String PAYMENT = "payment";
     public static final String DELIVERY = "delivery";
     public static final String CONVERSATION = "conversation";
 
     private static final String[] TODOS = {
-            IDENTITY, MERCHANT, CATALOG, SETTLEMENT, ORDER, PAYMENT, DELIVERY, CONVERSATION
+            IDENTITY, MERCHANT, CATALOG, SETTLEMENT, ORDER, DELIVERY, CONVERSATION
     };
 
     private final Map<String, HttpServer> servidores = new LinkedHashMap<>();

@@ -1,6 +1,6 @@
 # ADR-059 — A semeadura passa pelo agregado, e não pelas tabelas
 
-- **Status:** aceita · **emendada em 10/10/2026 (W-D)**: o terceiro semeador, e o vínculo · **emendada em 16/10/2026**: a condição era uma aproximação · **emendada em 17/10/2026**: a lista é estado, e estado não mora em ADR
+- **Status:** aceita · **emendada em 10/10/2026 (W-D)**: o terceiro semeador, e o vínculo · **emendada em 16/10/2026**: a condição era uma aproximação · **emendada em 17/10/2026**: a lista é estado, e estado não mora em ADR · **emendada em 01/11/2026**: o cardápio de demonstração
 - **Data:** 10/10/2026
 - **Rodada:** I-C
 - **Relacionada:** ADR-046 (quem observa a abertura), ADR-049 (o carimbo com a loja
@@ -232,3 +232,26 @@ dele. *Ela não envelhece porque não é mais a lista: é a medição de 16/10.*
 **E o primeiro campo saiu nesta rodada:** o horário de funcionamento ganhou rota (ADR-073).
 
 **Gatilho escrito: nenhum** — o da emenda de 16/10 continua armado.
+
+## Emenda de 01/11/2026 — o cardápio de demonstração
+
+**O que mudou.** A semeadura do `catalog` grava, além da margherita, o cardápio de exemplo do
+protótipo: seis seções, 24 produtos **publicados e disponíveis**, com descrição, foto e os
+grupos "Ponto da carne" e "Adicionais" no primeiro hambúrguer. Os dados estão em
+`CardapioDeDemonstracao`, ao lado da `SemeaduraDoCatalogo`. Motivo: o link "Ver as telas em modo
+demonstração" saiu da tela de entrada, e a loja de teste da entrega de 15/11 passou a ser a da
+fixture — com o cardápio inteiro, e não com um produto só.
+
+**Continua pelo agregado.** Cada produto passa por `rascunho` → `descreverCom` → `ilustrarCom` →
+`acrescentarGrupo` → `publicar`, com C1, C4 e C5 cobradas como em qualquer cadastro.
+
+**A idempotência é por seção, pelo nome**, e não pela loja como a da margherita: a seção que a
+loja já tem não é gravada de novo, nem os produtos dela. Assim um banco que já tinha a
+margherita ganha o cardápio na próxima subida, sem apagar o volume. Uma seção apagada ou
+renomeada pelo dono volta na subida seguinte — é fixture de desenvolvimento, atrás de
+`delivery.semeadura.ligada`.
+
+**As fotos são links**, no `imagemRef`: só as do Unsplash e da Wikimedia Commons, de licença
+livre. Quatro produtos do protótipo usavam fotos de outros sites e ficaram sem foto.
+
+**Gatilho escrito:** o mesmo da ADR — esta semeadura é andaime e sai com ela.

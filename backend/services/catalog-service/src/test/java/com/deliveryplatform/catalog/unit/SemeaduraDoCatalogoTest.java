@@ -29,14 +29,17 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 /**
  * O produto da fixture (ADR-059): publicado, esgotado com carimbo velho, e com
- * uma opção esgotada também — os dois caminhos da reativação.
+ * uma opção esgotada também — os dois caminhos da reativação. E, desde 01/11/2026, o
+ * cardápio de demonstração, idempotente por seção.
  */
 @ExtendWith(MockitoExtension.class)
 class SemeaduraDoCatalogoTest {
@@ -65,17 +68,21 @@ class SemeaduraDoCatalogoTest {
 
         semeadura(true).run(new DefaultApplicationArguments());
 
-        ArgumentCaptor<Categoria> secao = ArgumentCaptor.forClass(Categoria.class);
-        verify(categorias).salvar(secao.capture());
-        ArgumentCaptor<Produto> gravado = ArgumentCaptor.forClass(Produto.class);
-        verify(produtos).salvar(gravado.capture());
-        Produto produto = gravado.getValue();
+        ArgumentCaptor<Categoria> secoes = ArgumentCaptor.forClass(Categoria.class);
+        verify(categorias, atLeastOnce()).salvar(secoes.capture());
+        ArgumentCaptor<Produto> gravados = ArgumentCaptor.forClass(Produto.class);
+        verify(produtos, atLeastOnce()).salvar(gravados.capture());
+        // A margherita é a primeira gravação, na primeira seção; o cardápio vem depois.
+        Categoria secao = secoes.getAllValues().get(0);
+        Produto produto = gravados.getAllValues().get(0);
 
-        assertThat(secao.getValue().getEstabelecimentoId()).isEqualTo(LOJA);
-        assertThat(secao.getValue().isAtiva()).isTrue();
+        assertThat(secao.getNome()).isEqualTo("Pizzas");
+        assertThat(secao.getEstabelecimentoId()).isEqualTo(LOJA);
+        assertThat(secao.isAtiva()).isTrue();
+        assertThat(produto.getNome()).isEqualTo("Pizza margherita");
         assertThat(produto.getCategoriaId())
                 .as("até a E-3b era uma constante sem linha; agora é a categoria gravada")
-                .isEqualTo(secao.getValue().getId());
+                .isEqualTo(secao.getId());
 
         assertThat(produto.getEstabelecimentoId()).isEqualTo(LOJA);
         assertThat(produto.getEstadoDePublicacao()).isEqualTo(EstadoDePublicacao.ATIVO);
@@ -96,14 +103,78 @@ class SemeaduraDoCatalogoTest {
     }
 
     @Test
-    void loja_que_ja_tem_produto_nao_ganha_outro() {
+    void grava_o_cardapio_de_demonstracao_publicado_com_descricao_foto_e_opcoes() {
+        when(produtos.daLoja(eq(LOJA), any())).thenReturn(Page.empty());
+        when(categorias.salvar(any())).thenAnswer(chamada -> chamada.getArgument(0));
+        when(produtos.salvar(any())).thenAnswer(chamada -> chamada.getArgument(0));
+
+        semeadura(true).run(new DefaultApplicationArguments());
+
+        ArgumentCaptor<Categoria> secoes = ArgumentCaptor.forClass(Categoria.class);
+        verify(categorias, times(7)).salvar(secoes.capture());
+        assertThat(secoes.getAllValues()).extracting(Categoria::getNome).containsExactly(
+                "Pizzas", "Hambúrgueres", "Porções", "Hot Dogs", "Combos", "Bebidas", "Sobremesas");
+
+        ArgumentCaptor<Produto> gravados = ArgumentCaptor.forClass(Produto.class);
+        verify(produtos, times(25)).salvar(gravados.capture());
+        List<Produto> cardapio = gravados.getAllValues().subList(1, 25);
+        assertThat(cardapio).allSatisfy(produto -> {
+            assertThat(produto.getEstabelecimentoId()).isEqualTo(LOJA);
+            assertThat(produto.getEstadoDePublicacao()).isEqualTo(EstadoDePublicacao.ATIVO);
+            assertThat(produto.vendavel()).isTrue();
+            assertThat(produto.getDescricao()).isNotBlank();
+        });
+        // Só fotos de licença livre; as outras ficam sem foto.
+        assertThat(cardapio).extracting(Produto::getImagemRef).filteredOn(ref -> ref != null)
+                .hasSize(20)
+                .allSatisfy(ref -> assertThat(ref).matches(
+                        "https://(images\\.unsplash\\.com|upload\\.wikimedia\\.org)/.*"));
+
+        Produto classico = cardapio.get(0);
+        assertThat(classico.getNome()).isEqualTo("Aki Classic");
+        assertThat(classico.getCategoriaId()).isEqualTo(secoes.getAllValues().get(1).getId());
+        assertThat(classico.getGruposDeOpcoes()).extracting(g -> g.nome())
+                .containsExactly("Ponto da carne", "Adicionais");
+    }
+
+    @Test
+    void loja_que_ja_tem_produto_nao_ganha_outra_margherita_mas_ganha_as_secoes_que_faltam() {
         when(produtos.daLoja(eq(LOJA), any()))
                 .thenReturn(new PageImpl<>(List.of(ProdutoDeTeste.margheritaPublicada())));
+        when(categorias.daLoja(LOJA)).thenReturn(List.of(
+                Categoria.nova(LOJA, "Pizzas", 0),
+                Categoria.nova(LOJA, "Hambúrgueres", 1),
+                Categoria.nova(LOJA, "Porções", 2),
+                Categoria.nova(LOJA, "Hot Dogs", 3),
+                Categoria.nova(LOJA, "Combos", 4),
+                Categoria.nova(LOJA, "Bebidas", 5)));
+        when(categorias.salvar(any())).thenAnswer(chamada -> chamada.getArgument(0));
+        when(produtos.salvar(any())).thenAnswer(chamada -> chamada.getArgument(0));
+
+        semeadura(true).run(new DefaultApplicationArguments());
+
+        ArgumentCaptor<Categoria> secao = ArgumentCaptor.forClass(Categoria.class);
+        verify(categorias).salvar(secao.capture());
+        assertThat(secao.getValue().getNome()).isEqualTo("Sobremesas");
+        ArgumentCaptor<Produto> gravados = ArgumentCaptor.forClass(Produto.class);
+        verify(produtos, times(4)).salvar(gravados.capture());
+        assertThat(gravados.getAllValues()).extracting(Produto::getNome)
+                .doesNotContain("Pizza margherita")
+                .contains("Pudim de Leite");
+    }
+
+    @Test
+    void loja_com_o_cardapio_inteiro_nao_ganha_nada() {
+        when(produtos.daLoja(eq(LOJA), any()))
+                .thenReturn(new PageImpl<>(List.of(ProdutoDeTeste.margheritaPublicada())));
+        when(categorias.daLoja(LOJA)).thenReturn(List.of(
+                "Pizzas", "Hambúrgueres", "Porções", "Hot Dogs", "Combos", "Bebidas", "Sobremesas")
+                .stream().map(nome -> Categoria.nova(LOJA, nome, 0)).toList());
 
         semeadura(true).run(new DefaultApplicationArguments());
 
         verify(produtos, never()).salvar(any());
-        verifyNoInteractions(categorias);
+        verify(categorias, never()).salvar(any());
     }
 
     private SemeaduraDoCatalogo semeadura(boolean ligada) {

@@ -1,5 +1,10 @@
 # Procedimento — reconciliação com o provedor de pagamento
 
+> **Fora do produto desde 01/11/2026.** Não há pagamento pelo aplicativo: o cliente paga na
+> entrega ou na retirada, e a loja registra como foi pago no pedido. O `payment-service` saiu
+> do repositório (ADR-021, emenda de 01/11/2026). Este documento fica como registro do desenho,
+> para o dia em que uma loja pedir cobrança online.
+
 **Status:** esqueleto · **Base:** ADR-023, ADR-030, `docs/dominio/pagamento.md` §8
 **Vale a partir do marco 4.** Antes dele não há cobrança para reconciliar.
 

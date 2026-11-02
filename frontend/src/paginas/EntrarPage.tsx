@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { ErroDaApi, SemResposta } from '../api/cliente';
 import { useSessao } from '../auth/useSessao';
-import { entrarEmDemonstracao, sairDaDemonstracao, type PerfilDeDemonstracao } from '../aki/demo';
+import { sairDaDemonstracao } from '../aki/demo';
 import { AvisoDoCartao, CabecalhoDoCartao, TelaDeEntrada } from '../aki/TelaDeEntrada';
 
 /**
@@ -10,17 +10,12 @@ import { AvisoDoCartao, CabecalhoDoCartao, TelaDeEntrada } from '../aki/TelaDeEn
  *
  * Entra por **telefone e senha**. O perfil não é escolhido aqui: depois do
  * login, o painel lê o papel da pessoa em cada loja, e é o servidor que decide.
- * O "Tipo de acesso" só aparece no modo demonstração, para ver as telas sem
- * servidor.
+ *
+ * Até 01/11/2026 havia aqui o link "Ver as telas em modo demonstração", com dados
+ * de exemplo e sem servidor. Saiu: a loja de teste agora é a "Pizzaria da
+ * Fixture", semeada no banco (docs/como-subir-local.md). O código do modo
+ * demonstração continua em `aki/demo.ts`, sem porta de entrada.
  */
-const DESTINO_DA_DEMONSTRACAO: Record<PerfilDeDemonstracao, string> = {
-  administrador: '/painel',
-  colaborador: '/painel',
-  // O entregador entra na loja de exemplo e cai nas entregas dele (InicioDaLoja).
-  entregador: '/painel',
-  // O cliente vê o fluxo de verdade: o cardápio pelo link, com a loja de exemplo.
-  cliente: '/loja/demo',
-};
 
 export function EntrarPage() {
   const { entrar } = useSessao();
@@ -35,11 +30,7 @@ export function EntrarPage() {
   const [telefone, definirTelefone] = useState('');
   const [senha, definirSenha] = useState('');
   const [verSenha, definirVerSenha] = useState(false);
-  const [perfil, definirPerfil] = useState<PerfilDeDemonstracao | ''>('');
-  const [demo, definirDemo] = useState(false);
-  const [erros, definirErros] = useState<{ telefone?: string; senha?: string; perfil?: string }>(
-    {},
-  );
+  const [erros, definirErros] = useState<{ telefone?: string; senha?: string }>({});
   const [ocupado, definirOcupado] = useState(false);
   const [aviso, definirAviso] = useState<string | null>(null);
 
@@ -47,16 +38,6 @@ export function EntrarPage() {
     evento.preventDefault();
     definirErros({});
     definirAviso(null);
-
-    if (demo) {
-      if (perfil === '') {
-        definirErros({ perfil: 'Selecione qual tela você quer ver.' });
-        return;
-      }
-      entrarEmDemonstracao(perfil);
-      void navegar(DESTINO_DA_DEMONSTRACAO[perfil], { replace: true });
-      return;
-    }
 
     const faltando: typeof erros = {};
     if (telefone.trim() === '') faltando.telefone = 'Digite seu telefone.';
@@ -69,6 +50,7 @@ export function EntrarPage() {
     definirOcupado(true);
     try {
       await entrar(telefone.trim(), senha);
+      // Quem entrou na demonstração antes de ela sair da tela não fica preso nela.
       sairDaDemonstracao();
       void navegar(destino, { replace: true, state: naVolta });
     } catch (causa) {
@@ -161,32 +143,6 @@ export function EntrarPage() {
           </small>
         </div>
 
-        <div className="form-group access-group" hidden={!demo}>
-          <label htmlFor="roleInput">Tipo de acesso</label>
-          <div className="input-container access-select-container">
-            <span className="material-icons input-icon">badge</span>
-            <select
-              id="roleInput"
-              name="role"
-              value={perfil}
-              className={erros.perfil !== undefined ? 'input-error' : undefined}
-              onChange={(evento) => definirPerfil(evento.target.value as PerfilDeDemonstracao)}
-            >
-              <option value="" disabled>
-                Selecione seu perfil
-              </option>
-              <option value="administrador">Administrador</option>
-              <option value="colaborador">Colaborador</option>
-              <option value="entregador">Entregador</option>
-              <option value="cliente">Cliente</option>
-            </select>
-            <span className="material-icons select-arrow">expand_more</span>
-          </div>
-          <small className="error-message" id="roleError">
-            {erros.perfil}
-          </small>
-        </div>
-
         <div className="login-options">
           <label className="remember-option">
             <input type="checkbox" id="rememberMe" />
@@ -201,7 +157,7 @@ export function EntrarPage() {
           disabled={ocupado}
         >
           <span className="button-text" id="btnText">
-            {ocupado ? 'Entrando' : demo ? 'Ver a tela (demonstração)' : 'Entrar'}
+            {ocupado ? 'Entrando' : 'Entrar'}
           </span>
         </button>
         {aviso !== null && <AvisoDoCartao>{aviso}</AvisoDoCartao>}
@@ -268,21 +224,6 @@ export function EntrarPage() {
           <Link to="/cadastrar" id="createAccount" state={local.state as { de?: string } | null}>
             Cadastre-se
           </Link>
-        </p>
-        <p>
-          Sem servidor no ar?{' '}
-          <a
-            href="#"
-            id="demoLink"
-            onClick={(evento) => {
-              evento.preventDefault();
-              definirDemo((valor) => !valor);
-              definirErros({});
-              definirAviso(null);
-            }}
-          >
-            {demo ? 'Voltar ao login com o servidor' : 'Ver as telas em modo demonstração'}
-          </a>
         </p>
       </div>
     </TelaDeEntrada>

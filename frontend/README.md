@@ -17,8 +17,9 @@ Antes de subir para o Git: `npm run typecheck`, `npm run lint` e `npm test`.
 
 O back precisa estar no ar: o `gateway` em 8080, com `identity`, `merchant` e `catalog` — e o
 `order` para os pedidos (perfil `pedidos`, em `docs/como-subir-local.md`).
-Sem o back, a tela de entrada tem **"Ver as telas em modo demonstração"**: escolha o
-perfil e navegue com os dados de exemplo, sem nenhuma chamada à API.
+**Para testar, use a "Pizzaria da Fixture"**, gravada no banco com o cardápio de exemplo do
+protótipo (`docs/como-subir-local.md`, *"Testar pedidos com a Pizzaria da Fixture"*). O link
+"Ver as telas em modo demonstração" saiu da tela de entrada em 01/11/2026.
 
 ## O visual: o protótipo `aki_delivery`, em React
 
@@ -65,9 +66,9 @@ As rotas, por quem as usa:
 `/entregador` não existe mais como tela: redireciona para `/painel`, e o entregador entra na
 loja dele e cai em `.../entregas`.
 
-**O que ainda é demonstração:** só a área `/cliente` e o botão **"Ver as telas em modo
-demonstração"** da entrada, que mostram as telas com dados de exemplo (`src/pedido/demonstracao.ts`)
-sem chamar a API. O carrinho do cliente é estado da tela (`src/aki/pedidos.ts`); o total que vale
+**O que ainda é demonstração:** só a área `/cliente`, que mostra as telas com dados de exemplo
+(`src/pedido/demonstracao.ts`) sem chamar a API. O modo demonstração do painel (`src/aki/demo.ts`)
+continua no código, sem porta de entrada na tela desde 01/11/2026. O carrinho do cliente é estado da tela (`src/aki/pedidos.ts`); o total que vale
 é o que o `order` devolve.
 
 **O que ainda não existe:** entrar com Google ou Apple (os botões estão na tela, sem serviço
@@ -77,8 +78,8 @@ por trás).
 produto que já existe; criar grupos de opções; guardar o selo. Os ingredientes vão no fim da
 descrição (`Ingredientes: a, b, c`) e voltam separados.
 
-**O código do cadastro na tela:** com `DELIVERY_CODIGO_NA_TELA=true` no `.env` (só local e na
-demonstração), o `identity` devolve o código e a tela de cadastro o mostra e preenche.
+**O código do cadastro na tela:** com `DELIVERY_CODIGO_NA_TELA=true` no `.env` (só local e no
+ambiente de teste), o `identity` devolve o código e a tela de cadastro o mostra e preenche.
 
 ## 15.A — front mínimo (marco 3)
 

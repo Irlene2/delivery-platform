@@ -12,7 +12,7 @@ do agregado, invariantes, tabela de transições, fórmulas de apuração.
 | [`catalogo.md`](catalogo.md) | `catalog-service` | Produto e opções, publicação, disponibilidade qualitativa, reativação por expediente, cotação |
 | [`entrega.md`](entrega.md) | `delivery-service` | Atribuição direta e rodízio, posição do entregador, custódia, retorno registrado |
 | [`conversa.md`](conversa.md) | `conversation-service` | Roteamento por número, modos, limites da interpretação, escalonamento, custo, LGPD |
-| [`pagamento.md`](pagamento.md) | `payment-service` | Cobrança Pix, webhook e assinatura, confirmação, devolução e divergência com o provedor |
+| [`pagamento.md`](pagamento.md) | ~~`payment-service`~~ | **Fora do produto (01/11/2026):** não há pagamento pelo aplicativo. Fica o registro do desenho — cobrança Pix, webhook, devolução |
 
 ## Como ler junto com as ADRs
 
