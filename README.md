@@ -6,8 +6,7 @@ testes, container, contrato e pipeline próprios.
 
 > **O cliente é o comerciante, não o consumidor.** A plataforma frequentemente
 > não custodia o dinheiro, o entregador pertence ao estabelecimento e o pedido
-> nasce numa conversa de WhatsApp. Se uma decisão parecer estranha, confira as
-> premissas em [`docs/PRD.md`](docs/PRD.md) §5 antes de "corrigir".
+> nasce numa conversa de WhatsApp. 
 
 **Estado: 19/10/2026, em `5208ae6`.** O `PRD.md` §10 define cada marco por uma coluna —
 *"o comerciante consegue"* —, e é por ela que este parágrafo se mede.
