@@ -44,10 +44,8 @@ endereço público, e o gateway precisa aceitar a origem do front no CORS.
 6. Abra `<B>` no celular, entre, e copie o link do cardápio em Configurações: ele já sai com o
    endereço público.
 
-**O que falta no código para isto funcionar** (tarefa do time, abaixo): o Vite 7 recusa
-endereço que não seja `localhost` (*"Blocked request. This host is not allowed"*). É preciso
-liberar `.trycloudflare.com` em `preview.allowedHosts` no `vite.config.ts`. Não foi feito
-nesta rodada para não mexer na configuração sem o time validar.
+**A configuração já está no código** (07/11/2026): o `vite.config.ts` libera `.trycloudflare.com`
+no `vite preview`, na porta 4173. O `npm run dev` continua aceitando só `localhost`.
 
 ## Opção B — se quiserem um endereço que fica no ar: a VM gratuita da Oracle
 

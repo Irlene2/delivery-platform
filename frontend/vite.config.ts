@@ -27,6 +27,15 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
   },
+  // A hospedagem de teste (docs/operacao/hospedagem-de-teste.md): o build servido pelo
+  // `vite preview` atrás de um Quick Tunnel da Cloudflare. Sem esta lista, o Vite recusa o
+  // endereço público com "Blocked request. This host is not allowed". Só o domínio dos túneis
+  // de teste — o `npm run dev` continua aceitando só localhost.
+  preview: {
+    port: 4173,
+    strictPort: true,
+    allowedHosts: ['.trycloudflare.com'],
+  },
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/teste/preparo.ts'],
