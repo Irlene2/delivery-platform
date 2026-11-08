@@ -28,7 +28,10 @@ export function SinoDeNotificacoes({ estabelecimentoId }: { estabelecimentoId: s
   const caixa = useRef<HTMLDivElement>(null);
 
   const avisos = useMemo(() => notificacoesDosPedidos(pedidos ?? []), [pedidos]);
-  const novas = vistas === null ? [] : naoVistas(avisos, vistas);
+  const novas = useMemo(
+    () => (vistas === null ? [] : naoVistas(avisos, vistas)),
+    [avisos, vistas],
+  );
 
   // A primeira leitura vira a linha de base; as seguintes avisam com um toast.
   const anteriores = useRef<number | null>(null);

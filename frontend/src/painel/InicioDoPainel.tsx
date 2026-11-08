@@ -1,6 +1,6 @@
 import { Link, Navigate, useLocation } from 'react-router';
 import { Casca } from '../aki/Casca';
-import { menuDa } from './CascaDaLoja';
+import { menuDa } from './menuDaLoja';
 import { caminhoDaLoja, NOVA_LOJA } from './caminhos';
 import { useContextoDoPainel } from './contextoDoPainel';
 
