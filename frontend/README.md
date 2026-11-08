@@ -1,12 +1,5 @@
 # Front-end
 
-Scaffoldado na rodada **W-A**, em 29/09/2026 — um marco antes do que a ADR-016
-previa, pelo motivo que ela mesma dá (_"tela cedo expõe API mal desenhada
-rápido"_). Ver a emenda de 29/09/2026 à ADR-016.
-
-**Antes de escrever tela**, leia `docs/front/premissas-do-front.md`: ele lista o
-que este produto **decidiu não ter**, e por qual premissa.
-
 ## Como rodar
 
     npm install
