@@ -69,8 +69,24 @@ do front.
 | `delivery-service` | 8087 | PostgreSQL | *Planejado:* rodízio e retorno do entregador |
 | `conversation-service` | 8088 | MongoDB | *Planejado:* o pedido nascendo dentro da conversa do WhatsApp (marcos 7 e 9) |
 
-**Nenhum serviço acessa o banco de outro.** Os serviços planejados têm o esqueleto, o teste de
-arquitetura e o pipeline prontos, e ganham código no marco deles.
+**Nenhum serviço acessa o banco de outro.** Os desenhos de contexto e de containers estão em
+[`docs/architecture/`](docs/architecture/containers.md).
+
+### O que está no repositório e ainda não roda
+
+Para quem avalia o repositório: estas peças estão aqui **de propósito, para os próximos marcos**,
+e nada da entrega de 15/11 depende delas. Não sobem nos perfis `marco2` e `pedidos`.
+
+| Peça | O que tem hoje | Para quando |
+|---|---|---|
+| `settlement-service` | esqueleto: a classe de entrada, as pastas das camadas, o teste de arquitetura e o pipeline | a jornada e a custódia do entregador. O caixa do dia, que seria dele, foi feito no `order` |
+| `delivery-service` | esqueleto, igual | o rodízio, a posição do entregador e o mapa da entrega (marco 11) |
+| `conversation-service` | esqueleto, igual | o pedido nascendo na conversa do WhatsApp (ADR-075) e o atendimento com IA (marcos 7 e 9) |
+| Redis e MinIO, no Compose | os contêineres, nos perfis `core` e `full` | o cache do cardápio público e as fotos fora do banco |
+| [`docs/dominio/`](docs/dominio/README.md) `liquidacao.md`, `entrega.md` e `conversa.md` | as regras desenhadas para esses três serviços | servem de partida quando cada um ganhar código |
+| [`contracts/eventos.md`](contracts/eventos.md) | o catálogo de eventos, inclusive os desses três serviços | idem |
+
+Cada esqueleto tem um `README.md` na própria pasta dizendo isto.
 
 ### Stack
 
@@ -220,7 +236,7 @@ assumidas estão em [`docs/dividas.md`](docs/dividas.md).
 | [`docs/como-subir-local.md`](docs/como-subir-local.md) | A referência completa da subida: tempos medidos, rodar um serviço pelo IDE, e cada problema já visto |
 | [`docs/operacao/`](docs/operacao/README.md) | Procedimentos: hospedagem de teste, exclusão de dados, fila morta |
 | [`frontend/README.md`](frontend/README.md) | As telas, as rotas do front e o que cada uma chama |
-| [`CLAUDE.md`](CLAUDE.md) | Invariantes e convenções — leitura obrigatória antes do primeiro commit |
+| [`CLAUDE.md`](CLAUDE.md) | As invariantes e as convenções do código, escritas para o assistente de código (Claude Code) que ajudou a construir o projeto — e úteis para gente |
 
 ### Decisões que mais moldam o código
 
@@ -250,8 +266,8 @@ assumidas estão em [`docs/dividas.md`](docs/dividas.md).
 ## Como colaborar
 
 1. **Peça acesso** a quem administra o repositório (GitHub → *Settings → Collaborators*).
-2. **Clone e suba local** pelo [`docs/como-testar.md`](docs/como-testar.md). Leia o
-   [`CLAUDE.md`](CLAUDE.md) antes do primeiro commit.
+2. **Clone e suba local** pelo [`docs/como-testar.md`](docs/como-testar.md). As convenções do
+   código estão no [`CLAUDE.md`](CLAUDE.md).
 3. **Uma branch por tarefa**, a partir da `main` atualizada:
    `git switch main; git pull; git switch -c <tipo>/<assunto>` — por exemplo
    `feat/grupos-de-opcoes` ou `fix/loja-fechada`.

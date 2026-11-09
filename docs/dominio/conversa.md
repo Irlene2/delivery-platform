@@ -1,6 +1,10 @@
 # Domínio — Canal, conversa e interpretação
 
-**Serviço:** `conversation-service` · **Status:** vigente (v1.1, 21/08/2026)
+> **Planejado, ainda não implementado.** O `conversation-service` é um esqueleto, sem código de negócio, e
+> nada da entrega de 15/11/2026 depende deste documento. Na entrega de 15/11, o pedido nasce pelo link do cardápio (ADR-077); a conversa do WhatsApp só leva o link. Este é o desenho para quando o
+> serviço ganhar código.
+
+**Serviço:** `conversation-service` · **Status:** planejado — desenho v1.1, de 21/08/2026
 **Fontes:** PRD §5 (P4), PRD §6 E8 e E9, Resposta v1.1 §5.3 e §6, ADR-007, ADR-008, ADR-013, ADR-017, ADR-018, ADR-020
 **Invariantes do `CLAUDE.md` que este documento detalha:** 2, 6, 7, 9
 **Entra em dois tempos:** modo determinístico no marco 7, IA no marco 9

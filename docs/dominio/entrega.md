@@ -1,6 +1,10 @@
 # Domínio — Entrega, despacho e retorno
 
-**Serviço:** `delivery-service` · **Status:** vigente (v1.1, 21/08/2026)
+> **Planejado, ainda não implementado.** O `delivery-service` é um esqueleto, sem código de negócio, e
+> nada da entrega de 15/11/2026 depende deste documento. Na entrega de 15/11, o entregador e o despacho são campos do pedido, no `order-service` — ver [`pedido.md`](pedido.md) e [`../entrega-15-11/pedido.md`](../entrega-15-11/pedido.md). Este é o desenho para quando o
+> serviço ganhar código.
+
+**Serviço:** `delivery-service` · **Status:** planejado — desenho v1.1, de 21/08/2026
 **Fontes:** PRD §5 (P2, P5), PRD §6 E6, Resposta v1.1 §5.3, ADR-020, ADR-022
 **Invariantes do `CLAUDE.md` que este documento detalha:** 1, 8, 9
 **Entra no marco 5** — entregadores, vínculo, remuneração e despacho

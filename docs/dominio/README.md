@@ -1,17 +1,18 @@
 # Domínio — regras de negócio vigentes
 
-Um documento por agregado. Cada um responde **qual é a regra hoje**: fronteira
+Um documento por agregado. Os três marcados *planejado* descrevem serviços que ainda são
+esqueleto: são o desenho para os próximos marcos, e não o que roda hoje. Cada um responde **qual é a regra hoje**: fronteira
 do agregado, invariantes, tabela de transições, fórmulas de apuração.
 
 | Documento | Serviço | Cobre |
 |---|---|---|
 | [`usuario.md`](usuario.md) | `identity-service` | Conta de acesso, canais e verificação, credencial, e o que a conta deliberadamente não guarda |
 | [`pedido.md`](pedido.md) | `order-service` | Agregado Pedido, máquina de estados, congelamento, ajustes, liquidação registrada |
-| [`liquidacao.md`](liquidacao.md) | `settlement-service` | Jornada do entregador, conferência de caixa, extrato, fechamento imutável |
+| [`liquidacao.md`](liquidacao.md) | `settlement-service` · *planejado* | Jornada do entregador, conferência de caixa, extrato, fechamento imutável |
 | [`estabelecimento.md`](estabelecimento.md) | `merchant-service` | Agregados, autorização contextual, horário e pausa, áreas e taxas, política de troco, vínculos |
 | [`catalogo.md`](catalogo.md) | `catalog-service` | Produto e opções, publicação, disponibilidade qualitativa, reativação por expediente, cotação |
-| [`entrega.md`](entrega.md) | `delivery-service` | Atribuição direta e rodízio, posição do entregador, custódia, retorno registrado |
-| [`conversa.md`](conversa.md) | `conversation-service` | Roteamento por número, modos, limites da interpretação, escalonamento, custo, LGPD |
+| [`entrega.md`](entrega.md) | `delivery-service` · *planejado* | Atribuição direta e rodízio, posição do entregador, custódia, retorno registrado |
+| [`conversa.md`](conversa.md) | `conversation-service` · *planejado* | Roteamento por número, modos, limites da interpretação, escalonamento, custo, LGPD |
 
 ## Como ler junto com as ADRs
 

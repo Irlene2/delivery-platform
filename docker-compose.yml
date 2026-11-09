@@ -77,6 +77,8 @@ services:
     entrypoint: ["sh", "/init.sh"]
     restart: "no"
 
+  # PLANEJADO, sem uso hoje: o cache do cardápio público (catalogo.md §7). O gatilho para voltar
+  # está no catalog-service/build.gradle.kts. Não sobe nos perfis marco2 e pedidos.
   redis:
     restart: unless-stopped
     profiles: ["core", "full"]
@@ -111,6 +113,8 @@ services:
       timeout: 10s
       retries: 5
 
+  # PLANEJADO, sem uso hoje: guardar as fotos fora do banco (catalogo.md §9). Hoje a foto fica na
+  # coleção imagens_de_produto do MongoDB. Não sobe nos perfis marco2 e pedidos.
   minio:
     restart: unless-stopped
     profiles: ["core", "full"]

@@ -28,15 +28,14 @@ alguém de fora**.
 | [`legitimo-interesse.md`](legitimo-interesse.md) | o teste de balanceamento das duas hipóteses de legítimo interesse — rascunho de engenharia, para revisão jurídica |
 | [`revisao-juridica.md`](revisao-juridica.md) | a pauta da consulta com advogado: o que foi assumido, com que raciocínio, e o que muda conforme a resposta |
 
-## O método
+## O registro das passagens no navegador
 
-Não é procedimento de operação do produto: é como as rodadas de trabalho neste repositório
-funcionam.
+Não é procedimento de operação do produto: é o registro dos testes feitos por gente, que várias
+ADRs citam como prova. Para testar hoje, o caminho é o [`../como-testar.md`](../como-testar.md).
 
-| Documento | Quando se abre |
+| Documento | O que guarda |
 |---|---|
-| [`metodo-das-rodadas.md`](metodo-das-rodadas.md) | antes de escrever ou aplicar um pacote — os papéis, o formato e onde mora o erro de cada um |
-| [`passagem-humana.md`](passagem-humana.md) | antes de uma passagem no navegador — a pilha que é o código do commit, e o que a passagem de 19/10/2026 achou |
+| [`passagem-humana.md`](passagem-humana.md) | como a pilha foi preparada para as passagens de outubro, na máquina com o Docker dentro do WSL, e o que a passagem de 19/10/2026 achou |
 
 ## Uma regra comum aos quatro procedimentos
 

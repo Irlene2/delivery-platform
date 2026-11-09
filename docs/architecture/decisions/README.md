@@ -1,5 +1,13 @@
 # Registros de decisão (ADR)
 
+> **Os documentos de agosto citados nas ADRs** — o PRD e a arquitetura em PDF, v1, v2, o resumo
+> executivo e a resposta ao adendo, antes em `docs/referencia/` — **saíram do repositório em
+> 09/11/2026.** Descreviam o desenho original, com cobrança online, que a ADR-023 trocou pelo
+> pagamento registrado no pedido. As ADRs continuam citando seções deles como registro de onde
+> cada decisão partiu; os arquivos estão no histórico do Git (`git log --all -- docs/referencia`).
+> O que vale hoje: o [`PRD.md`](../../PRD.md), as ADRs e os desenhos em
+> [`../context.md`](../context.md) e [`../containers.md`](../containers.md).
+
 | ADR | Decisão | Status |
 |---|---|---|
 | 001 | Monorepo para os oito serviços, o gateway e os contratos | ✅ aceita · **emendada** (26/09/2026: a regra existe no build; 29/09/2026: `frontend/` na árvore) |

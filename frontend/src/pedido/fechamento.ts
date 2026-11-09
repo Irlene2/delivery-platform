@@ -6,7 +6,8 @@ import { classeDoStatus, ROTULO_DA_FORMA, ROTULO_DO_STATUS } from './regras';
 /**
  * As contas do dia, a partir dos pedidos — para o dashboard, o fechamento e o app do
  * entregador. **Nada aqui é guardado**: é a soma do que o servidor devolveu. O fechamento que
- * fica registrado é o marco 6 (settlement); para 15/11 ele é um relatório do dia.
+ * fica registrado é o do servidor: o `order-service` apura e grava o caixa do dia desde
+ * 01/11/2026 (`FechamentoDoDia`).
  *
  * ## A regra do repasse (decisão de 31/10/2026)
  *

@@ -1,6 +1,10 @@
 # Domínio — Liquidação e fechamento de expediente
 
-**Serviço:** `settlement-service` · **Status:** vigente (v1.1, 21/08/2026)
+> **Planejado, ainda não implementado.** O `settlement-service` é um esqueleto, sem código de negócio, e
+> nada da entrega de 15/11/2026 depende deste documento. O fechamento do dia que roda hoje é do `order-service` (`FechamentoDoDia`, desde 01/11/2026), mais simples que o descrito aqui: total por forma de pagamento, conferência do dinheiro e acerto por entregador, sem jornada nem custódia. Este é o desenho para quando o
+> serviço ganhar código.
+
+**Serviço:** `settlement-service` · **Status:** planejado — desenho v1.1, de 21/08/2026
 **Fontes:** PRD §5 (P1, P2), PRD §6 E5, E6 e E7, ADR-002, ADR-009, ADR-022
 **Invariantes do `CLAUDE.md` que este documento detalha:** 1, 3, 5, 7, 8
 

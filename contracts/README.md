@@ -6,8 +6,7 @@ entre serviços — a única coisa que se compartilha é o **formato**.
 - `openapi/` — um arquivo por serviço, **gerado do código e congelado**: um teste
   compara o documento gerado com o arquivo commitado e falha se divergirem
   (ADR-039)
-- `asyncapi/` — eventos de domínio publicados via RabbitMQ
-- `events/` — JSON Schema por evento, versionado
+- `events/` — JSON Schema por evento, versionado; hoje, o envelope comum a todos
 
 ## Onde mora o quê
 
@@ -15,7 +14,7 @@ entre serviços — a única coisa que se compartilha é o **formato**.
 |---|---|
 | [`eventos.md`](eventos.md) | **quem publica e quem assina** — fonte única do pareamento |
 | `events/` | o esquema de cada evento |
-| `openapi/` · `asyncapi/` | os contratos de interface |
+| `openapi/` | os contratos HTTP de cada serviço |
 | `docs/dominio/` | **o que** cada serviço faz com o evento que recebe |
 
 Divergência entre `eventos.md` e um documento de domínio é defeito. Corrija na
