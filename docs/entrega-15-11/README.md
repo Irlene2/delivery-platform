@@ -51,20 +51,22 @@ pagamento registrado são campos do pedido. O pagamento é presencial e o produt
 | 2 | Desenho do pedido e do cardápio público — [`pedido.md`](pedido.md) e a ADR-077 | ✅ |
 | 3 | Back-end: `order-service`, cardápio público no `catalog`, rotas no `gateway`, perfil `pedidos` no Compose | ✅ testes de unidade verdes; pilha de pé no Docker Desktop |
 | 4 | Front ligado ao `order`: vitrine, checkout, acompanhamento, painel de pedidos, dashboard com dados reais, entregador com conta, fechamento do dia, configurações | ✅ passagem humana até o pedido entregue; o entregador e o fechamento ainda esperam a passagem humana |
-| 5 | WhatsApp: a resposta automática do WhatsApp Business com o link do cardápio, e o aviso ao cliente pelo `wa.me` | ⏳ |
+| 5 | WhatsApp: a resposta automática do WhatsApp Business com o link do cardápio, e o aviso ao cliente pelo `wa.me` | ✅ configurado e conferido no celular em 08/11/2026 |
 | 4b | O pacote até o marco 6 (01/11/2026): loja fechada não recebe pedido, corrigir produto, foto do produto, sessão de 12 horas, código do cadastro na tela (local), caixa do dia gravado | ✅ testes de unidade e de tela; espera os testes do Gradle e a passagem humana |
 | 4c | A loja de teste (01/11/2026): a "Pizzaria da Fixture" com o cardápio do protótipo — 24 produtos, fotos e opções —, a tela de entrada sem o modo demonstração e a hospedagem de teste escrita | ✅ testes de unidade; o cardápio conferido no navegador em 02/11 |
 | 4e | A segunda leva de 02/11/2026: a foto de cada item no acompanhamento do pedido, o "Esqueci minha senha" pelo código de verificação e a entrada só pelo telefone, sem Google e Apple | ✅ testes de unidade e de tela; espera os testes do Gradle e a passagem humana |
 | 4d | Os ajustes da passagem de 02/11/2026: o sino de notificações, o Pix informado pelo entregador e conferido pela loja, a busca e os filtros do estoque, as vendas por período no fechamento, o menu da loja em "Minhas lojas", a conta nova levada ao "Cadastrar minha loja" e as fotos no painel | ✅ testes de unidade e de tela; espera os testes do Gradle e a passagem humana |
-| 6 | Testes que faltam (contrato e integração do `order`), passagem completa no navegador, ensaio da demonstração e vídeo de reserva | ⏳ |
+| 6 | Testes que faltam (contrato e integração do `order`), passagem completa no navegador, ensaio da demonstração e vídeo de reserva | 🟡 passagem completa no navegador e no celular, pela Cloudflare, e o vídeo feitos em 08/11/2026; faltam o contrato e a integração do `order` e o ensaio |
 
 Pendente fora das etapas: a aprovação da ADR-077 pelo grupo. O que foi assumido como dívida
 está em [`docs/dividas.md`](../dividas.md), seção *"As da entrega de 15/11"*.
 
 ## Como subir e testar
 
-1. **Subir:** [`docs/como-subir-local.md`](../como-subir-local.md) — perfil `marco2` mais
-   `pedidos`. No Windows com Docker Desktop, a seção 0.1.
+1. **Subir:** [`docs/como-testar.md`](../como-testar.md) — na sua máquina (parte B) ou aberto
+   para o celular pela Cloudflare (parte C), com o roteiro completo do teste. A referência
+   longa, com os tempos medidos e cada problema já visto, é o
+   [`docs/como-subir-local.md`](../como-subir-local.md).
 2. **Back-end:** em `backend`, `.\gradlew.bat :services:order-service:test` e
    `.\gradlew.bat :services:catalog-service:test`.
 3. **Front:** em `frontend`, `npm run typecheck`, `npm run lint`, `npm test` e `npm run dev`
@@ -97,13 +99,13 @@ colaborar"*).
 
 | # | Tarefa | Por quê | Esforço | Quem |
 | --- | --- | --- | --- | --- |
-| 1 | Rodar os testes do Gradle numa máquina com folga de memória, um serviço por vez (`--max-workers=1`) | Ainda não houve uma rodada inteira verde com o Testcontainers | P | |
-| 2 | Regenerar os contratos do `merchant`, `catalog` e `identity` (`-Dopenapi.atualizar=true`) e os tipos do front (`npm run tipos`) | As rotas novas de 01/11 e as do "Esqueci minha senha" (02/11) ainda não estão no contrato; o `ContratoOpenApiIT` do `identity` reprova até regenerar | P | |
+| 1 | Rodar os testes do Gradle numa máquina com folga de memória, um serviço por vez (`--max-workers=1`) | Os do `identity` passaram em 02/11; falta uma rodada inteira | P | |
+| ~~2~~ | ~~Regenerar os contratos do `merchant`, `catalog` e `identity` e os tipos do front~~ | **Feito** (`a1d2f55` e `5068bae`) | — | |
 | 3 | Contrato OpenAPI e testes de integração do `order` | Os tipos do pedido no front são escritos à mão (`src/api/pedidos.ts`), inclusive as rotas de 02/11 (`pix-check` e o período do fechamento) | M | |
-| 4 | Passagem completa no navegador, com a fixture, anotando cada achado | Entregador, Pix a conferir, sino, fechamento por período, loja fechada, foto e correção de produto só passaram em testes de tela | M | |
-| 5 | Hospedagem de teste pelo túnel da Cloudflare, e liberar `.trycloudflare.com` no `preview.allowedHosts` do Vite | O link precisa abrir no celular de outra pessoa | P | |
-| 6 | Configurar a resposta automática do WhatsApp Business com o link do cardápio, e escrever o passo a passo | Etapa 5: sem código, só configuração no celular da loja | P | |
-| 7 | Roteiro da apresentação, ensaio e vídeo de reserva | O modo demonstração saiu; sem rede, o vídeo é a reserva | M | |
+| ~~4~~ | ~~Passagem completa no navegador~~ | **Feita em 08/11/2026**, da loja nova ao caixa fechado, com o cliente no celular. O roteiro está em [`como-testar.md`](../como-testar.md) | — | |
+| ~~5~~ | ~~Hospedagem de teste pelo túnel da Cloudflare~~ | **Feita em 07/11/2026** | — | |
+| ~~6~~ | ~~Resposta automática do WhatsApp Business com o link do cardápio~~ | **Feita em 08/11/2026** | — | |
+| 7 | Ensaio da apresentação | O roteiro e o vídeo de reserva estão prontos (08/11/2026); falta ensaiar com o tempo | P | |
 | 8 | Ler e aprovar a ADR-077 (com as decisões de 01/11 e 02/11) em grupo | É a decisão do recorte, ainda *proposta* | P | |
 
 ### Melhorias que podem entrar, se sobrar tempo — validem o esforço

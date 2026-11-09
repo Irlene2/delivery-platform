@@ -1,7 +1,9 @@
 # Hospedagem de teste, sem custo
 
-**Status:** proposta, 01/11/2026 · **Para:** a entrega de 15/11/2026 e os testes com o celular
-de outra pessoa · **Não é** hospedagem de produção.
+**Status:** em uso — a opção A sustentou as evidências e o vídeo da entrega (07 e 08/11/2026) ·
+**Para:** a entrega de 15/11/2026 e os testes com o celular de outra pessoa · **Não é**
+hospedagem de produção. O passo a passo para o time, junto com o roteiro do teste, está em
+[`../como-testar.md`](../como-testar.md), parte C.
 
 O objetivo é um só: **o link do cardápio abrir no celular de quem não está na rede da casa**,
 para o teste e para a apresentação, sem gastar nada. Os preços e limites abaixo foram
@@ -39,10 +41,14 @@ endereço público, e o gateway precisa aceitar a origem do front no CORS.
    ```powershell
    cd frontend
    $env:VITE_API_BASE_URL = "<A>"; npm run build
-   npx vite preview --port 4173 --strictPort
+   npm run preview
    ```
 6. Abra `<B>` no celular, entre, e copie o link do cardápio em Configurações: ele já sai com o
-   endereço público.
+   endereço público. É esse link que vai na resposta automática do WhatsApp Business da loja.
+
+O log do `cloudflared` mostra o endereço numa caixa, no meio das primeiras linhas. Um
+`connection refused` no túnel do site antes do passo 5 é esperado: ainda não havia nada servindo
+na 4173. Os endereços mudam a cada vez que os túneis sobem — aí repetem-se os passos 4 e 5.
 
 **A configuração já está no código** (07/11/2026): o `vite.config.ts` libera `.trycloudflare.com`
 no `vite preview`, na porta 4173. O `npm run dev` continua aceitando só `localhost`.

@@ -117,16 +117,23 @@ delivery-platform/
 
 ## Como rodar
 
-**Requisitos:** JDK 21, Docker com Docker Compose, Node 22 ou mais novo. No Windows, Docker
-Desktop e PowerShell — os comandos estão em [`docs/como-subir-local.md`](docs/como-subir-local.md)
-§0.1.
+**Para testar, comece por [`docs/como-testar.md`](docs/como-testar.md):** os três jeitos (pelo link
+de quem já subiu, na sua máquina e aberto para o celular pela Cloudflare), passo a passo no
+Windows com Docker Desktop, e o roteiro do cadastro da loja ao caixa fechado.
+
+**Requisitos:** JDK 21, Docker com Docker Compose, Node 22 ou mais novo, e uns 10 GB livres em
+disco. O resumo:
 
 ```bash
 cp .env.example .env                       # preencha as senhas; o .env nunca vai para o Git
-cd backend && ./gradlew bootJar && cd ..   # os jars que as imagens usam
-docker compose --profile marco2 --profile pedidos up -d --build --wait
+mkdir secrets                              # a chave do login, com os dois comandos openssl do .env.example
+cd backend && ./gradlew bootJar && cd ..   # os jars que as imagens usam (no Windows: .\gradlew.bat)
+docker compose --profile marco2 --profile pedidos build
+docker compose --profile marco2 --profile pedidos up -d --wait
 cd frontend && npm ci && npm run dev       # http://localhost:5173
 ```
+
+Se a máquina tiver pouca memória, suba em grupos, como mostra o `docs/como-testar.md`.
 
 | Perfil do Compose | Sobe |
 |---|---|
@@ -150,14 +157,16 @@ cd frontend && npm run typecheck && npm run lint && npm test
 npm ci && npm run contracts                                # na raiz: os contratos
 ```
 
-**Hospedagem de teste sem custo:** [`docs/operacao/hospedagem-de-teste.md`](docs/operacao/hospedagem-de-teste.md).
+**Hospedagem de teste sem custo, para abrir no celular:** [`docs/operacao/hospedagem-de-teste.md`](docs/operacao/hospedagem-de-teste.md)
+— dois túneis da Cloudflare, usados nas evidências de 07 e 08/11/2026. **Não há ambiente de
+produção.**
 
 ---
 
 ## Marcos
 
 A numeração é a do [`docs/PRD.md`](docs/PRD.md) §10, medida pela pergunta *"o comerciante
-consegue?"*. Situação em **02/11/2026**. 🟡 = funciona no recorte da entrega de 15/11 (ADR-077), mas
+consegue?"*. Situação em **08/11/2026**. 🟡 = funciona no recorte da entrega de 15/11 (ADR-077), mas
 não é o marco inteiro.
 
 | Marco | O comerciante consegue | Situação |
@@ -183,11 +192,13 @@ entregador próprio, registra como cada pedido foi pago e fecha o caixa com extr
 **Para a entrega de 15/11** — a lista com esforço e responsáveis está em
 [`docs/entrega-15-11/README.md`](docs/entrega-15-11/README.md):
 
-- os testes do Gradle verdes numa máquina do time, os contratos regenerados, e o contrato e os
-  testes de integração do `order`;
-- a passagem completa no navegador, o ensaio da apresentação e um vídeo de reserva;
-- a hospedagem de teste e a resposta automática do WhatsApp Business com o link;
+- o contrato OpenAPI e os testes de integração do `order`;
+- o ensaio da apresentação;
 - a aprovação da ADR-077 pelo grupo.
+
+Já feitos: a passagem completa no navegador e no celular, o vídeo da entrega, a hospedagem de
+teste pela Cloudflare, a resposta automática do WhatsApp Business com o link e os contratos dos
+outros serviços regenerados.
 
 **Para vender, depois:** o código de verificação por SMS ou WhatsApp (serve ao cadastro e ao
 "Esqueci minha senha"), grupos de
@@ -205,7 +216,8 @@ assumidas estão em [`docs/dividas.md`](docs/dividas.md).
 | [`docs/entrega-15-11/`](docs/entrega-15-11/README.md) | A entrega de 15/11: o fluxo, as etapas, as rotas do pedido, como testar e o que falta |
 | [`docs/dominio/`](docs/dominio/README.md) | As regras de cada serviço: agregados, invariantes, estados |
 | [`docs/architecture/decisions/`](docs/architecture/decisions/README.md) | As decisões de arquitetura (ADRs), com alternativas e consequências |
-| [`docs/como-subir-local.md`](docs/como-subir-local.md) | Como subir tudo no seu computador, e o que fazer quando não sobe |
+| [`docs/como-testar.md`](docs/como-testar.md) | **Comece aqui para testar:** pelo link, na sua máquina ou pela Cloudflare, e o roteiro do teste |
+| [`docs/como-subir-local.md`](docs/como-subir-local.md) | A referência completa da subida: tempos medidos, rodar um serviço pelo IDE, e cada problema já visto |
 | [`docs/operacao/`](docs/operacao/README.md) | Procedimentos: hospedagem de teste, exclusão de dados, fila morta |
 | [`frontend/README.md`](frontend/README.md) | As telas, as rotas do front e o que cada uma chama |
 | [`CLAUDE.md`](CLAUDE.md) | Invariantes e convenções — leitura obrigatória antes do primeiro commit |
@@ -238,7 +250,7 @@ assumidas estão em [`docs/dividas.md`](docs/dividas.md).
 ## Como colaborar
 
 1. **Peça acesso** a quem administra o repositório (GitHub → *Settings → Collaborators*).
-2. **Clone e suba local** pelo [`docs/como-subir-local.md`](docs/como-subir-local.md). Leia o
+2. **Clone e suba local** pelo [`docs/como-testar.md`](docs/como-testar.md). Leia o
    [`CLAUDE.md`](CLAUDE.md) antes do primeiro commit.
 3. **Uma branch por tarefa**, a partir da `main` atualizada:
    `git switch main; git pull; git switch -c <tipo>/<assunto>` — por exemplo

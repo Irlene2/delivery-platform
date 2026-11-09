@@ -1,5 +1,10 @@
 # Como subir o ambiente local
 
+> **Quer só testar?** Comece pelo [`como-testar.md`](como-testar.md): é o passo a passo curto,
+> no Windows com Docker Desktop, mais a abertura para o celular pela Cloudflare e o roteiro do
+> teste. Este documento é a referência longa — os tempos medidos, o caminho de rodar um serviço
+> pelo IDE, a máquina com o Docker dentro do WSL e cada problema já visto.
+
 Este documento existe porque, em 01/10/2026, a receita de subir a pilha vivia
 numa conversa e, por isso, não existia. Oito das nove imagens de serviço nunca
 tinham sido construídas, e o comando que a gente achava que subia o ambiente
@@ -15,7 +20,9 @@ vez em 10/10/2026**, em quatro grupos e com limite de memória por contêiner
 
 ## 0. Onde rodar cada coisa
 
-São dois lados, e cada comando tem o seu:
+**Com Docker Desktop, que é o caso da maior parte do time, vá direto para a seção 0.1:** tudo
+roda no PowerShell. O resto desta seção é a máquina com o motor Docker dentro do Ubuntu do WSL,
+sem Docker Desktop. Nela, são dois lados, e cada comando tem o seu:
 
 | Lado | O que roda ali | Por quê |
 | --- | --- | --- |
@@ -561,11 +568,16 @@ credenciais estão no `.env`.
 
 ## 6. O que este documento não cobre
 
-**Não há dado de partida.** Depois de subir, o banco está vazio: para ver um
-produto na tela é preciso usuário, estabelecimento, categoria e produto. As rotas de
-escrita que existem — o `merchant` cria a loja desde 10/10/2026 (`31a5958`), e o
-`catalog` cria seção e produto desde 11/10/2026 (`cbd633c`, `40aa4ce`) — não bastam
-para montar uma loja que abra e um produto com opções: o que falta está no fim desta seção.
+**Atualizado em 08/11/2026.** Com `DELIVERY_SEMEADURA=false`, o banco começa vazio — e
+hoje isso já não impede o teste: o painel cadastra a loja, as seções, os produtos com foto, o
+horário e a equipe, como mostra o roteiro do [`como-testar.md`](como-testar.md). O que só a
+semeadura grava são os **grupos de opções** (o "Aki Classic"); criá-los pelo painel é a melhoria
+9 de [`entrega-15-11/README.md`](entrega-15-11/README.md). O histórico abaixo fica como registro
+de por que a semeadura é como é.
+
+**Até 01/11/2026 não havia dado de partida.** As rotas de escrita de então — o `merchant` criava
+a loja desde 10/10/2026 (`31a5958`), e o `catalog` seção e produto desde 11/10/2026
+(`cbd633c`, `40aa4ce`) — não bastavam para montar uma loja que abrisse e um produto com opções.
 
 Um `seed` que escreva direto nas tabelas foi considerado e recusado: ele burlaria
 as invariantes que só existem no agregado, e passaria a ser um segundo lugar onde
