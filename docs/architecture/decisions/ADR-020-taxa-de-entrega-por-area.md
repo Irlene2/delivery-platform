@@ -1,5 +1,7 @@
 # ADR-020 — Taxa de entrega por área nomeada
 
+> **Situação em 09/11/2026 — futura (melhoria).** A entrega usa **uma taxa de entrega fixa por loja** (ADR-077). A taxa por bairro desta ADR — o modelo `AreaDeEntrega` já existe no `merchant` — é melhoria para quando a loja pedir.
+
 **Status:** Aceita — 18/08/2026
 **Substitui:** ADR-019 (cotação por distância geodésica)
 **Relacionada:** ADR-009 (valores do pedido), premissa P5 do PRD

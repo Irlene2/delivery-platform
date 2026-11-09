@@ -28,12 +28,12 @@ rodadas.
 | **P5** | Taxa de entrega por área nomeada | Mapa com raio, arrastar o pino, pedir permissão de localização, acompanhar o entregador em tempo real |
 | **P6** | Disponibilidade qualitativa | Quantidade em estoque, "restam 3 unidades", contagem de inventário. Há quatro estados: disponível, acabando, acabou hoje, acabou sem data |
 
-> **Emenda de 31/10/2026 — a P4 fica suspensa até 15/11 (ADR-077, proposta).** Nesta entrega o
+> **Emenda de 31/10/2026, confirmada em 09/11/2026 (ADR-077, aceita).** Nesta entrega o
 > pedido nasce no **cardápio público** que a conversa entrega por link, e por isso existe
 > carrinho e checkout em `/loja/:id`. O que continua valendo: o carrinho é **estado da tela**
 > (`sessionStorage`), o total exibido é só exibição, e o que vale é o total que o `order`
 > calcula com o preço lido do `catalog`. O cliente não tem conta; ele acompanha o pedido pelo
-> código em `/pedido/:codigo`. Passada a entrega, a ADR-075 volta e a P4 com ela.
+> código em `/pedido/:codigo`. O pedido começa na conversa do WhatsApp e é montado no link; montá-lo dentro da conversa (ADR-075) é melhoria.
 >
 > **A P2 continua valendo, e a tela do entregador foi desenhada a partir dela:** o entregador é
 > alguém da equipe da loja, com a permissão `VER_ENTREGA`, e vê **só as entregas que a loja

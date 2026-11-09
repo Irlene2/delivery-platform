@@ -1,5 +1,7 @@
 # ADR-022 — A remuneração do entregador pertence ao vínculo, não ao pedido
 
+> **Situação em 09/11/2026 — superada.** A regra que vale é a da ADR-077 (31/10/2026): o entregador recebe por entrega, e o valor é a taxa de entrega daquele pedido. As outras modalidades desta ADR (diária, comissão) não estão nos planos.
+
 **Status:** Aceita — 21/08/2026
 **Relacionada:** ADR-009 (valores do pedido), ADR-020 (taxa por área)
 **Premissas do PRD que sustentam esta decisão:** P1, P2

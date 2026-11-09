@@ -1,9 +1,9 @@
 # ADR-077 — O recorte da entrega de 15/11: o pedido nasce pelo link do cardápio
 
-- **Status:** proposta
+- **Status:** aceita — 09/11/2026, com as decisões de 26/10, 31/10, 01/11 e 02/11/2026
 - **Data:** 26/10/2026
 - **Rodada:** entrega de 15/11
-- **Relacionada:** ADR-075 (o pedido nasce no canal — adiada por esta, não revogada), ADR-006
+- **Relacionada:** ADR-075 (o pedido montado dentro da conversa — vira melhoria futura), ADR-006
   (o rascunho pertence à conversa), ADR-009 (modelo de valores do pedido), ADR-021 (catálogo de
   serviços), ADR-023 (o pedido registra o pagamento), PRD §5 (P4) e §10
 

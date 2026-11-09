@@ -1,5 +1,7 @@
 # ADR-075 — O pedido nasce no canal antes do painel
 
+> **Situação em 09/11/2026 — futura (melhoria).** O rumo do produto mudou: o pedido nasce **a partir da conversa** que o cliente começa no WhatsApp, e a resposta automática do WhatsApp Business da loja leva ao cardápio (ADR-077). Montar o pedido dentro da conversa — com menu ou com IA — passa a ser melhoria, e o "7a antes do marco 3" deixa de valer.
+
 - **Status:** aceita
 - **Data:** 18/10/2026
 - **Rodada:** P-1

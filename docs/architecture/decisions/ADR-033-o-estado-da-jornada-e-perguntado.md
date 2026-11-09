@@ -1,5 +1,7 @@
 # ADR-033 — O estado da jornada é perguntado, com cache curto e falha fechada
 
+> **Situação em 09/11/2026 — futura, com o `settlement-service`.** O despacho de 15/11 não exige jornada aberta: o entregador da equipe recebe o pedido direto. Esta decisão volta quando a jornada do entregador existir.
+
 **Status:** Aceita — 25/08/2026
 **Corrige:** duas guardas inexequíveis — `pedido.md` T16 e `entrega.md` §5
 **Relacionada:** ADR-011 (autorização contextual — este é o mesmo padrão), ADR-022, ADR-032 (a irmã assimétrica)

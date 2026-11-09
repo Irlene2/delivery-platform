@@ -182,22 +182,21 @@ produção.**
 ## Marcos
 
 A numeração é a do [`docs/PRD.md`](docs/PRD.md) §10, medida pela pergunta *"o comerciante
-consegue?"*. Situação em **08/11/2026**. 🟡 = funciona no recorte da entrega de 15/11 (ADR-077), mas
-não é o marco inteiro.
+consegue?"*. Situação em **08/11/2026**. 🔜 = melhoria planejada, que não é pendência do produto.
 
 | Marco | O comerciante consegue | Situação |
 |---|---|---|
 | 0 | — (esqueleto: build, módulos, Compose, CI) | ✅ |
 | 1 | Cadastrar a loja e o time, com poderes diferentes | ✅ loja do zero, convite, permissões, sessão de 12 horas. **Falta:** enviar o código de verificação por SMS ou WhatsApp |
 | 2 | Publicar o cardápio e marcar o que acabou | ✅ cardápio com foto, descrição e opções, correção de produto, estoque do dia com busca. **Falta:** criar grupos de opções pelo painel |
-| 3 | Receber e acompanhar pedidos numa tela | 🟡 o pedido vem do link do cardápio, o painel leva por todos os estados, o cliente acompanha, a loja fechada não recebe, o sino avisa. **Falta:** o pedido nascer dentro da conversa (ADR-075) |
+| 3 | Receber e acompanhar pedidos numa tela | ✅ o pedido vem do link do cardápio que a conversa do WhatsApp entrega, o painel leva por todos os estados, o cliente acompanha, a loja fechada não recebe, o sino avisa. *Melhoria:* montar o pedido dentro da conversa, com IA |
 | 4 | Registrar como cada pedido foi pago de verdade | ✅ dinheiro com troco, cartão e Pix, registrados no pedido; o Pix informado pelo entregador a loja confere no extrato |
 | 5 | Despachar e saber quem está com cada pedido | ✅ entregador da equipe com conta, despacho e "minhas entregas"; repasse por entrega, igual à taxa de entrega |
 | **6** | **Fechar o dia com extrato por entregador** | ✅ caixa apurado e gravado, conferência do dinheiro, acerto por entregador, histórico, vendas por período e CSV |
-| 7 | Receber pedido pelo WhatsApp | 🟡 a resposta automática do WhatsApp Business manda o link; o aviso ao cliente é a mensagem pronta (`wa.me`). **Falta:** o aviso sair automático |
-| 9 | Atender sozinho a maior parte dos pedidos | ⏳ futuro: atendimento com IA no WhatsApp |
-| 10 | Operar com contagem de estoque | ⏳ planejado: o produto que pode acabar ganha quantidade, que baixa a cada pedido |
-| 11 | Mostrar a entrega no mapa | ⏳ futuro. Hoje o cliente acompanha pelo status |
+| 7 | Receber pedido pelo WhatsApp | ✅ o cliente chama a loja, a resposta automática do WhatsApp Business (configurada no celular da loja) manda o link, e a loja avisa o cliente a cada etapa com a mensagem pronta. *Melhoria:* o aviso sair automático |
+| 9 | Atender sozinho a maior parte dos pedidos | 🔜 melhoria: atendimento com IA no WhatsApp |
+| 10 | Operar com contagem de estoque | 🔜 melhoria, para minimercado e hortifruti: o produto que pode acabar ganha quantidade. Para quem produz sob pedido, o "tem / acabou" do marco 2 basta |
+| 11 | Mostrar a entrega no mapa | 🔜 melhoria. Hoje o cliente acompanha pelo status e pelo aviso no WhatsApp |
 
 Pagamento e nota fiscal acontecem na loja, e por isso não há marco 8 (PRD §7). **Ao fim do marco 6
 existe produto completo:** a loja cadastra equipe e cardápio, recebe e prepara pedidos, despacha com
@@ -209,10 +208,9 @@ entregador próprio, registra como cada pedido foi pago e fecha o caixa com extr
 [`docs/entrega-15-11/README.md`](docs/entrega-15-11/README.md):
 
 - o contrato OpenAPI e os testes de integração do `order`;
-- o ensaio da apresentação;
-- a aprovação da ADR-077 pelo grupo.
+- o ensaio da apresentação.
 
-Já feitos: a passagem completa no navegador e no celular, o vídeo da entrega, a hospedagem de
+Já feitos: a ADR-077 aceita, a passagem completa no navegador e no celular, o vídeo da entrega, a hospedagem de
 teste pela Cloudflare, a resposta automática do WhatsApp Business com o link e os contratos dos
 outros serviços regenerados.
 

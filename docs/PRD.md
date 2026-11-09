@@ -105,6 +105,12 @@ Estas premissas determinam o desenho. Se alguma deixar de valer, o escopo precis
 | P5 | A taxa de entrega é por **área nomeada**, não por distância | Volta a ser necessário cálculo de rota e geoprocessamento |
 | P6 | A maioria dos produtos opera em **disponibilidade qualitativa**, não em saldo contado | Controle quantitativo volta ao caminho principal |
 
+**Emenda de 09/11/2026 (ADR-077, aceita).** A **P4** vale assim: o pedido **começa na conversa**
+que o cliente abre no WhatsApp da loja, e a resposta automática do WhatsApp Business — que a
+própria loja configura no celular dela — entrega o link do cardápio, onde o pedido é montado.
+Montar o pedido dentro da conversa, com menu ou com IA, é melhoria. A **P5** fica para depois:
+hoje a taxa é fixa por loja, e a taxa por bairro é melhoria (ADR-020).
+
 ---
 
 ## 6. Escopo funcional
@@ -371,20 +377,20 @@ Cada marco entrega valor operável, não uma camada técnica.
 |---|---|---|
 | **1** | Conta, estabelecimento, equipe e permissões | Cadastrar a loja e o time, com poderes diferentes |
 | **2** | Cardápio com opções e disponibilidade qualitativa | Publicar o cardápio e marcar o que acabou |
-| **3** | Painel de pedidos e ciclo de preparo | Receber e acompanhar pedidos numa tela |
+| **3** | Painel de pedidos e ciclo de preparo, com o pedido vindo do link do cardápio | Receber e acompanhar pedidos numa tela |
 | **4** | Pagamento presencial, troco e Pix conferido pela loja | Registrar como cada pedido foi pago de verdade |
 | **5** | Entregadores, vínculo, repasse por entrega e despacho | Despachar e saber quem está com cada pedido |
 | **6** | **Fechamento de expediente** | Fechar o dia com extrato por entregador |
-| **7** | Canal WhatsApp determinístico — **o 7a vem antes do marco 3** (ADR-075) | Receber pedido pelo WhatsApp com menu numerado |
-| **9** | Atendimento assistido por IA no WhatsApp | Atender sozinho a maior parte dos pedidos |
-| **10** | Controle quantitativo e substituição de item | Operar minimercado com contagem de estoque |
-| **11** | Rastreamento e telemetria — **condicionado pelo §7** | Mostrar a entrega no mapa |
+| **7** | Canal WhatsApp: a resposta automática do WhatsApp Business leva ao cardápio, e a loja avisa o cliente com a mensagem pronta | Receber pedido pelo WhatsApp |
+| **9** | *Melhoria:* atendimento assistido por IA no WhatsApp | Atender sozinho a maior parte dos pedidos |
+| **10** | *Melhoria, para um segmento novo:* controle quantitativo e substituição de item | Operar minimercado com contagem de estoque |
+| **11** | *Melhoria:* rastreamento e telemetria — **condicionado pelo §7** | Mostrar a entrega no mapa |
 
 Não há marco 8: pagamento e nota fiscal acontecem na loja, e o aplicativo registra (§7, E5, E10).
 
-**A ordem não é a dos números.** O marco 7 se parte em **7a** — o menu numerado de ponta a ponta,
-até o pedido confirmado — e **7b**, o resto. O 7a é executado **antes do marco 3**, porque é ele
-que faz um pedido nascer (ADR-075). Os números ficam como estão.
+**Situação em 09/11/2026: os marcos 1 a 7 estão entregues.** O 9, o 10 e o 11 são melhorias, e
+nenhum é pendência do produto. A divisão do marco 7 em 7a e 7b, com o 7a antes do marco 3
+(ADR-075), foi substituída pela ADR-077: o pedido começa na conversa e é montado no link.
 
 ### 10.1 Ponto de parada com produto vendável
 
@@ -392,12 +398,12 @@ que faz um pedido nascer (ADR-075). Os números ficam como estão.
 
 Os marcos 7 a 9 ampliam o alcance — trazem o pedido para dentro do canal onde ele já nasce. Os marcos 10 e 11 abrem segmentos novos.
 
-**Emenda de 18/10/2026.** Com a ADR-075, o 7a vem antes do marco 3, e o canal deixa de ser
+**Emenda de 18/10/2026 (substituída pela ADR-077 em 09/11/2026).** Com a ADR-075, o 7a vem antes do marco 3, e o canal deixa de ser
 ampliação: ele é a entrada de pedido do produto, como a P4 do §5 já dizia. *"Ao fim do marco 6
 existe produto completo"* continua verdadeiro — e passa a incluir o 7a e a H4.5, o lançamento
 manual. *"Os marcos 7 a 9 ampliam o alcance"* vale para o 7b, o 8 e o 9.
 
-**Decisões de produto de 31/10 a 02/11/2026** (com a ADR-077, para o grupo aprovar):
+**Decisões de produto de 31/10 a 02/11/2026** (aceitas com a ADR-077 em 09/11/2026):
 
 - **Marco 4:** o pagamento é presencial — dinheiro, cartão na maquininha da loja ou Pix na conta
   da loja — e fica registrado no pedido. O entregador pode informar Pix; a loja confere no extrato.
@@ -407,9 +413,10 @@ manual. *"Os marcos 7 a 9 ampliam o alcance"* vale para o 7b, o 8 e o 9.
 - **Marco 6:** o caixa do dia é apurado, conferido e gravado, com histórico e as vendas de um
   período.
 - **Marco 9:** atendimento com inteligência artificial no WhatsApp, como melhoria futura.
-- **Marco 10:** ao cadastrar o produto, a loja diz se ele pode acabar e, se pode, a quantidade
-  em estoque. Convive com a P6: o produto sem quantidade continua na disponibilidade
-  qualitativa.
+- **Marco 10 (melhoria, para minimercado e hortifruti):** ao cadastrar o produto, a loja diz se
+  ele pode acabar e, se pode, a quantidade em estoque. Convive com a P6: o produto sem quantidade
+  continua na disponibilidade qualitativa. Para a loja que produz sob pedido — pizzaria,
+  hamburgueria, marmitaria —, o "tem / acabou" do marco 2 basta.
 - **Marco 11:** até lá, o cliente acompanha pelo status — a cada mudança, o aviso pelo WhatsApp
   e o link do pedido. A melhoria seguinte é o aviso sair automático, antes de qualquer mapa.
 

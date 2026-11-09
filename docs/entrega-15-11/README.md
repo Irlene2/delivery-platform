@@ -1,7 +1,7 @@
 # Entrega de 15/11/2026 — o recorte, etapa por etapa
 
 **A decisão é a [ADR-077](../architecture/decisions/ADR-077-o-recorte-da-entrega-de-15-11.md)
-(proposta).** Este arquivo é o índice: o fluxo que a demonstração mostra, o que cada serviço
+(aceita em 09/11/2026).** Este arquivo é o índice: o fluxo que a demonstração mostra, o que cada serviço
 faz nele, o estado de cada etapa e como testar. As rotas e regras do pedido estão em
 [`pedido.md`](pedido.md); os testes pela API, em [`testes-pedido.http`](testes-pedido.http).
 
@@ -58,7 +58,7 @@ pagamento registrado são campos do pedido. O pagamento é presencial e o produt
 | 4d | Os ajustes da passagem de 02/11/2026: o sino de notificações, o Pix informado pelo entregador e conferido pela loja, a busca e os filtros do estoque, as vendas por período no fechamento, o menu da loja em "Minhas lojas", a conta nova levada ao "Cadastrar minha loja" e as fotos no painel | ✅ testes de unidade e de tela; espera os testes do Gradle e a passagem humana |
 | 6 | Testes que faltam (contrato e integração do `order`), passagem completa no navegador, ensaio da demonstração e vídeo de reserva | 🟡 passagem completa no navegador e no celular, pela Cloudflare, e o vídeo feitos em 08/11/2026; faltam o contrato e a integração do `order` e o ensaio |
 
-Pendente fora das etapas: a aprovação da ADR-077 pelo grupo. O que foi assumido como dívida
+A ADR-077 foi aceita em 09/11/2026. O que foi assumido como dívida
 está em [`docs/dividas.md`](../dividas.md), seção *"As da entrega de 15/11"*.
 
 ## Como subir e testar
@@ -106,7 +106,7 @@ colaborar"*).
 | ~~5~~ | ~~Hospedagem de teste pelo túnel da Cloudflare~~ | **Feita em 07/11/2026** | — | |
 | ~~6~~ | ~~Resposta automática do WhatsApp Business com o link do cardápio~~ | **Feita em 08/11/2026** | — | |
 | 7 | Ensaio da apresentação | O roteiro e o vídeo de reserva estão prontos (08/11/2026); falta ensaiar com o tempo | P | |
-| 8 | Ler e aprovar a ADR-077 (com as decisões de 01/11 e 02/11) em grupo | É a decisão do recorte, ainda *proposta* | P | |
+| ~~8~~ | ~~Aprovar a ADR-077~~ | **Aceita em 09/11/2026** | — | |
 
 ### Melhorias que podem entrar, se sobrar tempo — validem o esforço
 

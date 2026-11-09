@@ -1,6 +1,6 @@
 # O pedido da entrega de 15/11 — rotas, campos e estados
 
-**Depende da ADR-077** (proposta). Este documento é o desenho que a etapa 3 implementa, e o
+**Depende da ADR-077** (aceita em 09/11/2026). Este documento é o desenho que a etapa 3 implementa, e o
 que o código cumpre hoje. O índice das etapas está em [`README.md`](README.md). O
 OpenAPI de `contracts/openapi/` **não é escrito à mão** (ADR-039): ele sai do código, e este
 texto é o que o código precisa cumprir.

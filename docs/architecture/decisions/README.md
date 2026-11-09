@@ -15,34 +15,34 @@
 | 003 | ~~Mensageria híbrida RabbitMQ + MQTT~~ | ⛔ sem objeto — MQTT saiu do MVP (020, 021) |
 | 004 | Um pedido pertence a exatamente um estabelecimento | ✅ aceita |
 | 005 | ~~PostGIS e Redis GEO~~ | ⛔ sem objeto — geoprocessamento saiu do MVP (020) |
-| 006 | O rascunho pertence à conversa; não existe carrinho | ✅ aceita |
+| 006 | O rascunho pertence à conversa; não existe carrinho | 🔜 futura — vale para o pedido montado na conversa, com IA (melhoria) |
 | 007 | Mongock para versionamento de esquema no MongoDB | ✅ aceita · **emendada** (27/09/2026: `@EnableMongock`, DDL em `@BeforeExecution`, convenção de id) |
 | 008 | MongoDB como replica set de nó único | ✅ aceita · **emendada** (27/09/2026: `withReplicaSet()` na Testcontainers 2; `spring.mongodb.uri` no Boot 4) |
 | 009 | Modelo de valores do pedido | ✅ aceita · **emendada pela v1.1** · **emendada** (27/09/2026: `Money` em documento é texto) |
-| 010 | Saga do pedido: pivô em `PRONTO`, pagamento fora da transação | ✅ aceita · **reescrita pela v1.1** |
+| 010 | ~~Saga do pedido: pivô em `PRONTO`, pagamento fora da transação~~ | 🗄️ superada — o pedido mora num serviço só (077) |
 | 011 | Autorização comercial: cache em processo, invalidação por evento, fail-closed | ✅ aceita · **emendada** (26/09/2026: a porta não recebe `usuarioId` — ADR-045; 28/09/2026: primeiro consumidor, sem cache até a G-B4; 29/09/2026: `topic` com fila exclusiva, e o cache existe; 17/10/2026: `CONFIGURAR_LOJA`, e por que ela é ampla; 19/10/2026: a permissão não alcança quem já era membro) |
 | 012 | Roteamento do gateway por recurso, não por serviço | ✅ aceita · **emendada** (24/09/2026: limite de taxa e `correlationId` fora do marco 1; 30/09/2026: `/api/v1/me` compartilhado, a ordem decide; 16/10/2026: a tabela não acompanhou o gateway; 16/10/2026 (2): a tabela deixa de ser a lista, e o teste deriva do gateway) |
 | 013 | Retenção, anonimização e exclusão de dados pessoais | ✅ aceita |
 | 014 | Não adotar H2; Testcontainers como fonte de verdade | ✅ aceita · **emendada pela v1.1** · **emendada** (27/09/2026: todo contêiner prova que é o usado — `ConteinerDeVerdadeIT`) |
 | 015 | Emitir JWT com `NimbusJwtEncoder` | ✅ aceita |
-| 016 | Front-end mínimo antes da PWA completa | ✅ aceita · **emendada** (29/09/2026: o 15.A começa no marco 2) · **emendada** (30/09/2026: o TanStack Query sai do 15.A) |
+| 016 | Front-end mínimo antes da PWA completa | ✔️ cumprida — o front existe; a PWA não está nos planos |
 | 017 | MongoDB como decisão de aprendizado | ✅ aceita |
 | 018 | Snapshot de opções no item e cotação pelo catálogo | ✅ aceita |
 | 019 | `DeliveryQuotePort`: cotação por distância geodésica | ⛔ **revogada** — ver 020 |
-| 020 | Taxa de entrega por área nomeada (bairro / faixa de CEP) | ✅ aceita |
+| 020 | Taxa de entrega por área nomeada (bairro / faixa de CEP) | 🔜 futura — hoje a taxa é fixa por loja (077) |
 | 021 | Catálogo de serviços do produto — sete serviços e o gateway | ✅ aceita · **revisada** (02/11/2026: a proposta atual) · **emendada** (24/09/2026: `merchant` sem Redis; 26/09/2026: `order` e `delivery` sem Redis; 27/09/2026: `catalog` sem o starter, motivo mantido) |
-| 022 | A remuneração do entregador pertence ao vínculo | ✅ aceita |
+| 022 | ~~A remuneração do entregador pertence ao vínculo~~ | 🗄️ superada — o entregador recebe a taxa de cada entrega (077) |
 | 023 | O pedido registra o pagamento; o produto não cobra | ✅ aceita · **revisada** (02/11/2026: pagamento presencial; o Pix informado pelo entregador fica a conferir pela loja) |
-| 024 | Desconto de retirada, não preço por modalidade | ✅ aceita · **emendada** (07/10/2026: o `cotar` é marco 3, e o prazo desta decisão vai com ele) |
+| 024 | Desconto de retirada, não preço por modalidade | 🔜 futura — modelado na loja, o pedido ainda não aplica |
 | 025 | Fuso horário do estabelecimento e o dia operacional | ✅ aceita · **emendada** (26/09/2026: um evento de abertura por dia operacional — ADR-046) |
 | 026 | Fila morta, retentativa e reprocessamento | ✅ aceita · **emendada** (29/09/2026: consumidor de invalidação não tem retentativa nem fila morta) · **emendada** (10/10/2026: recusa definitiva vai à fila morta na primeira entrega) |
 | 027 | O que conta como mudança compatível num evento | ✅ aceita · **emendada** (17/10/2026: a exceção do §2, medida no primeiro valor novo num enum publicado) |
-| 028 | Pedido mínimo por modalidade, sobre o subtotal dos itens | ✅ aceita |
+| 028 | Pedido mínimo por modalidade, sobre o subtotal dos itens | 🔜 futura — modelado na loja, o pedido ainda não confere |
 | 029 | Recuperação do administrador único | ✅ aceita |
 | 030 | Devolução não é estorno | ✅ aceita · **revisada** (02/11/2026: toda devolução é fora do sistema) |
 | 031 | Nome de evento é único no repositório | ✅ aceita |
-| 032 | A guarda da conferência pergunta, não escuta | ✅ aceita |
-| 033 | O estado da jornada é perguntado | ✅ aceita |
+| 032 | A guarda da conferência pergunta, não escuta | 🔜 futura — com a jornada do entregador (`settlement`) |
+| 033 | O estado da jornada é perguntado | 🔜 futura — com a jornada do entregador (`settlement`) |
 | 034 | Resposta que vira snapshot nunca é cacheada | ✅ aceita |
 | 035 | Domínio em português, o resto em inglês | ✅ aceita |
 | 036 | O telefone é o identificador de login | ✅ aceita |
@@ -83,12 +83,23 @@
 | 072 | A seção que o comando colhe, e o item que não era gatilho | ✅ aceita · **emendada** (16/10/2026: "condição nossa" tem duas espécies) |
 | 073 | O horário ganha rota, sob uma permissão que não existia | ✅ aceita · **emendada** (17/10/2026: a irmã de leitura) |
 | 074 | A tela do horário, e a tela que não valida o que o domínio decide | ✅ aceita · **emendada** (19/10/2026: marcar o que acabou não espera a varredura) |
-| 075 | O pedido nasce no canal, e o 7a vem antes do marco 3 | ✅ aceita |
+| 075 | O pedido nasce no canal, e o 7a vem antes do marco 3 | 🔜 futura — montar o pedido dentro da conversa é melhoria (077) |
 | 076 | O convite aceita antes de entrar | ✅ aceita |
-| 077 | O recorte da entrega de 15/11: o pedido nasce pelo link do cardápio | 📝 proposta (com as decisões de 26/10 e 31/10/2026 dentro do recorte: taxa fixa, entregador com conta, repasse pela taxa) |
+| 077 | O recorte da entrega de 15/11: o pedido nasce pelo link do cardápio | ✅ **aceita** (09/11/2026) — com as decisões de 26/10, 31/10, 01/11 e 02/11/2026: taxa fixa, entregador com conta, repasse pela taxa, pagamento presencial |
 
-**Setenta e três escritas, duas sem objeto — estas com registro próprio desde
-25/08/2026 —, nenhuma a escrever.**
+**Setenta e seis ADRs (de 001 a 077; o número 062 não foi usado).** Situação em 09/11/2026,
+depois de o produto mudar de rumo — o pedido nasce pelo link do cardápio que a conversa do
+WhatsApp entrega, o pagamento é presencial e o pedido mora num serviço só:
+
+| Sinal | Quer dizer | Quantas |
+|---|---|---|
+| ✅ | vigente: é como o sistema funciona hoje | 63 |
+| ✔️ | cumprida: a decisão era um passo, e o passo foi dado | 1 |
+| 🔜 | futura: vale para uma melhoria planejada, e **não é pendência** da entrega | 7 |
+| 🗄️ ⛔ | superada, revogada ou sem objeto: fica só como registro do desenho de agosto | 5 |
+
+**Nenhuma ADR está proposta ou pendente.** As futuras são o desenho das melhorias listadas no
+README; as superadas não se apagam, porque outras ADRs e o código citam o número delas.
 
 ## Onde mora o quê
 

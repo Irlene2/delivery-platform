@@ -1,5 +1,7 @@
 # ADR-024 — Desconto de retirada, não preço por modalidade
 
+> **Situação em 09/11/2026 — futura (melhoria).** O desconto de retirada está modelado na loja (`merchant`), mas o pedido não o aplica na entrega de 15/11. Entra junto da taxa por bairro (ADR-020), se a loja pedir.
+
 **Status:** Aceita — 23/08/2026 · **emendada em 16/10/2026**: o pedido mínimo existe desde a ADR-028
 **Relacionada:** ADR-009 (modelo de valores), ADR-018 (cotação), ADR-020 (taxa por área), ADR-022 (remuneração do entregador)
 **Premissa do PRD:** "Modalidade — entrega ou retirada no balcão"

@@ -1,5 +1,7 @@
 # ADR-016 — Entregar front-end mínimo antes da PWA completa
 
+> **Situação em 09/11/2026 — cumprida.** O front existe e cobre o painel, o cardápio público e o entregador, com o visual do protótipo `aki_delivery`. A PWA completa (offline, push) não está nos planos.
+
 **Status:** Aceita — 16/08/2026 · **emendada em 29/09/2026**: o 15.A começa no
 marco 2, e não no 3 — pelo motivo que esta ADR já dava · **emendada em
 30/09/2026**: o TanStack Query sai da pilha do 15.A

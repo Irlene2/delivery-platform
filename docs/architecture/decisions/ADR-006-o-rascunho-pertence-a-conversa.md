@@ -1,5 +1,7 @@
 # ADR-006 — O rascunho pertence à conversa; não existe carrinho
 
+> **Situação em 09/11/2026 — futura (melhoria).** Na entrega de 15/11 o pedido nasce pelo link do cardápio, com carrinho (ADR-077). Esta decisão vale para quando o pedido for montado dentro da conversa do WhatsApp, com a IA — uma melhoria, e não pendência.
+
 **Status:** Aceita — 26/08/2026
 **Substitui o assunto reservado como:** "Carrinho no Redis: TTL, durabilidade e ordem do checkout"
 **Relacionada:** ADR-004 (um estabelecimento por pedido), ADR-017 (MongoDB), ADR-018 (snapshot e cotação), ADR-024 (desconto de retirada)

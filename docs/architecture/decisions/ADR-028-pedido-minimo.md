@@ -1,5 +1,7 @@
 # ADR-028 — Pedido mínimo por modalidade, sobre o subtotal dos itens
 
+> **Situação em 09/11/2026 — futura (melhoria).** O pedido mínimo está modelado na loja (`merchant`), mas o pedido não o confere na entrega de 15/11. Entra junto do desconto de retirada (ADR-024).
+
 **Status:** Aceita — 24/08/2026
 **Fecha a consequência assumida da:** ADR-024 (desconto de retirada)
 **Relacionada:** ADR-009 (modelo de valores), ADR-020 (taxa por área)

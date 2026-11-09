@@ -1,5 +1,7 @@
 # ADR-032 — A guarda da conferência pergunta, não escuta
 
+> **Situação em 09/11/2026 — futura, com o `settlement-service`.** A conferência de caixa que roda hoje é a do `order` (`FechamentoDoDia`), que já recusa fechar com pedido em andamento. A guarda desta ADR é para quando existir a jornada do entregador.
+
 **Status:** Aceita — 25/08/2026
 **Corrige:** uma guarda de `docs/dominio/liquidacao.md` §3 que hoje é inexequível
 **Relacionada:** ADR-002 (integração por API ou evento), ADR-010 (saga), ADR-022 (remuneração no vínculo), ADR-031 (matriz de eventos)

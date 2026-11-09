@@ -1,5 +1,7 @@
 # ADR-010 — Saga do pedido: pivô em PRONTO, pagamento fora da transação
 
+> **Situação em 09/11/2026 — superada pelo rumo do produto.** A saga entre `order`, `delivery` e `settlement` não existe: o pedido, o entregador, o pagamento registrado e o caixa do dia moram num serviço só, o `order` (ADR-077). Fica como registro do desenho de agosto.
+
 **Status:** Aceita — 16/08/2026 · **reescrita em 21/08/2026** pela arquitetura v1.1
 **Substitui:** `ADR-010-saga-com-estoque-opcional.md` (mesmo número, título anterior)
 **Relacionada:** ADR-009 (valores e liquidação), ADR-018 (`estoqueControladoSnapshot`), ADR-022 (remuneração)
