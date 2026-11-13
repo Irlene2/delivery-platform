@@ -173,6 +173,11 @@ class MarcarDisponibilidadeServiceTest {
                     public List<UUID> idsParaReativar(UUID estabelecimentoId, LocalDate expediente, int limite) {
                         throw new UnsupportedOperationException("não é deste caso de uso");
                     }
+
+                    @Override
+                    public void excluir(UUID id) {
+                        throw new UnsupportedOperationException("não é deste caso de uso");
+                    }
                 },
                 Clock.fixed(AGORA, ZoneOffset.UTC));
 
@@ -334,6 +339,11 @@ class MarcarDisponibilidadeServiceTest {
 
             @Override
             public List<UUID> idsParaReativar(UUID estabelecimentoId, LocalDate expediente, int limite) {
+                throw new UnsupportedOperationException("não é deste caso de uso");
+            }
+
+            @Override
+            public void excluir(UUID id) {
                 throw new UnsupportedOperationException("não é deste caso de uso");
             }
         };
