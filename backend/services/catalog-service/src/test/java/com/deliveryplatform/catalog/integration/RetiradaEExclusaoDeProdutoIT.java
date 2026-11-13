@@ -1,7 +1,9 @@
 package com.deliveryplatform.catalog.integration;
 
+import com.deliveryplatform.catalog.application.port.out.CategoriaRepositorio;
 import com.deliveryplatform.catalog.application.port.out.ImagemDoProdutoRepositorio;
 import com.deliveryplatform.catalog.application.port.out.ProdutoRepositorio;
+import com.deliveryplatform.catalog.domain.model.Categoria;
 import com.deliveryplatform.catalog.domain.model.EstadoDePublicacao;
 import com.deliveryplatform.catalog.domain.model.ImagemDoProduto;
 import com.deliveryplatform.catalog.domain.model.ModoDeControle;
@@ -60,6 +62,7 @@ class RetiradaEExclusaoDeProdutoIT extends Infraestrutura {
 
     @Autowired ProdutoRepositorio produtos;
     @Autowired ImagemDoProdutoRepositorio imagens;
+    @Autowired CategoriaRepositorio categorias;
     @Autowired MongoTemplate mongo;
 
     private UUID loja;
@@ -123,13 +126,15 @@ class RetiradaEExclusaoDeProdutoIT extends Infraestrutura {
     @Test
     @DisplayName("a correção troca o pode acabar e o selo, e os dois aparecem na leitura")
     void troca_controle_e_selo() {
-        Produto pizza = produtos.salvar(Produto.rascunho(loja, ProdutoDeTeste.CATEGORIA, "Pizza",
+        // a alteração confere que a categoria existe na loja; a do ProdutoDeTeste não está no banco
+        Categoria pizzas = categorias.salvar(Categoria.nova(loja, "Pizzas", 0));
+        Produto pizza = produtos.salvar(Produto.rascunho(loja, pizzas.getId(), "Pizza",
                 Precos.reais("40.00"), ModoDeControle.QUALITATIVO, 0));
 
         cliente().put().uri(caminho(pizza, ""))
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body("{\"categoriaId\":\"" + ProdutoDeTeste.CATEGORIA + "\",\"nome\":\"Pizza\","
+                .body("{\"categoriaId\":\"" + pizzas.getId() + "\",\"nome\":\"Pizza\","
                         + "\"precoBase\":40.00,\"modoDeControle\":\"SEM_CONTROLE\","
                         + "\"selo\":\"Mais pedido\"}")
                 .exchange()
