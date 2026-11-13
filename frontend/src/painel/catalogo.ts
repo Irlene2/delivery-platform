@@ -3,8 +3,10 @@ import {
   criarProduto,
   criarSecao,
   enviarFoto,
+  excluirProduto,
   fraseDaRecusa,
   publicarProduto,
+  retirarProduto,
 } from '../api/cardapio';
 import { chamar, urlDaApi } from '../api/cliente';
 import {
@@ -29,14 +31,13 @@ import type { Permissao } from './tipos';
  *
  * ## O que o servidor sabe hoje
  *
- * Criar seção, criar produto (nasce rascunho), publicar, marcar disponibilidade
- * do produto e da opção. **Não há rota para alterar** nome, seção, descrição ou
- * preço de um produto existente, nem para criar grupos de opções: a tela trava
- * esses campos e diz por quê.
+ * Criar seção, criar produto (nasce rascunho), corrigir o cadastro — seção, nome,
+ * descrição, preço, o "pode acabar" e o selo —, publicar e tirar do cardápio, apagar,
+ * a foto e marcar disponibilidade do produto e da opção. Não há rota para criar grupos
+ * de opções nem para mudar a posição de um produto existente.
  *
  * Ingrediente não tem campo no contrato. Vai no fim da descrição, numa linha
- * `Ingredientes: a, b, c`, e volta separado ao abrir o produto. Foto e selo não
- * existem no servidor: valem só na demonstração.
+ * `Ingredientes: a, b, c`, e volta separado ao abrir o produto.
  */
 
 export type Situacao = 'RASCUNHO' | 'ATIVO' | 'INATIVO';
@@ -113,6 +114,8 @@ export interface FonteDoCatalogo {
   readonly editaTudo: boolean;
   readonly podeCriar: boolean;
   readonly podeAlterar: boolean;
+  /** Tirar do cardápio e apagar (`DESATIVAR_PRODUTO`). */
+  readonly podeDesativar: boolean;
   carregar(): Promise<Catalogo>;
   abrir(item: ItemDoCatalogo): Promise<ItemDoCatalogo>;
   salvar(
@@ -127,6 +130,8 @@ export interface FonteDoCatalogo {
     opcaoId: string,
     estado: EstadoDeDisponibilidade,
   ): Promise<ItemDoCatalogo>;
+  /** Apaga o produto e devolve o catálogo sem ele. */
+  excluir(item: ItemDoCatalogo, catalogo: Catalogo): Promise<Catalogo>;
 }
 
 export const NOVO_TIPO = '__novo__';
@@ -232,7 +237,7 @@ export function fonteDoServidor(
       // A foto enviada pelo painel (caminho da API) ou um link absoluto, como o do
       // cardápio de demonstração da fixture.
       imagem: urlDaApi(produto.imagem),
-      selo: '',
+      selo: produto.selo ?? '',
       grupos: gruposDoContrato(produto),
     };
   }
@@ -241,6 +246,7 @@ export function fonteDoServidor(
     editaTudo: false,
     podeCriar: permissoes.includes('CRIAR_PRODUTO'),
     podeAlterar: permissoes.includes('ALTERAR_PRODUTO'),
+    podeDesativar: permissoes.includes('DESATIVAR_PRODUTO'),
 
     async carregar() {
       const [secoes, pagina] = await Promise.all([
@@ -311,20 +317,40 @@ export function fonteDoServidor(
           token,
         );
         item = doContrato(criado, tipos);
+        // O selo não vai na criação: entra pela correção, logo depois.
+        if (dados.selo !== '') {
+          const rotulado = await alterarProduto(
+            estabelecimentoId,
+            item.id,
+            { categoriaId, nome: dados.nome, descricao, precoBase: dados.preco, selo: dados.selo },
+            token,
+          );
+          item = doContrato(rotulado, tipos);
+        }
         itens = [...itens, item];
       } else {
         const mudou =
           categoriaId !== item.tipoId ||
           dados.nome !== item.nome ||
           dados.preco !== item.preco ||
-          descricao !== juntarDescricao(item.descricao, item.ingredientes);
+          descricao !== juntarDescricao(item.descricao, item.ingredientes) ||
+          dados.controle !== item.controle ||
+          dados.selo !== item.selo;
         if (mudou) {
-          // Correção do cadastro (ADR-077, emenda de 01/11/2026). A recusa aqui é do produto
-          // inteiro: ela sobe, e a tela mostra a frase sem perder o que foi digitado.
+          // Correção do cadastro (ADR-077, emenda de 01/11/2026; o controle e o selo desde
+          // 13/11/2026). A recusa aqui é do produto inteiro: ela sobe, e a tela mostra a frase
+          // sem perder o que foi digitado.
           const alterado = await alterarProduto(
             estabelecimentoId,
             item.id,
-            { categoriaId, nome: dados.nome, descricao, precoBase: dados.preco },
+            {
+              categoriaId,
+              nome: dados.nome,
+              descricao,
+              precoBase: dados.preco,
+              modoDeControle: dados.controle,
+              selo: dados.selo,
+            },
             token,
           );
           item = { ...doContrato(alterado, tipos), grupos: item.grupos };
@@ -347,6 +373,13 @@ export function fonteDoServidor(
             ...atual,
             situacao: publicado.estadoDePublicacao ?? 'ATIVO',
             vendavel: publicado.vendavel === true,
+          };
+        } else if (dados.situacao === 'INATIVO' && atual.situacao === 'ATIVO') {
+          const retirado = await retirarProduto(estabelecimentoId, atual.id, token);
+          atual = {
+            ...atual,
+            situacao: retirado.estadoDePublicacao ?? 'INATIVO',
+            vendavel: retirado.vendavel === true,
           };
         }
         if (atual.controle === 'QUALITATIVO' && dados.disponibilidade !== atual.disponibilidade) {
@@ -396,6 +429,11 @@ export function fonteDoServidor(
               },
         ),
       };
+    },
+
+    async excluir(item, catalogo) {
+      await excluirProduto(estabelecimentoId, item.id, token);
+      return { ...catalogo, itens: catalogo.itens.filter((um) => um.id !== item.id) };
     },
   };
   return fonte;
@@ -474,6 +512,7 @@ export function fonteDaDemonstracao(): FonteDoCatalogo {
     editaTudo: true,
     podeCriar: true,
     podeAlterar: true,
+    podeDesativar: true,
 
     carregar: () => Promise.resolve(atual()),
 
@@ -541,5 +580,12 @@ export function fonteDaDemonstracao(): FonteDoCatalogo {
           ),
         }),
       ),
+
+    excluir(item) {
+      const catalogo = atual();
+      const novo = { ...catalogo, itens: catalogo.itens.filter((um) => um.id !== item.id) };
+      guardar(novo);
+      return Promise.resolve(novo);
+    },
   };
 }

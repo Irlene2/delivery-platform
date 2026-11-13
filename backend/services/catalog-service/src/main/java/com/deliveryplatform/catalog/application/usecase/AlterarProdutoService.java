@@ -56,6 +56,12 @@ public class AlterarProdutoService implements AlterarProduto {
 
         produto.alterarCadastro(alteracao.categoriaId(), alteracao.nome(), alteracao.precoBase(),
                 alteracao.descricao());
+        if (alteracao.modoDeControle() != null) {
+            produto.trocarControle(alteracao.modoDeControle());
+        }
+        if (alteracao.selo() != null) {
+            produto.rotular(alteracao.selo());
+        }
 
         return produtos.salvar(produto);
     }

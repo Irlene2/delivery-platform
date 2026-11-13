@@ -115,6 +115,14 @@ class ErroDoCatalogoTest {
                 .doesNotContain("SEM_CONTROLE", "ESGOTADO", "ACABANDO");
     }
 
+    @Test
+    @DisplayName("SELO_LONGO diz o tamanho máximo")
+    void selo_longo() {
+        Produto pizza = ProdutoDeTeste.margherita();
+        assertThat(detalheDe(() -> pizza.rotular("x".repeat(31)), Motivo.SELO_LONGO))
+                .isEqualTo("o selo tem no máximo 30 letras; use um mais curto");
+    }
+
     // ── A2 e A3 · a frase não traz o código, e traz os dados certos ────────
 
     @Test

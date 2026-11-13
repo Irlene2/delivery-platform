@@ -64,7 +64,7 @@
       "put" : {
         "tags" : [ "produto-controller" ],
         "summary" : "Corrige o nome, o preço, a descrição e a seção do produto",
-        "description" : "Exige ALTERAR_PRODUTO. Os quatro campos vêm inteiros. Num produto publicado, as regras da publicação continuam valendo.",
+        "description" : "Exige ALTERAR_PRODUTO. Os quatro campos vêm inteiros. Num produto publicado, as regras da publicação continuam valendo. O controle e o selo são opcionais: ausentes, ficam como estão.",
         "operationId" : "alterar",
         "parameters" : [ {
           "name" : "estabelecimentoId",
@@ -105,13 +105,53 @@
             }
           },
           "400" : {
-            "description" : "Corpo malformado, preço negativo, preço zero num produto publicado (C1, C2), ou seção que não existe nesta loja"
+            "description" : "Corpo malformado, preço negativo, preço zero num produto publicado (C1, C2), seção que não existe nesta loja, ou selo com mais de 30 letras"
           },
           "401" : {
             "description" : "Sem token, ou token inválido"
           },
           "403" : {
             "description" : "Sem vínculo, sem ALTERAR_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa"
+          },
+          "404" : {
+            "description" : "O produto não existe nesta loja — inexistente ou de outra loja, a mesma resposta (ADR-056)"
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "produto-controller" ],
+        "summary" : "Apaga o produto do cadastro",
+        "description" : "Exige DESATIVAR_PRODUTO. A foto sai junto. Os pedidos já feitos não mudam.",
+        "operationId" : "excluir",
+        "parameters" : [ {
+          "name" : "estabelecimentoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "produtoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "O produto foi apagado"
+          },
+          "400" : {
+            "description" : "Identificador malformado"
+          },
+          "401" : {
+            "description" : "Sem token, ou token inválido"
+          },
+          "403" : {
+            "description" : "Sem vínculo, sem DESATIVAR_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa"
           },
           "404" : {
             "description" : "O produto não existe nesta loja — inexistente ou de outra loja, a mesma resposta (ADR-056)"
@@ -161,6 +201,53 @@
           },
           "403" : {
             "description" : "Sem vínculo, sem ALTERAR_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa"
+          },
+          "404" : {
+            "description" : "O produto não existe nesta loja — inexistente ou de outra loja, a mesma resposta (ADR-056)"
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "produto-controller" ],
+        "summary" : "Tira o produto do cardápio",
+        "description" : "Exige DESATIVAR_PRODUTO. O produto fica INATIVO e volta ao cardápio pela publicação. Idempotente.",
+        "operationId" : "retirar",
+        "parameters" : [ {
+          "name" : "estabelecimentoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "produtoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "O produto, fora do cardápio — também quando já estava",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProdutoResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "O produto é rascunho e nunca apareceu no cardápio; ou identificador malformado"
+          },
+          "401" : {
+            "description" : "Sem token, ou token inválido"
+          },
+          "403" : {
+            "description" : "Sem vínculo, sem DESATIVAR_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa"
           },
           "404" : {
             "description" : "O produto não existe nesta loja — inexistente ou de outra loja, a mesma resposta (ADR-056)"
@@ -658,7 +745,7 @@
     "schemas" : {
       "ProdutoAlteracaoRequest" : {
         "type" : "object",
-        "description" : "O cadastro corrigido: seção, nome, descrição e preço.",
+        "description" : "O cadastro corrigido: seção, nome, descrição e preço; e, se vierem, o controle e o selo.",
         "properties" : {
           "categoriaId" : {
             "type" : "string",
@@ -680,6 +767,16 @@
             "type" : "number",
             "description" : "Em reais, duas casas. Num produto publicado, zero é recusado (C1).",
             "example" : 52.9
+          },
+          "modoDeControle" : {
+            "type" : [ "string", "null" ],
+            "description" : "Opcional (13/11/2026): se o produto pode acabar. Ausente mantém o que está; virar SEM_CONTROLE devolve o produto a DISPONIVEL.",
+            "enum" : [ "SEM_CONTROLE", "QUALITATIVO" ]
+          },
+          "selo" : {
+            "type" : [ "string", "null" ],
+            "description" : "Opcional (13/11/2026): o selo da vitrine, até 30 letras. Ausente mantém o que está; vazio tira o selo.",
+            "example" : "Mais pedido"
           }
         },
         "required" : [ "categoriaId", "nome", "precoBase" ]
@@ -785,6 +882,10 @@
           "imagem" : {
             "type" : [ "string", "null" ],
             "description" : "O caminho público da foto, relativo ao gateway; nulo sem foto."
+          },
+          "selo" : {
+            "type" : [ "string", "null" ],
+            "description" : "O selo da vitrine, como \"Mais pedido\"; nulo sem selo."
           }
         }
       },
@@ -854,6 +955,10 @@
           "imagem" : {
             "type" : [ "string", "null" ],
             "description" : "O caminho público da foto, relativo ao gateway; nulo sem foto."
+          },
+          "selo" : {
+            "type" : [ "string", "null" ],
+            "description" : "O selo da vitrine, como \"Mais pedido\"; nulo sem selo."
           }
         }
       },
@@ -990,6 +1095,10 @@
           "imagem" : {
             "type" : [ "string", "null" ],
             "description" : "O caminho público da foto, relativo ao gateway; nulo sem foto."
+          },
+          "selo" : {
+            "type" : [ "string", "null" ],
+            "description" : "O selo da vitrine, como \"Mais pedido\"; nulo sem selo."
           }
         }
       },

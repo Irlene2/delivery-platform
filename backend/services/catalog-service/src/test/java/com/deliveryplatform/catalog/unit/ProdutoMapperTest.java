@@ -24,7 +24,7 @@ class ProdutoMapperTest {
         ProdutoDocumento semCategoria = new ProdutoDocumento(bom.id(), bom.estabelecimentoId(), null,
                 bom.nome(), bom.descricao(), bom.imagemRef(), bom.precoBase(), bom.ordem(),
                 bom.estadoDePublicacao(), bom.modoDeControle(), bom.disponibilidade(),
-                bom.gruposDeOpcoes(), bom.versao());
+                bom.gruposDeOpcoes(), bom.versao(), bom.selo());
 
         assertThatThrownBy(() -> ProdutoMapper.paraDominio(semCategoria))
                 .isInstanceOf(DocumentoIlegivel.class)

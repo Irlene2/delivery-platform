@@ -181,6 +181,7 @@ public class TratadorDeErros {
                     + "aceita a marcação «" + estado(d.get(0)) + "»";
             case IMAGEM_INVALIDA -> "a foto precisa ser JPG, PNG ou WebP, com até 600 KB; "
                     + "escolha outra imagem";
+            case SELO_LONGO -> "o selo tem no máximo " + d.get(0) + " letras; use um mais curto";
             case INTEGRIDADE -> "não foi possível completar a operação";
         };
     }

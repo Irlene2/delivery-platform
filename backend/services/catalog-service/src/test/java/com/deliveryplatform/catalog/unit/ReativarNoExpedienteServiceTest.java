@@ -211,6 +211,11 @@ class ReativarNoExpedienteServiceTest {
      * conflito pareceria "nada a fazer". Foi o que a versão do pacote fazia.
      */
     private static final class RepositorioFalso implements ProdutoRepositorio {
+
+        @Override
+        public void excluir(UUID id) {
+            throw new UnsupportedOperationException();
+        }
         private final Map<UUID, Produto> porId = new HashMap<>();
         private final Deque<UUID> candidatos = new ArrayDeque<>();
         final List<UUID> gravados = new ArrayList<>();

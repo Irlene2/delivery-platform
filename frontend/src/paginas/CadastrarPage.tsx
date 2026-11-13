@@ -194,6 +194,10 @@ export function CadastrarPage() {
             </a>
           </p>
         )}
+        <p className="legal-aceite">
+          Ao criar a conta, você concorda com os <Link to="/termos">Termos de uso</Link> e com o{' '}
+          <Link to="/privacidade">Aviso de privacidade</Link>.
+        </p>
         <p>
           Já tem conta?{' '}
           <Link to="/entrar" state={local.state as { de?: string } | null}>

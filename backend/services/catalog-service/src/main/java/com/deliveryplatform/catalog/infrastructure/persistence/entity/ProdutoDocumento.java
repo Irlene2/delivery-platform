@@ -68,7 +68,12 @@ public record ProdutoDocumento(
          * começaria em zero, e toda inserção viraria a atualização de um
          * documento que não existe.
          */
-        @Version Long versao
+        @Version Long versao,
+        /*
+         * O selo da vitrine (13/11/2026). Nulo sem selo — e nulo também nos documentos
+         * gravados antes de o campo existir, que é a mesma coisa.
+         */
+        String selo
 ) {
 
     /** Texto, e não número. Ver a decisão 1 no javadoc da classe. */

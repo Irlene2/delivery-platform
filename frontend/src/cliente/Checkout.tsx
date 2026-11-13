@@ -8,6 +8,7 @@ import type {
 } from '../api/pedidos';
 import { dinheiro } from '../aki/formatos';
 import { totaisDoCarrinho, type ItemDoCarrinho } from '../aki/pedidos';
+import { Link } from 'react-router';
 import { lerPreco, mensagemDoErro } from '../painel/catalogo';
 import type { Vitrine } from '../pedido/fontes';
 import { ROTULO_DA_FORMA, ROTULO_DA_MODALIDADE } from '../pedido/regras';
@@ -285,6 +286,10 @@ export function ResumoComCheckout({
       <small className="secure-note">
         <span className="material-symbols-outlined">verified_user</span> O total final é confirmado
         pela loja ao receber o pedido
+      </small>
+      <small className="secure-note">
+        Ao finalizar, você concorda com os <Link to="/termos">Termos de uso</Link> e com o{' '}
+        <Link to="/privacidade">Aviso de privacidade</Link>.
       </small>
     </form>
   );

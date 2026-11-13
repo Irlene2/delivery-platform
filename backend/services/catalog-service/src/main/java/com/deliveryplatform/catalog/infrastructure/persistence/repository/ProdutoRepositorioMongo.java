@@ -103,6 +103,11 @@ public class ProdutoRepositorioMongo implements ProdutoRepositorio, VitrineRepos
      * a rota aceita {@code sort}, e quem o manda leva o que pediu.
      */
     @Override
+    public void excluir(UUID id) {
+        documentos.deleteById(id);
+    }
+
+    @Override
     public Page<Produto> daLoja(UUID estabelecimentoId, Pageable paginacao) {
         Pageable ordenada = paginacao.getSort().isSorted()
                 ? paginacao

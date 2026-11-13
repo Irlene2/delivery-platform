@@ -11,6 +11,7 @@ import com.deliveryplatform.catalog.application.port.in.AlterarProduto;
 import com.deliveryplatform.catalog.application.port.in.ConsultarProduto;
 import com.deliveryplatform.catalog.application.port.in.IlustrarProduto;
 import com.deliveryplatform.catalog.application.port.in.CriarProduto;
+import com.deliveryplatform.catalog.application.port.in.ExcluirProduto;
 import com.deliveryplatform.catalog.application.port.in.ListarProdutos;
 import com.deliveryplatform.catalog.application.port.in.MarcarDisponibilidade;
 import com.deliveryplatform.catalog.application.port.in.PublicarProduto;
@@ -26,6 +27,7 @@ import org.springframework.data.web.PageableDefault;
 import com.deliveryplatform.valuetypes.Money;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -78,11 +80,12 @@ public class ProdutoController {
     private final PublicarProduto publicacao;
     private final AlterarProduto alteracao;
     private final IlustrarProduto ilustracao;
+    private final ExcluirProduto exclusao;
 
     public ProdutoController(ListarProdutos produtos, ConsultarProduto consultas,
                              MarcarDisponibilidade marcacoes, CriarProduto criacao,
                              PublicarProduto publicacao, AlterarProduto alteracao,
-                             IlustrarProduto ilustracao) {
+                             IlustrarProduto ilustracao, ExcluirProduto exclusao) {
         this.produtos = produtos;
         this.consultas = consultas;
         this.marcacoes = marcacoes;
@@ -90,6 +93,7 @@ public class ProdutoController {
         this.publicacao = publicacao;
         this.alteracao = alteracao;
         this.ilustracao = ilustracao;
+        this.exclusao = exclusao;
     }
 
     /**
@@ -102,7 +106,7 @@ public class ProdutoController {
      */
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "O produto com o cadastro corrigido"),
-            @ApiResponse(responseCode = "400", description = "Corpo malformado, preço negativo, preço zero num produto publicado (C1, C2), ou seção que não existe nesta loja", content = @Content),
+            @ApiResponse(responseCode = "400", description = "Corpo malformado, preço negativo, preço zero num produto publicado (C1, C2), seção que não existe nesta loja, ou selo com mais de 30 letras", content = @Content),
             @ApiResponse(responseCode = "401", description = "Sem token, ou token inválido", content = @Content),
             @ApiResponse(responseCode = "403", description = "Sem vínculo, sem ALTERAR_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa", content = @Content),
             @ApiResponse(responseCode = "404", description = "O produto não existe nesta loja — inexistente ou de outra loja, a mesma resposta (ADR-056)", content = @Content)
@@ -111,7 +115,8 @@ public class ProdutoController {
             produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Corrige o nome, o preço, a descrição e a seção do produto",
             description = "Exige ALTERAR_PRODUTO. Os quatro campos vêm inteiros. Num produto "
-                    + "publicado, as regras da publicação continuam valendo.")
+                    + "publicado, as regras da publicação continuam valendo. O controle e o "
+                    + "selo são opcionais: ausentes, ficam como estão.")
     public ProdutoResponse alterar(
             @PathVariable UUID estabelecimentoId,
             @PathVariable UUID produtoId,
@@ -119,7 +124,8 @@ public class ProdutoController {
 
         return ProdutoResponse.de(alteracao.alterar(estabelecimentoId, produtoId,
                 new AlterarProduto.Alteracao(pedido.categoriaId(), pedido.nome(),
-                        pedido.descricao(), Money.de(pedido.precoBase()))));
+                        pedido.descricao(), Money.de(pedido.precoBase()),
+                        pedido.modoDeControle(), pedido.selo())));
     }
 
     /**
@@ -184,6 +190,52 @@ public class ProdutoController {
             @PathVariable UUID produtoId) {
 
         return ProdutoResponse.de(publicacao.publicar(estabelecimentoId, produtoId));
+    }
+
+    /**
+     * Tira o produto do cardápio (13/11/2026): {@code DELETE} no mesmo sub-recurso que o
+     * publica. O produto fica {@code INATIVO}, com o cadastro inteiro, e volta pelo {@code PUT}.
+     * Repetir é inofensivo. <b>400</b> num rascunho, que nunca apareceu no cardápio.
+     */
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "O produto, fora do cardápio — também quando já estava"),
+            @ApiResponse(responseCode = "400", description = "O produto é rascunho e nunca apareceu no cardápio; ou identificador malformado", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Sem token, ou token inválido", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Sem vínculo, sem DESATIVAR_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa", content = @Content),
+            @ApiResponse(responseCode = "404", description = "O produto não existe nesta loja — inexistente ou de outra loja, a mesma resposta (ADR-056)", content = @Content)
+    })
+    @DeleteMapping(path = "/{produtoId}/publicacao", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Tira o produto do cardápio",
+            description = "Exige DESATIVAR_PRODUTO. O produto fica INATIVO e volta ao cardápio "
+                    + "pela publicação. Idempotente.")
+    public ProdutoResponse retirar(
+            @PathVariable UUID estabelecimentoId,
+            @PathVariable UUID produtoId) {
+
+        return ProdutoResponse.de(publicacao.retirar(estabelecimentoId, produtoId));
+    }
+
+    /**
+     * Apaga o produto do cadastro, com a foto (13/11/2026). <b>204</b>, sem corpo. Os pedidos
+     * já feitos não mudam: o item do pedido guarda nome e preço (ADR-018).
+     */
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "O produto foi apagado"),
+            @ApiResponse(responseCode = "400", description = "Identificador malformado", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Sem token, ou token inválido", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Sem vínculo, sem DESATIVAR_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa", content = @Content),
+            @ApiResponse(responseCode = "404", description = "O produto não existe nesta loja — inexistente ou de outra loja, a mesma resposta (ADR-056)", content = @Content)
+    })
+    @DeleteMapping(path = "/{produtoId}")
+    @Operation(summary = "Apaga o produto do cadastro",
+            description = "Exige DESATIVAR_PRODUTO. A foto sai junto. Os pedidos já feitos não "
+                    + "mudam.")
+    public ResponseEntity<Void> excluir(
+            @PathVariable UUID estabelecimentoId,
+            @PathVariable UUID produtoId) {
+
+        exclusao.excluir(estabelecimentoId, produtoId);
+        return ResponseEntity.noContent().build();
     }
 
     /**

@@ -11,6 +11,8 @@ import './estilos/style.css';
 import './estilos/toast.css';
 import './estilos/produtos.css';
 import './estilos/pedidos.css';
+import './estilos/legal.css';
+import './estilos/celular.css';
 
 /**
  * O TanStack Query saiu na W-B, pelo gatilho que a W-A escreveu aqui: *"se a

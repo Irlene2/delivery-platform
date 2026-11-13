@@ -8,6 +8,7 @@ import { PedidosDaVitrine } from './cliente/PedidosDaVitrine';
 import { CadastrarPage } from './paginas/CadastrarPage';
 import { CadastroDeLojaPage } from './paginas/CadastroDeLojaPage';
 import { ConvitePage } from './paginas/ConvitePage';
+import { AvisoDePrivacidadePage, TermosDeUsoPage } from './paginas/DocumentosLegais';
 import { EntrarPage } from './paginas/EntrarPage';
 import { PainelPage } from './paginas/PainelPage';
 import { RecuperarSenhaPage } from './paginas/RecuperarSenhaPage';
@@ -38,6 +39,8 @@ export function App() {
       <Route path="/entrar" element={<EntrarPage />} />
       <Route path="/cadastrar" element={<CadastrarPage />} />
       <Route path="/recuperar-senha" element={<RecuperarSenhaPage />} />
+      <Route path="/termos" element={<TermosDeUsoPage />} />
+      <Route path="/privacidade" element={<AvisoDePrivacidadePage />} />
       {/* ADR-070 §4: pública, fora do ExigeSessao — quem abre o link pode não ter conta. */}
       <Route path="/convite/:token" element={<ConvitePage />} />
       {/* ADR-077: o cliente compra pelo link da loja, sem conta. Públicas, fora do ExigeSessao. */}

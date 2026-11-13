@@ -176,6 +176,10 @@ export function EntrarPage() {
             Cadastre-se
           </Link>
         </p>
+        <p className="legal-rodape">
+          <Link to="/termos">Termos de uso</Link>
+          <Link to="/privacidade">Aviso de privacidade</Link>
+        </p>
       </div>
     </TelaDeEntrada>
   );

@@ -1,0 +1,39 @@
+/* Ajustes para o celular (13/11/2026). O visual é o do protótipo; aqui só o que
+   impede o texto de sair da linha e o menu de prender a tela. */
+
+/* O título da barra do topo quebra em vez de vazar sobre a página. */
+.topbar-title{display:flex;align-items:center;min-width:0}
+.topbar-texto{display:inline-block;margin-left:8px;min-width:0}
+.topbar-texto h1,.topbar-texto p{overflow-wrap:break-word}
+
+/* Texto longo quebra dentro do cartão, em qualquer tela. */
+.page h1,.page h2,.page h3,.page p,.page strong,.page small,.page b,.page td,.page li,.page label{overflow-wrap:break-word}
+.page .panel,.page .stat,.page .delivery-card,.page .quick-card{min-width:0}
+
+/* O texto só para leitor de tela fica preso à tabela, e não alarga a página. */
+.table-scroll{position:relative}
+
+/* O fundo e o X do menu lateral só existem no celular. */
+.sidebar-fundo,.sidebar-fechar{display:none}
+
+@media (max-width:800px){
+  .topbar{height:auto;min-height:63px;padding-top:9px;padding-bottom:9px;gap:10px;align-items:center}
+  .topbar-title{flex:1 1 auto}
+  .top-actions{flex:0 0 auto;gap:8px}
+  .sidebar-fundo{display:block;position:fixed;inset:0;z-index:45;border:0;padding:0;margin:0;background:rgba(10,12,18,.55);cursor:pointer}
+  .sidebar-fechar{display:grid;position:absolute;top:14px;right:8px;color:#fff;z-index:2}
+  .sidebar-fechar:hover{background:#252b35;color:#fff}
+  .sidebar{overflow-y:auto}
+}
+
+@media (max-width:560px){
+  /* O nome de quem está logado sai; o avatar fica. O título da tela ganha a linha. */
+  .top-actions .role{display:none}
+  /* Cadastro de produtos: sem a coluna Tipo, e os botões só com o ícone. */
+  .prod-tabela th:nth-child(2),.prod-tabela td:nth-child(2){display:none}
+  .prod-tabela td,.prod-tabela th{padding:10px 6px}
+  .prod-nome{gap:8px}
+  .prod-nome img{width:36px;height:36px}
+  .prod-acoes-linha .prod-rotulo{display:none}
+  .prod-acoes-linha .btn{padding:7px 9px}
+}

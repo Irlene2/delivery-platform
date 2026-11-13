@@ -11,4 +11,7 @@ public interface ImagemDoProdutoRepositorio {
     void salvar(ImagemDoProduto imagem);
 
     Optional<ImagemDoProduto> buscar(UUID produtoId);
+
+    /** Apaga a foto do produto, se houver (13/11/2026). */
+    void excluir(UUID produtoId);
 }

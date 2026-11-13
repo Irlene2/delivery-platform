@@ -24,6 +24,10 @@
 .prod-nome img{width:42px;height:42px;border-radius:9px;object-fit:cover;flex:0 0 auto;background:var(--line)}
 .prod-nome small{display:block;color:var(--muted);font-size:11px;margin-top:2px}
 .prod-editar{width:auto;min-height:34px;padding:7px 12px}
+.prod-acoes-linha{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.prod-acoes-linha>span{font-size:12px;font-weight:700}
+.prod-acoes-linha .btn{width:auto;flex:0 0 auto;min-height:34px;padding:7px 10px}
+.prod-excluir .material-symbols-outlined{font-size:18px}
 .status.cinza{background:var(--line);color:var(--muted)}
 .status.vermelho{background:#fff0ef;color:#c94b42}
 .dark .status.vermelho{background:#34201f;color:#ff9a92}

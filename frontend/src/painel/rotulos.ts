@@ -14,5 +14,5 @@ export const COR_DA_DISPONIBILIDADE: Record<EstadoDeDisponibilidade, string> = {
 export const ROTULO_DA_SITUACAO: Record<Situacao, [string, string]> = {
   ATIVO: ['Publicado', 'green'],
   RASCUNHO: ['Rascunho', 'cinza'],
-  INATIVO: ['Inativo', 'cinza'],
+  INATIVO: ['Fora do cardápio', 'cinza'],
 };

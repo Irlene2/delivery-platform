@@ -153,6 +153,11 @@ class ConsultarProdutoServiceTest {
      * grava nada.)
      */
     private static final class RepositorioQueConta implements ProdutoRepositorio {
+
+        @Override
+        public void excluir(UUID id) {
+            throw new UnsupportedOperationException();
+        }
         private final Map<UUID, Produto> porId = new HashMap<>();
         int buscas = 0;
 

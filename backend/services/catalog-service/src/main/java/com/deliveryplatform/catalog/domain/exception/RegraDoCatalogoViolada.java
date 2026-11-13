@@ -68,6 +68,8 @@ public class RegraDoCatalogoViolada extends RuntimeException {
         CATEGORIA_NAO_ENCONTRADA,
         /** A foto do produto: tipo que não é imagem aceita, ou grande demais. dados: nenhum. */
         IMAGEM_INVALIDA,
+        /** O selo da vitrine passou do tamanho. dados: o tamanho máximo. */
+        SELO_LONGO,
         /** Nulo onde o nosso código deveria ter posto valor. Só um defeito o produz. */
         INTEGRIDADE
     }

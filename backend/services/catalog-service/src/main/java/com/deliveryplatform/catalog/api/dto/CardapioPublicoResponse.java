@@ -33,7 +33,10 @@ public record CardapioPublicoResponse(List<Secao> categorias, List<ProdutoNoCard
             boolean vendavel,
             @Schema(description = "O caminho público da foto, relativo ao gateway; nulo sem foto.",
                     nullable = true)
-            String imagem) {
+            String imagem,
+            @Schema(description = "O selo da vitrine, como \"Mais pedido\"; nulo sem selo.",
+                    nullable = true)
+            String selo) {
     }
 
     public static CardapioPublicoResponse de(ConsultarCardapioPublico.Cardapio cardapio) {
@@ -45,7 +48,7 @@ public record CardapioPublicoResponse(List<Secao> categorias, List<ProdutoNoCard
                         .map(p -> new ProdutoNoCardapio(p.getId(), p.getCategoriaId(), p.getNome(),
                                 p.getDescricao(), p.getPrecoBase().valor(), p.getOrdem(),
                                 p.getDisponibilidade().estado(), p.vendavel(),
-                                p.getImagemRef()))
+                                p.getImagemRef(), p.getSelo()))
                         .toList());
     }
 }

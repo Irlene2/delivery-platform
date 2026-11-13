@@ -55,7 +55,8 @@ public final class ProdutoMapper {
                 produto.getModoDeControle().name(),
                 disponibilidade(produto.getDisponibilidade()),
                 produto.getGruposDeOpcoes().stream().map(ProdutoMapper::grupo).toList(),
-                produto.getVersao());
+                produto.getVersao(),
+                produto.getSelo());
     }
 
     private static GrupoDocumento grupo(GrupoDeOpcoes g) {
@@ -102,7 +103,7 @@ public final class ProdutoMapper {
     }
 
     private static Produto reconstituir(ProdutoDocumento doc) {
-        return Produto.reconstituir(
+        Produto produto = Produto.reconstituir(
                 doc.id(),
                 doc.estabelecimentoId(),
                 doc.categoriaId(),
@@ -118,6 +119,8 @@ public final class ProdutoMapper {
                         ? List.of()
                         : doc.gruposDeOpcoes().stream().map(ProdutoMapper::grupoDe).toList(),
                 doc.versao());
+        produto.rotular(doc.selo());
+        return produto;
     }
 
     private static GrupoDeOpcoes grupoDe(GrupoDocumento g) {

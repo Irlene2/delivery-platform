@@ -24,6 +24,11 @@ public class ImagemDoProdutoRepositorioMongo implements ImagemDoProdutoRepositor
     }
 
     @Override
+    public void excluir(UUID produtoId) {
+        documentos.deleteById(produtoId);
+    }
+
+    @Override
     public Optional<ImagemDoProduto> buscar(UUID produtoId) {
         return documentos.findById(produtoId)
                 .map(d -> new ImagemDoProduto(d.produtoId(), d.estabelecimentoId(), d.tipo(),

@@ -1,0 +1,21 @@
+/* Termos de uso e Aviso de privacidade (13/11/2026): texto longo, para ler no celular. */
+.legal{min-height:100vh;background:var(--bg);color:var(--text);padding:0 16px 40px}
+.legal-topo{max-width:760px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 0}
+.legal-voltar{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:9px;padding:9px 13px;font-weight:700;font-size:13px}
+.legal-voltar:hover{border-color:var(--orange);color:var(--orange)}
+.legal-voltar .material-symbols-outlined{font-size:18px}
+.legal-marca{font-size:18px;font-weight:800;letter-spacing:-.5px}
+.legal-marca b{color:var(--orange)}
+.legal-texto{max-width:760px;margin:0 auto;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:28px 30px;box-shadow:var(--shadow);font-size:15px;line-height:1.65;overflow-wrap:break-word}
+.legal-texto h1{font-size:26px;margin:0 0 4px;letter-spacing:-.5px}
+.legal-texto h2{font-size:17px;margin:26px 0 8px}
+.legal-texto p{margin:0 0 12px}
+.legal-texto ul{margin:0 0 12px;padding-left:20px}
+.legal-texto li{margin-bottom:6px}
+.legal-texto a{color:var(--orange-dark);font-weight:700}
+.legal-versao{color:var(--muted);font-size:13px}
+.legal-nota{margin-top:26px!important;padding:12px 14px;border-radius:10px;background:var(--orange-soft);font-size:13px}
+.legal-links{display:flex;gap:16px;flex-wrap:wrap;margin-top:18px;font-size:13px}
+.legal-rodape{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:10px;font-size:12px}
+.legal-rodape a{color:inherit;font-weight:600}
+@media (max-width:560px){.legal-texto{padding:20px 18px;font-size:14px}.legal-texto h1{font-size:22px}}

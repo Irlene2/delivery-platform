@@ -52,9 +52,33 @@ export function publicarProduto(
   );
 }
 
+/** Tira do cardápio o que estava publicado (13/11/2026). Volta pelo {@link publicarProduto}. */
+export function retirarProduto(
+  estabelecimentoId: string,
+  produtoId: string,
+  token: string,
+): Promise<ProdutoCriado> {
+  return chamar<ProdutoCriado>(
+    `/api/v1/merchants/${estabelecimentoId}/catalog/produtos/${produtoId}/publicacao`,
+    { metodo: 'DELETE', token },
+  );
+}
+
+/** Apaga o produto do cadastro, com a foto (13/11/2026). Os pedidos já feitos não mudam. */
+export function excluirProduto(
+  estabelecimentoId: string,
+  produtoId: string,
+  token: string,
+): Promise<void> {
+  return chamar<void>(`/api/v1/merchants/${estabelecimentoId}/catalog/produtos/${produtoId}`, {
+    metodo: 'DELETE',
+    token,
+  });
+}
+
 /**
  * Corrige o cadastro de um produto existente: seção, nome, descrição e preço, inteiros
- * (ADR-077, emenda de 01/11/2026).
+ * (ADR-077, emenda de 01/11/2026); e, desde 13/11/2026, o "pode acabar" e o selo.
  */
 export function alterarProduto(
   estabelecimentoId: string,

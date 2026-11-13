@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router';
+import { Link, useNavigate, useParams } from 'react-router';
 import { carrinhoDaLoja, lembrarPedido, limparCarrinho } from '../aki/pedidos';
 import { toast } from '../aki/toast';
 import type { PedidoPublico, VitrineDaLoja } from '../api/pedidos';
@@ -67,6 +67,10 @@ export function LojaPublica() {
       />
       <footer className="footer">
         <b>AKI Delivery</b> © 2026 — Cardápio online
+        <span className="legal-rodape">
+          <Link to="/termos">Termos de uso</Link>
+          <Link to="/privacidade">Aviso de privacidade</Link>
+        </span>
       </footer>
     </CascaDaVitrine>
   );

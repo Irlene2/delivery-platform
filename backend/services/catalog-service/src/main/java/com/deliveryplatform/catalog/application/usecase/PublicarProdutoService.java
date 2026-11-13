@@ -58,4 +58,28 @@ public class PublicarProdutoService implements PublicarProduto {
 
         return produtos.salvar(produto);
     }
+
+    /**
+     * O par da publicação (13/11/2026): {@code ATIVO → INATIVO}, pela regra que o agregado
+     * já tinha ({@link Produto#inativar()}). A permissão é a {@code DESATIVAR_PRODUTO}, que o
+     * {@code merchant} já concedia e nenhuma rota usava. Retirar o que já está fora do
+     * cardápio não faz nada — a mesma idempotência da publicação.
+     */
+    @Override
+    public Produto retirar(UUID estabelecimentoId, UUID produtoId) {
+        ContextoDeAcesso contexto = autorizacao
+                .contexto(estabelecimentoId)
+                .orElseThrow(AcessoNegado::new);
+        if (!contexto.pode(PermissaoDoCatalogo.DESATIVAR_PRODUTO)) {
+            throw new AcessoNegado();
+        }
+
+        Produto produto = produtos.buscarPorId(produtoId)
+                .filter(encontrado -> encontrado.getEstabelecimentoId().equals(estabelecimentoId))
+                .orElseThrow(ProdutoNaoEncontrado::new);
+
+        produto.inativar();
+
+        return produtos.salvar(produto);
+    }
 }

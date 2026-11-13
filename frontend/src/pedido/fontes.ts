@@ -74,6 +74,7 @@ function cardapioPublico(estabelecimentoId: string): FonteDoCatalogo {
     editaTudo: false,
     podeCriar: false,
     podeAlterar: false,
+    podeDesativar: false,
     async carregar() {
       const cardapio = await chamar<CardapioDoContrato>(
         `/api/v1/storefront/${estabelecimentoId}/menu`,
@@ -104,7 +105,7 @@ function cardapioPublico(estabelecimentoId: string): FonteDoCatalogo {
           disponibilidade: estadoConhecido(produto.disponibilidade) ?? 'DISPONIVEL',
           vendavel: produto.vendavel === true,
           imagem: urlDaApi(produto.imagem),
-          selo: '',
+          selo: produto.selo ?? '',
           grupos: [],
         };
       });
@@ -115,6 +116,7 @@ function cardapioPublico(estabelecimentoId: string): FonteDoCatalogo {
     salvar: somenteLeitura,
     marcar: somenteLeitura,
     marcarOpcao: somenteLeitura,
+    excluir: somenteLeitura,
   };
 }
 

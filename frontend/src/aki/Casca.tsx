@@ -47,6 +47,19 @@ export function Casca({
   useRolarParaAncora();
   const { pathname } = useLocation();
 
+  // No celular, o menu fecha ao trocar de tela, com o Esc e tocando fora dele (13/11/2026).
+  useEffect(() => {
+    definirAberto(false);
+  }, [pathname]);
+  useEffect(() => {
+    if (!aberto) return;
+    const tecla = (evento: KeyboardEvent) => {
+      if (evento.key === 'Escape') definirAberto(false);
+    };
+    document.addEventListener('keydown', tecla);
+    return () => document.removeEventListener('keydown', tecla);
+  }, [aberto]);
+
   // Como no protótipo: cada tela avisa que é demonstração.
   useEffect(() => {
     if (emDemonstracao()) toast('Modo demonstração: dados de exemplo, sem servidor.');
@@ -61,7 +74,23 @@ export function Casca({
 
   return (
     <div className="app-shell">
+      {aberto && (
+        <button
+          type="button"
+          className="sidebar-fundo"
+          aria-label="Fechar menu"
+          onClick={() => definirAberto(false)}
+        />
+      )}
       <aside className={`sidebar${aberto ? ' open' : ''}`} id="sidebar">
+        <button
+          type="button"
+          className="icon-btn sidebar-fechar"
+          aria-label="Fechar menu e voltar à tela"
+          onClick={() => definirAberto(false)}
+        >
+          <span className="material-symbols-outlined">close</span>
+        </button>
         <div className="brand">
           <div className="brand-mark">
             <span className="material-symbols-outlined">lunch_dining</span>
@@ -122,11 +151,13 @@ export function Casca({
               className="icon-btn mobile-menu"
               type="button"
               aria-label="Abrir menu"
+              aria-expanded={aberto}
+              aria-controls="sidebar"
               onClick={() => definirAberto((valor) => !valor)}
             >
               <span className="material-symbols-outlined">menu</span>
             </button>
-            <div style={{ display: 'inline-block', marginLeft: '8px' }}>
+            <div className="topbar-texto">
               <h1>{titulo}</h1>
               <p>{subtitulo}</p>
             </div>

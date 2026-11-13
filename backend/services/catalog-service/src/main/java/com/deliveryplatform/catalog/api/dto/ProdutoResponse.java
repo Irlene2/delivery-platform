@@ -45,7 +45,10 @@ public record ProdutoResponse(
         List<GrupoResponse> gruposDeOpcoes,
         @Schema(description = "O caminho público da foto, relativo ao gateway; nulo sem foto.",
                 nullable = true)
-        String imagem) {
+        String imagem,
+        @Schema(description = "O selo da vitrine, como \"Mais pedido\"; nulo sem selo.",
+                nullable = true)
+        String selo) {
 
     public static ProdutoResponse de(Produto produto) {
         return new ProdutoResponse(
@@ -60,7 +63,8 @@ public record ProdutoResponse(
                 produto.getDisponibilidade().estado(),
                 produto.vendavel(),
                 produto.getGruposDeOpcoes().stream().map(GrupoResponse::de).toList(),
-                produto.getImagemRef());
+                produto.getImagemRef(),
+                produto.getSelo());
     }
 
     /** O grupo, com as opções na ordem em que o comerciante as pôs. */

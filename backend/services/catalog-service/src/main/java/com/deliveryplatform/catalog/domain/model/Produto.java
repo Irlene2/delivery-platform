@@ -52,6 +52,8 @@ public final class Produto {
     private String nome;
     private String descricao;
     private String imagemRef;
+    /** O selo da vitrine ("Mais pedido", "Novo"…), escolhido pela loja. Nulo sem selo. */
+    private String selo;
     private Money precoBase;
     private int ordem;
 
@@ -508,6 +510,10 @@ public final class Produto {
         return descricao;
     }
 
+    public String getSelo() {
+        return selo;
+    }
+
     public String getImagemRef() {
         return imagemRef;
     }
@@ -556,6 +562,39 @@ public final class Produto {
      *
      * <p>Grupos, opções, modo de controle e ordem ficam como estão: cada um tem o seu ato.
      */
+    /** O tamanho máximo do selo: ele cabe numa etiqueta sobre a foto. */
+    public static final int TAMANHO_MAXIMO_DO_SELO = 30;
+
+    /**
+     * Põe, troca ou tira o selo da vitrine (13/11/2026). Vazio tira. É enfeite da vitrine e
+     * não muda nada do que o produto vende, por isso vale em qualquer estado de publicação.
+     */
+    public void rotular(String novoSelo) {
+        String limpo = novoSelo == null ? "" : novoSelo.strip();
+        if (limpo.length() > TAMANHO_MAXIMO_DO_SELO) {
+            throw new RegraDoCatalogoViolada(RegraDoCatalogoViolada.Motivo.SELO_LONGO,
+                    "selo com mais de " + TAMANHO_MAXIMO_DO_SELO + " caracteres",
+                    String.valueOf(TAMANHO_MAXIMO_DO_SELO));
+        }
+        this.selo = limpo.isEmpty() ? null : limpo;
+    }
+
+    /**
+     * Troca o "pode acabar" (13/11/2026): a loja descobre depois do cadastro que o produto
+     * acaba, ou que nunca acaba. Ao virar {@code SEM_CONTROLE}, o produto volta a
+     * {@code DISPONIVEL} — um produto que não acaba não pode continuar marcado como acabado,
+     * que é a mesma regra do {@link #marcar(Disponibilidade)}.
+     */
+    public void trocarControle(ModoDeControle novo) {
+        if (novo == null) {
+            throw RegraDoCatalogoViolada.integridade("produto sem modo de controle");
+        }
+        this.modoDeControle = novo;
+        if (novo == ModoDeControle.SEM_CONTROLE) {
+            this.disponibilidade = Disponibilidade.inicial();
+        }
+    }
+
     public void alterarCadastro(UUID novaCategoriaId, String novoNome, Money novoPreco,
                                 String novaDescricao) {
         if (novaCategoriaId == null) {

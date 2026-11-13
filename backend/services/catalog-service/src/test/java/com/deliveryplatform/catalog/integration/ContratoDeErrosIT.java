@@ -353,6 +353,53 @@ class ContratoDeErrosIT extends Infraestrutura {
                             return publicar(c, UUID.randomUUID().toString());
                         }),
 
+                // Tirar do cardápio (13/11/2026): 200, 400, 401, 403, 404.
+                new Provocacao("DELETE", PUBLICAR, 400, "rascunho, que nunca apareceu no cardápio",
+                        () -> {
+                            Cena c = cena("DESATIVAR_PRODUTO");
+                            Produto rascunho = produtos.salvar(Produto.rascunho(c.loja(),
+                                    ProdutoDeTeste.CATEGORIA, "Rascunho", Precos.reais("9.00"),
+                                    ModoDeControle.SEM_CONTROLE, 1));
+                            return apagar(c, rascunho.getId() + "/publicacao");
+                        }),
+                new Provocacao("DELETE", PUBLICAR, 401, "sem token",
+                        () -> {
+                            Cena c = cena("DESATIVAR_PRODUTO");
+                            return apagar(c.semToken(), c.pizza().getId() + "/publicacao");
+                        }),
+                new Provocacao("DELETE", PUBLICAR, 403, "vínculo sem DESATIVAR_PRODUTO",
+                        () -> {
+                            Cena c = cena("ALTERAR_PRODUTO");
+                            return apagar(c, c.pizza().getId() + "/publicacao");
+                        }),
+                new Provocacao("DELETE", PUBLICAR, 404, "produto que não existe nesta loja — ADR-056",
+                        () -> {
+                            Cena c = cena("DESATIVAR_PRODUTO");
+                            return apagar(c, UUID.randomUUID() + "/publicacao");
+                        }),
+
+                // Apagar o produto (13/11/2026): 204, 400, 401, 403, 404.
+                new Provocacao("DELETE", CONSULTAR, 400, "identificador do produto que não é UUID",
+                        () -> {
+                            Cena c = cena("DESATIVAR_PRODUTO");
+                            return apagar(c, "nao-e-uuid");
+                        }),
+                new Provocacao("DELETE", CONSULTAR, 401, "sem token",
+                        () -> {
+                            Cena c = cena("DESATIVAR_PRODUTO");
+                            return apagar(c.semToken(), c.pizza().getId().toString());
+                        }),
+                new Provocacao("DELETE", CONSULTAR, 403, "vínculo sem DESATIVAR_PRODUTO",
+                        () -> {
+                            Cena c = cena("ALTERAR_PRODUTO");
+                            return apagar(c, c.pizza().getId().toString());
+                        }),
+                new Provocacao("DELETE", CONSULTAR, 404, "produto que não existe nesta loja — ADR-056",
+                        () -> {
+                            Cena c = cena("DESATIVAR_PRODUTO");
+                            return apagar(c, UUID.randomUUID().toString());
+                        }),
+
                 new Provocacao("POST", LISTAR, 400,
                         "seção de outra loja no corpo — ADR-066; a inexistente dá a mesma",
                         () -> {
@@ -528,6 +575,14 @@ class ContratoDeErrosIT extends Infraestrutura {
     private int publicar(Cena c, String produtoId) {
         var requisicao = cliente().put()
                 .uri("/api/v1/merchants/" + c.loja() + "/catalog/produtos/" + produtoId + "/publicacao");
+        if (c.token() != null) {
+            requisicao = requisicao.header("Authorization", "Bearer " + c.token());
+        }
+        return requisicao.exchange().returnResult(String.class).getStatus().value();
+    }
+
+    private int apagar(Cena c, String resto) {
+        var requisicao = cliente().delete().uri(produto(c, resto));
         if (c.token() != null) {
             requisicao = requisicao.header("Authorization", "Bearer " + c.token());
         }

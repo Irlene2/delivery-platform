@@ -47,7 +47,10 @@ public record ProdutoResumoResponse(
         EstadoDePublicacao estadoDePublicacao,
         @Schema(description = "O caminho público da foto, relativo ao gateway; nulo sem foto.",
                 nullable = true)
-        String imagem
+        String imagem,
+        @Schema(description = "O selo da vitrine, como \"Mais pedido\"; nulo sem selo.",
+                nullable = true)
+        String selo
 ) {
 
     public static ProdutoResumoResponse de(Produto produto) {
@@ -60,6 +63,7 @@ public record ProdutoResumoResponse(
                 produto.getDisponibilidade().estado(),
                 produto.vendavel(),
                 produto.getEstadoDePublicacao(),
-                produto.getImagemRef());
+                produto.getImagemRef(),
+                produto.getSelo());
     }
 }

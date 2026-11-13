@@ -32,6 +32,9 @@ public interface ProdutoRepositorio {
 
     Optional<Produto> buscarPorId(UUID id);
 
+    /** Apaga o produto. Apagar o que não existe não é erro (13/11/2026). */
+    void excluir(UUID id);
+
     /**
      * Os produtos de uma loja, <b>em qualquer estado de publicação</b> (ADR-068), pela
      * {@code ordem} e, no empate, pelo id quando quem chamou não pediu ordenação.

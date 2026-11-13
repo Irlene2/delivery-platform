@@ -3,7 +3,8 @@ import { Link } from 'react-router';
 import { ROTULO } from '../api/disponibilidade';
 import { emDemonstracao } from '../aki/demo';
 import { dinheiro } from '../aki/formatos';
-import { IMAGEM_PADRAO } from './catalogo';
+import { toast } from '../aki/toast';
+import { IMAGEM_PADRAO, mensagemDoErro, type ItemDoCatalogo } from './catalogo';
 import { CascaDaLoja } from './CascaDaLoja';
 import { caminhoDaSecao, caminhoDoNovoProduto } from './caminhos';
 import { useLojaAtual } from './lojaAtual';
@@ -12,13 +13,17 @@ import { useCatalogo } from './useCatalogo';
 
 /**
  * Cadastro de produtos (`aki_delivery/pages/produtos.html`): a lista da loja,
- * com busca, filtro por tipo e os botões Novo produto e Editar.
+ * com busca, filtro por tipo e os botões Novo produto, Editar e Excluir.
  */
 export function CadastroDeProdutos() {
   const { estabelecimentoId, fonte } = useLojaAtual();
-  const { leitura } = useCatalogo(fonte);
+  const { leitura, trocar } = useCatalogo(fonte);
   const [busca, definirBusca] = useState('');
   const [tipo, definirTipo] = useState('');
+  const [aExcluir, definirAExcluir] = useState<string | null>(null);
+  const [excluindo, definirExcluindo] = useState(false);
+  const [falhaAoExcluir, definirFalhaAoExcluir] = useState<string | null>(null);
+  const podeExcluir = fonte.editaTudo || fonte.podeDesativar;
 
   const catalogo = leitura.estado === 'pronto' ? leitura.catalogo : { tipos: [], itens: [] };
   const termo = busca.trim().toLowerCase();
@@ -34,6 +39,21 @@ export function CadastroDeProdutos() {
   const rotuloDoBotao = fonte.editaTudo || fonte.podeAlterar ? 'Editar' : 'Ver';
   const caminhoDaLista = caminhoDaSecao(estabelecimentoId, 'cardapio');
 
+  async function excluir(item: ItemDoCatalogo) {
+    if (leitura.estado !== 'pronto' || excluindo) return;
+    definirExcluindo(true);
+    definirFalhaAoExcluir(null);
+    try {
+      trocar(await fonte.excluir(item, leitura.catalogo));
+      toast(`${item.nome} excluído`);
+      definirAExcluir(null);
+    } catch (erro) {
+      definirFalhaAoExcluir(mensagemDoErro(erro));
+    } finally {
+      definirExcluindo(false);
+    }
+  }
+
   return (
     <CascaDaLoja
       atual="catalogo"
@@ -43,6 +63,11 @@ export function CadastroDeProdutos() {
       {leitura.estado === 'erro' && (
         <div className="prod-aviso" role="status">
           Não deu para carregar os produtos: {leitura.frase}
+        </div>
+      )}
+      {falhaAoExcluir !== null && (
+        <div className="prod-aviso" role="alert">
+          Não deu para excluir: {falhaAoExcluir}
         </div>
       )}
       {emDemonstracao() && (
@@ -156,14 +181,57 @@ export function CadastroDeProdutos() {
                         </span>
                       </td>
                       <td>
-                        <Link
-                          className="btn btn-light prod-editar"
-                          data-editar={item.id}
-                          to={`${caminhoDaLista}/${encodeURIComponent(item.id)}`}
-                        >
-                          <span className="material-symbols-outlined">edit</span>
-                          {rotuloDoBotao}
-                        </Link>
+                        {aExcluir === item.id ? (
+                          <div
+                            className="prod-acoes-linha"
+                            role="alertdialog"
+                            aria-label={`Excluir ${item.nome}`}
+                          >
+                            <span>Excluir?</span>
+                            <button
+                              type="button"
+                              className="btn btn-danger-soft"
+                              data-confirmar-exclusao={item.id}
+                              aria-busy={excluindo}
+                              onClick={() => void excluir(item)}
+                            >
+                              {excluindo ? 'Excluindo…' : 'Sim, excluir'}
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-light"
+                              onClick={() => definirAExcluir(null)}
+                            >
+                              Não
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="prod-acoes-linha">
+                            <Link
+                              className="btn btn-light prod-editar"
+                              data-editar={item.id}
+                              to={`${caminhoDaLista}/${encodeURIComponent(item.id)}`}
+                            >
+                              <span className="material-symbols-outlined">edit</span>
+                              <span className="prod-rotulo">{rotuloDoBotao}</span>
+                            </Link>
+                            {podeExcluir && (
+                              <button
+                                type="button"
+                                className="btn btn-danger-soft prod-excluir"
+                                data-excluir={item.id}
+                                aria-label={`Excluir ${item.nome}`}
+                                title="Excluir"
+                                onClick={() => {
+                                  definirFalhaAoExcluir(null);
+                                  definirAExcluir(item.id);
+                                }}
+                              >
+                                <span className="material-symbols-outlined">delete</span>
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </td>
                     </tr>
                   );

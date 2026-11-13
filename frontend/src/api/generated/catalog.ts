@@ -18,11 +18,15 @@ export interface paths {
     get: operations['consultar'];
     /**
      * Corrige o nome, o preço, a descrição e a seção do produto
-     * @description Exige ALTERAR_PRODUTO. Os quatro campos vêm inteiros. Num produto publicado, as regras da publicação continuam valendo.
+     * @description Exige ALTERAR_PRODUTO. Os quatro campos vêm inteiros. Num produto publicado, as regras da publicação continuam valendo. O controle e o selo são opcionais: ausentes, ficam como estão.
      */
     put: operations['alterar'];
     post?: never;
-    delete?: never;
+    /**
+     * Apaga o produto do cadastro
+     * @description Exige DESATIVAR_PRODUTO. A foto sai junto. Os pedidos já feitos não mudam.
+     */
+    delete: operations['excluir'];
     options?: never;
     head?: never;
     patch?: never;
@@ -42,7 +46,11 @@ export interface paths {
      */
     put: operations['publicar'];
     post?: never;
-    delete?: never;
+    /**
+     * Tira o produto do cardápio
+     * @description Exige DESATIVAR_PRODUTO. O produto fica INATIVO e volta ao cardápio pela publicação. Idempotente.
+     */
+    delete: operations['retirar'];
     options?: never;
     head?: never;
     patch?: never;
@@ -200,7 +208,7 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
-    /** @description O cadastro corrigido: seção, nome, descrição e preço. */
+    /** @description O cadastro corrigido: seção, nome, descrição e preço; e, se vierem, o controle e o selo. */
     ProdutoAlteracaoRequest: {
       /**
        * Format: uuid
@@ -222,6 +230,16 @@ export interface components {
        * @example 52.9
        */
       precoBase: number;
+      /**
+       * @description Opcional (13/11/2026): se o produto pode acabar. Ausente mantém o que está; virar SEM_CONTROLE devolve o produto a DISPONIVEL.
+       * @enum {string|null}
+       */
+      modoDeControle?: 'SEM_CONTROLE' | 'QUALITATIVO' | null;
+      /**
+       * @description Opcional (13/11/2026): o selo da vitrine, até 30 letras. Ausente mantém o que está; vazio tira o selo.
+       * @example Mais pedido
+       */
+      selo?: string | null;
     };
     GrupoResponse: {
       /** Format: uuid */
@@ -265,6 +283,8 @@ export interface components {
       gruposDeOpcoes?: components['schemas']['GrupoResponse'][];
       /** @description O caminho público da foto, relativo ao gateway; nulo sem foto. */
       imagem?: string | null;
+      /** @description O selo da vitrine, como "Mais pedido"; nulo sem selo. */
+      selo?: string | null;
     };
     /** @description A foto do produto: o tipo e o conteúdo em Base64. */
     ImagemRequest: {
@@ -301,6 +321,8 @@ export interface components {
       estadoDePublicacao?: 'RASCUNHO' | 'ATIVO' | 'INATIVO';
       /** @description O caminho público da foto, relativo ao gateway; nulo sem foto. */
       imagem?: string | null;
+      /** @description O selo da vitrine, como "Mais pedido"; nulo sem selo. */
+      selo?: string | null;
     };
     /** @description Um produto novo. Nasce rascunho; vai ao cardápio pela publicação. */
     ProdutoRequest: {
@@ -384,6 +406,8 @@ export interface components {
       vendavel?: boolean;
       /** @description O caminho público da foto, relativo ao gateway; nulo sem foto. */
       imagem?: string | null;
+      /** @description O selo da vitrine, como "Mais pedido"; nulo sem selo. */
+      selo?: string | null;
     };
     Secao: {
       /** Format: uuid */
@@ -486,7 +510,7 @@ export interface operations {
           'application/json': components['schemas']['ProdutoResponse'];
         };
       };
-      /** @description Corpo malformado, preço negativo, preço zero num produto publicado (C1, C2), ou seção que não existe nesta loja */
+      /** @description Corpo malformado, preço negativo, preço zero num produto publicado (C1, C2), seção que não existe nesta loja, ou selo com mais de 30 letras */
       400: {
         headers: {
           [name: string]: unknown;
@@ -552,6 +576,106 @@ export interface operations {
         content?: never;
       };
       /** @description Sem vínculo, sem ALTERAR_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description O produto não existe nesta loja — inexistente ou de outra loja, a mesma resposta (ADR-056) */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  retirar: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        estabelecimentoId: string;
+        produtoId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description O produto, fora do cardápio — também quando já estava */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ProdutoResponse'];
+        };
+      };
+      /** @description O produto é rascunho e nunca apareceu no cardápio; ou identificador malformado */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Sem token, ou token inválido */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Sem vínculo, sem DESATIVAR_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description O produto não existe nesta loja — inexistente ou de outra loja, a mesma resposta (ADR-056) */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  excluir: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        estabelecimentoId: string;
+        produtoId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description O produto foi apagado */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Identificador malformado */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Sem token, ou token inválido */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Sem vínculo, sem DESATIVAR_PRODUTO, loja inexistente ou merchant indisponível — a mesma recusa */
       403: {
         headers: {
           [name: string]: unknown;

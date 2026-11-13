@@ -23,9 +23,9 @@ import { useCatalogo } from './useCatalogo';
  * Novo produto e Editar produto — o formulário do cadastro de produtos do
  * protótipo, com a prévia de como o cliente vê.
  *
- * Com o servidor, num produto que já existe, nome, tipo, descrição,
- * ingredientes e preço ficam travados: ainda não há rota para alterá-los. Dá
- * para publicar, marcar a disponibilidade e marcar cada opção.
+ * Com o servidor, num produto que já existe, só a posição no cardápio fica
+ * travada. Dá para corrigir o cadastro, trocar o "pode acabar" e o selo,
+ * publicar e tirar do cardápio, apagar e marcar a disponibilidade de cada opção.
  */
 const SELOS = ['Mais pedido', 'Novo', 'Favorito', 'Oferta', 'Economize', 'Natural'];
 
@@ -87,6 +87,8 @@ export function EditorDeProduto() {
   );
   const [salvando, definirSalvando] = useState(false);
   const [confirmarSaida, definirConfirmarSaida] = useState(false);
+  const [confirmarExclusao, definirConfirmarExclusao] = useState(false);
+  const [excluindo, definirExcluindo] = useState(false);
   const [estadoDasOpcoes, definirEstadoDasOpcoes] = useState<Record<string, string>>({});
   const campoNome = useRef<HTMLInputElement>(null);
   const campoIngrediente = useRef<HTMLInputElement>(null);
@@ -133,9 +135,10 @@ export function EditorDeProduto() {
   // ---------- travas ----------
   const doServidor = !fonte.editaTudo;
   const semPermissao = doServidor && (item === null ? !fonte.podeCriar : !fonte.podeAlterar);
-  // A posição e o "pode acabar" são do cadastro inicial: a correção do cadastro (ADR-077,
-  // emenda de 01/11/2026) muda seção, nome, descrição, ingredientes e preço.
+  // A posição é do cadastro inicial: a correção do cadastro (ADR-077, emendas de 01/11 e
+  // 13/11/2026) muda seção, nome, descrição, ingredientes, preço, o "pode acabar" e o selo.
   const travarDados = doServidor && item !== null;
+  const podeExcluir = item !== null && (fonte.editaTudo || fonte.podeDesativar);
   const travarTudo = semPermissao;
   const nota = semPermissao
     ? item === null
@@ -158,7 +161,9 @@ export function EditorDeProduto() {
       definirPreparandoFoto(false);
     }
   }
-  const situacaoFixa = doServidor && item?.situacao === 'ATIVO';
+  // Tirar do cardápio pede DESATIVAR_PRODUTO; quem não tem vê a situação, sem trocá-la.
+  const situacaoFixa = doServidor && item?.situacao === 'ATIVO' && !fonte.podeDesativar;
+  const jaApareceu = item !== null && item.situacao !== 'RASCUNHO';
 
   const alterar = <K extends keyof Campos>(campo: K, valor: Campos[K]) => {
     definirCampos((atual) => ({ ...atual, [campo]: valor }));
@@ -247,6 +252,22 @@ export function EditorDeProduto() {
     }
   }
 
+  async function excluir() {
+    if (item === null || catalogo === null || excluindo) return;
+    definirExcluindo(true);
+    definirMensagem(null);
+    try {
+      trocar(await fonte.excluir(item, catalogo));
+      toast(`${item.nome} excluído`);
+      void navegar(caminhoDaLista);
+    } catch (erro) {
+      definirConfirmarExclusao(false);
+      definirMensagem({ texto: mensagemDoErro(erro), tom: 'erro' });
+    } finally {
+      definirExcluindo(false);
+    }
+  }
+
   function pedirParaSair() {
     if (sujo) {
       definirConfirmarSaida(true);
@@ -289,7 +310,7 @@ export function EditorDeProduto() {
     if (campos.tipoId === NOVO_TIPO) return campos.tipoNovo;
     return catalogo?.tipos.find((tipo) => tipo.id === campos.tipoId)?.nome ?? '';
   }, [campos.tipoId, campos.tipoNovo, catalogo]);
-  let seloDaPrevia = fonte.editaTudo ? campos.selo : '';
+  let seloDaPrevia = campos.selo;
   if (campos.controle === 'QUALITATIVO' && campos.disponibilidade !== 'DISPONIVEL') {
     seloDaPrevia = ROTULO[campos.disponibilidade];
   }
@@ -505,7 +526,6 @@ export function EditorDeProduto() {
                       type="radio"
                       name="fControle"
                       value="QUALITATIVO"
-                      disabled={travarDados}
                       checked={campos.controle === 'QUALITATIVO'}
                       onChange={() => alterar('controle', 'QUALITATIVO')}
                     />{' '}
@@ -522,7 +542,6 @@ export function EditorDeProduto() {
                       type="radio"
                       name="fControle"
                       value="SEM_CONTROLE"
-                      disabled={travarDados}
                       checked={campos.controle === 'SEM_CONTROLE'}
                       onChange={() => alterar('controle', 'SEM_CONTROLE')}
                     />{' '}
@@ -545,10 +564,11 @@ export function EditorDeProduto() {
                       disabled={situacaoFixa}
                       onChange={(evento) => alterar('situacao', evento.target.value as Situacao)}
                     >
-                      {campos.situacao === 'INATIVO' && (
-                        <option value="INATIVO">Inativo (não aparece)</option>
+                      {jaApareceu ? (
+                        <option value="INATIVO">Fora do cardápio (não aparece)</option>
+                      ) : (
+                        <option value="RASCUNHO">Rascunho (não aparece)</option>
                       )}
-                      <option value="RASCUNHO">Rascunho (não aparece)</option>
                       <option value="ATIVO">Publicado (aparece no cardápio)</option>
                     </select>
                   </label>
@@ -646,16 +666,10 @@ export function EditorDeProduto() {
                       : 'JPG, PNG ou WebP. A foto é reduzida antes de enviar.'}
                   </small>
                 </label>
-                {!fonte.editaTudo && (
-                  <p className="prod-dica" id="vitrineNota">
-                    O selo vale só na demonstração.
-                  </p>
-                )}
                 <label className="prod-campo">
                   Selo
                   <select
                     id="fSelo"
-                    disabled={!fonte.editaTudo}
                     value={campos.selo}
                     onChange={(evento) => alterar('selo', evento.target.value)}
                   >
@@ -663,6 +677,9 @@ export function EditorDeProduto() {
                     {SELOS.map((selo) => (
                       <option key={selo}>{selo}</option>
                     ))}
+                    {campos.selo !== '' && !SELOS.includes(campos.selo) && (
+                      <option>{campos.selo}</option>
+                    )}
                   </select>
                 </label>
               </fieldset>
@@ -693,7 +710,50 @@ export function EditorDeProduto() {
                 >
                   <span className="material-symbols-outlined">close</span>Sair sem salvar
                 </button>
+                {podeExcluir && !travarTudo && (
+                  <button
+                    type="button"
+                    className="btn btn-danger-soft"
+                    id="btnExcluir"
+                    onClick={() => {
+                      definirConfirmarSaida(false);
+                      definirConfirmarExclusao(true);
+                    }}
+                  >
+                    <span className="material-symbols-outlined">delete</span>Excluir produto
+                  </button>
+                )}
               </div>
+              {confirmarExclusao && item !== null && (
+                <div
+                  className="prod-confirmar"
+                  id="confirmarExclusao"
+                  role="alertdialog"
+                  aria-labelledby="confirmarExclusaoTexto"
+                >
+                  <span id="confirmarExclusaoTexto">
+                    Excluir “{item.nome}” do cardápio? Os pedidos já feitos não mudam, mas o produto
+                    não volta.
+                  </span>
+                  <button
+                    type="button"
+                    className="btn btn-danger-soft"
+                    id="btnConfirmarExclusao"
+                    aria-busy={excluindo}
+                    onClick={() => void excluir()}
+                  >
+                    {excluindo ? 'Excluindo…' : 'Excluir'}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-light"
+                    id="btnCancelarExclusao"
+                    onClick={() => definirConfirmarExclusao(false)}
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              )}
               {confirmarSaida && (
                 <div
                   className="prod-confirmar"
