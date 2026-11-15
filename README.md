@@ -13,7 +13,7 @@ sem saber direito quanto vendeu e quanto o entregador tem a acertar.
 
 | O quê | Onde |
 |---|---|
-| Repositório | [github.com/camilasatie99/delivery-platform](https://github.com/camilasatie99/delivery-platform) — branch `main`, versão entregue na tag `v1.0.0` |
+| Repositório | [github.com/Irlene2/delivery-platform](https://github.com/Irlene2/delivery-platform) — branch `main`, versão entregue na tag `v1.0.0` |
 | Vídeo do fluxo, de 1 minuto | [`docs/entrega-15-11/video-da-entrega.mp4`](docs/entrega-15-11/video-da-entrega.mp4) — do cadastro da loja ao caixa fechado |
 | Como subir e testar | [`docs/como-testar.md`](docs/como-testar.md) — pelo link, na sua máquina com Docker ou aberto para o celular pela Cloudflare |
 | Documentação das APIs (Swagger) | [Documentação das APIs](#documentação-das-apis-swagger), abaixo — no ar com Docker, ou direto no navegador pelos contratos |
@@ -198,9 +198,9 @@ escolha *File → Import URL* e cole um destes endereços:
 
 | Serviço | Contrato |
 |---|---|
-| `identity` — conta, login, código e senha | `https://raw.githubusercontent.com/camilasatie99/delivery-platform/main/contracts/openapi/identity-service.json` |
-| `merchant` — loja, horário, equipe e convite | `https://raw.githubusercontent.com/camilasatie99/delivery-platform/main/contracts/openapi/merchant-service.json` |
-| `catalog` — cardápio, produtos, fotos e vitrine | `https://raw.githubusercontent.com/camilasatie99/delivery-platform/main/contracts/openapi/catalog-service.json` |
+| `identity` — conta, login, código e senha | `https://raw.githubusercontent.com/Irlene2/delivery-platform/main/contracts/openapi/identity-service.json` |
+| `merchant` — loja, horário, equipe e convite | `https://raw.githubusercontent.com/Irlene2/delivery-platform/main/contracts/openapi/merchant-service.json` |
+| `catalog` — cardápio, produtos, fotos e vitrine | `https://raw.githubusercontent.com/Irlene2/delivery-platform/main/contracts/openapi/catalog-service.json` |
 
 **Com o sistema no ar:** ponha `DELIVERY_DOCS_ABERTAS=true` no `.env`, recrie os serviços
 (`docker compose --profile marco2 --profile pedidos up -d merchant-service catalog-service order-service`)

@@ -48,7 +48,7 @@ diante, só o passo 6.
 ### 2. Baixe o projeto
 
 ```powershell
-git clone https://github.com/camilasatie99/delivery-platform.git
+git clone https://github.com/Irlene2/delivery-platform.git
 cd delivery-platform
 ```
 
