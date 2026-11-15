@@ -9,6 +9,22 @@ sem saber direito quanto vendeu e quanto o entregador tem a acertar.
 > registra. O entregador é da loja. Se uma decisão parecer estranha, as premissas estão em
 > [`docs/PRD.md`](docs/PRD.md) §5.
 
+## Links da entrega
+
+| O quê | Onde |
+|---|---|
+| Repositório | [github.com/camilasatie99/delivery-platform](https://github.com/camilasatie99/delivery-platform) — branch `main`, versão entregue na tag `v1.0.0` |
+| Vídeo do fluxo, de 1 minuto | [`docs/entrega-15-11/video-da-entrega.mp4`](docs/entrega-15-11/video-da-entrega.mp4) — do cadastro da loja ao caixa fechado |
+| Como subir e testar | [`docs/como-testar.md`](docs/como-testar.md) — pelo link, na sua máquina com Docker ou aberto para o celular pela Cloudflare |
+| Documentação das APIs (Swagger) | [Documentação das APIs](#documentação-das-apis-swagger), abaixo — no ar com Docker, ou direto no navegador pelos contratos |
+| O que mudou em cada versão | [`CHANGELOG.md`](CHANGELOG.md) |
+| A entrega, etapa por etapa | [`docs/entrega-15-11/README.md`](docs/entrega-15-11/README.md) |
+
+**Ambiente de deploy:** o sistema roda inteiro com Docker Compose, na máquina de quem avalia. Para
+mostrar no celular, ele é aberto por um túnel da Cloudflare, que fica no ar enquanto o
+computador que o subiu estiver ligado; o endereço muda a cada subida e é passado na hora. Não há
+servidor de produção (veja *"Depois da entrega"*).
+
 ---
 
 ## Como funciona
@@ -172,6 +188,32 @@ cd backend && ./gradlew :services:order-service:test     # um serviço (no Windo
 cd frontend && npm run typecheck && npm run lint && npm test
 npm ci && npm run contracts                                # na raiz: os contratos
 ```
+
+### Documentação das APIs (Swagger)
+
+**Sem subir nada:** os contratos OpenAPI de cada serviço estão em
+[`contracts/openapi/`](contracts/openapi/), gerados do código e conferidos por teste a cada
+build (ADR-039). Para navegar neles como Swagger, abra o [Swagger Editor](https://editor.swagger.io),
+escolha *File → Import URL* e cole um destes endereços:
+
+| Serviço | Contrato |
+|---|---|
+| `identity` — conta, login, código e senha | `https://raw.githubusercontent.com/camilasatie99/delivery-platform/main/contracts/openapi/identity-service.json` |
+| `merchant` — loja, horário, equipe e convite | `https://raw.githubusercontent.com/camilasatie99/delivery-platform/main/contracts/openapi/merchant-service.json` |
+| `catalog` — cardápio, produtos, fotos e vitrine | `https://raw.githubusercontent.com/camilasatie99/delivery-platform/main/contracts/openapi/catalog-service.json` |
+
+**Com o sistema no ar:** ponha `DELIVERY_DOCS_ABERTAS=true` no `.env`, recrie os serviços
+(`docker compose --profile marco2 --profile pedidos up -d merchant-service catalog-service order-service`)
+e abra o Swagger UI de cada um, com o "Try it out":
+
+| Serviço | Swagger UI |
+|---|---|
+| `merchant` | http://localhost:8082/swagger-ui.html |
+| `catalog` | http://localhost:8083/swagger-ui.html |
+| `order` | http://localhost:8085/swagger-ui.html — o `order` ainda não tem o contrato commitado; é o próximo passo técnico |
+
+A documentação viva fica **fechada por padrão** (ADR-050): sem a variável, as rotas do Swagger
+pedem token, para que esquecer a configuração nunca a exponha.
 
 **Hospedagem de teste sem custo, para abrir no celular:** [`docs/operacao/hospedagem-de-teste.md`](docs/operacao/hospedagem-de-teste.md)
 — dois túneis da Cloudflare, usados nas evidências de 07 e 08/11/2026. **Não há ambiente de
