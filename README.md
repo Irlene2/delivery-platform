@@ -23,13 +23,13 @@ sem saber direito quanto vendeu e quanto o entregador tem a acertar.
 **Ambiente de deploy:** o sistema roda inteiro com Docker Compose, na máquina de quem avalia. Para
 mostrar no celular, ele é aberto por um túnel da Cloudflare, que fica no ar enquanto o
 computador que o subiu estiver ligado; o endereço muda a cada subida e é passado na hora. Não há
-servidor de produção (veja *"Depois da entrega"*).
+servidor de produção.
 
 ---
 
 ## Como funciona
 
-1. **A loja se cadastra e monta o cardápio** — seções, produtos com foto, opções (como ponto da
+1. **A loja se cadastra e monta o cardápio** seções, produtos com foto, opções (como ponto da
    carne e adicionais), horário de funcionamento, taxa de entrega e a equipe com permissões.
 2. **O link do cardápio vai na resposta automática do WhatsApp Business** da loja. Quem chama a
    loja recebe o link.
