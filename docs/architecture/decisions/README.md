@@ -138,7 +138,10 @@ decoração, não registro de decisão.
 
 ## A seção "Gatilho escrito" é colhida por comando
 
-**O `docs/dividas.md` é derivado, e um dos dois comandos dele é
+*O `docs/dividas.md` saiu do repositório em 15/11/2026 e continua no histórico do Git; a regra
+abaixo fica como registro de como as ADRs foram escritas.*
+
+**O `docs/dividas.md` era derivado, e um dos dois comandos dele era
 `grep -rn "Gatilho escrito"`.** Isso faz deste título **uma entrada de instrumento**: **cada
 item escrito debaixo dele vira uma linha do razão.**
 

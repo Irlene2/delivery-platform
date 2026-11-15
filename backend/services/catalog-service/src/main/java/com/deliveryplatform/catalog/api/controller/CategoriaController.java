@@ -27,7 +27,7 @@ import java.util.UUID;
  * {@code ProdutoController} é dono de {@code /produtos}.
  *
  * <p><b>Só criar e listar.</b> Renomear, reordenar, ativar e desativar existem no
- * agregado e não têm rota — cada um tem gatilho no {@code dividas.md}, e reordenar
+ * agregado e não têm rota — entram quando uma tela pedir, e reordenar
  * arrasta o outbox que o {@code catalog} não tem (invariante 7).
  */
 @RestController

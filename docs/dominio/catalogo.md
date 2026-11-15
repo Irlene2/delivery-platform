@@ -64,8 +64,7 @@ documento, coleção e índice, mais **criar** e **listar**.
 
 **Renomear, reordenar, ativar e desativar continuam só no agregado**, e o motivo de
 `reordenar` é de infraestrutura: ele publica `CategoriasReordenadasV1`, e **o `catalog` não
-tem outbox**. Quem publica precisa de um (invariante 7). *Está no `dividas.md`, com
-gatilho.*
+tem outbox**. Quem publica precisa de um (invariante 7).
 
 **O produto aponta para uma categoria que existe, e da mesma loja** (ADR-066). A regra é do
 **caso de uso que cria produto** — `Categoria` é outra raiz, e agregado não valida agregado,

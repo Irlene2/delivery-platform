@@ -69,7 +69,7 @@ export function agrupar(
  *
  * <p><b>É dívida nossa, não recurso da tela</b> (ADR-067 §4): o contrato exige `ordem`,
  * e nenhum comerciante tem opinião sobre ela. A regra *"entra no fim"* é de domínio e
- * está vivendo no cliente. *Está no `dividas.md`, com gatilho.*
+ * está vivendo no cliente até o back assumir a ordem.
  */
 export function proximaOrdem(itens: readonly { ordem: number }[]): number {
   return itens.reduce((maior, item) => Math.max(maior, item.ordem + 1), 0);

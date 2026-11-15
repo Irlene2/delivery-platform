@@ -50,16 +50,17 @@ pagamento registrado são campos do pedido. O pagamento é presencial e o produt
 | 1 | Base: a branch a partir do repositório do grupo, o front `aki_delivery` em React com o mesmo visual, horário e convite | ✅ |
 | 2 | Desenho do pedido e do cardápio público — [`pedido.md`](pedido.md) e a ADR-077 | ✅ |
 | 3 | Back-end: `order-service`, cardápio público no `catalog`, rotas no `gateway`, perfil `pedidos` no Compose | ✅ testes de unidade verdes; pilha de pé no Docker Desktop |
-| 4 | Front ligado ao `order`: vitrine, checkout, acompanhamento, painel de pedidos, dashboard com dados reais, entregador com conta, fechamento do dia, configurações | ✅ passagem humana até o pedido entregue; o entregador e o fechamento ainda esperam a passagem humana |
+| 4 | Front ligado ao `order`: vitrine, checkout, acompanhamento, painel de pedidos, dashboard com dados reais, entregador com conta, fechamento do dia, configurações | ✅ passagem humana completa em 08/11/2026, do pedido ao caixa fechado |
 | 5 | WhatsApp: a resposta automática do WhatsApp Business com o link do cardápio, e o aviso ao cliente pelo `wa.me` | ✅ configurado e conferido no celular em 08/11/2026 |
-| 4b | O pacote até o marco 6 (01/11/2026): loja fechada não recebe pedido, corrigir produto, foto do produto, sessão de 12 horas, código do cadastro na tela (local), caixa do dia gravado | ✅ testes de unidade e de tela; espera os testes do Gradle e a passagem humana |
+| 4b | O pacote até o marco 6 (01/11/2026): loja fechada não recebe pedido, corrigir produto, foto do produto, sessão de 12 horas, código do cadastro na tela (local), caixa do dia gravado | ✅ testes de unidade e de tela; passagem completa em 08/11/2026 |
 | 4c | A loja de teste (01/11/2026): a "Pizzaria da Fixture" com o cardápio do protótipo — 24 produtos, fotos e opções —, a tela de entrada sem o modo demonstração e a hospedagem de teste escrita | ✅ testes de unidade; o cardápio conferido no navegador em 02/11 |
-| 4e | A segunda leva de 02/11/2026: a foto de cada item no acompanhamento do pedido, o "Esqueci minha senha" pelo código de verificação e a entrada só pelo telefone, sem Google e Apple | ✅ testes de unidade e de tela; espera os testes do Gradle e a passagem humana |
-| 4d | Os ajustes da passagem de 02/11/2026: o sino de notificações, o Pix informado pelo entregador e conferido pela loja, a busca e os filtros do estoque, as vendas por período no fechamento, o menu da loja em "Minhas lojas", a conta nova levada ao "Cadastrar minha loja" e as fotos no painel | ✅ testes de unidade e de tela; espera os testes do Gradle e a passagem humana |
-| 6 | Testes que faltam (contrato e integração do `order`), passagem completa no navegador, ensaio da demonstração e vídeo de reserva | 🟡 passagem completa no navegador e no celular, pela Cloudflare, e o vídeo feitos em 08/11/2026; faltam o contrato e a integração do `order` e o ensaio |
+| 4e | A segunda leva de 02/11/2026: a foto de cada item no acompanhamento do pedido, o "Esqueci minha senha" pelo código de verificação e a entrada só pelo telefone, sem Google e Apple | ✅ testes de unidade e de tela; passagem completa em 08/11/2026 |
+| 4d | Os ajustes da passagem de 02/11/2026: o sino de notificações, o Pix informado pelo entregador e conferido pela loja, a busca e os filtros do estoque, as vendas por período no fechamento, o menu da loja em "Minhas lojas", a conta nova levada ao "Cadastrar minha loja" e as fotos no painel | ✅ testes de unidade e de tela; passagem completa em 08/11/2026 |
+| 6 | Passagem completa no navegador e vídeo da apresentação | ✅ passagem no navegador e no celular, pela Cloudflare, e o vídeo em 08/11/2026. A apresentação é em 16/11/2026 |
+| 7 | Os ajustes dos testes no celular (13/11/2026): excluir produto, tirar do cardápio, selo e "pode acabar" gravados pelo painel, termos de uso e aviso de privacidade, textos que quebram linha e o menu lateral que fecha | ✅ testes do `catalog` verdes; testes de unidade e de tela do front |
 
-A ADR-077 foi aceita em 09/11/2026. O que foi assumido como dívida
-está em [`docs/dividas.md`](../dividas.md), seção *"As da entrega de 15/11"*.
+A ADR-077 foi aceita em 09/11/2026. O contrato OpenAPI e os testes de integração do `order`
+ficaram como o próximo passo técnico (veja *"Depois da entrega"*).
 
 ## Como subir e testar
 
@@ -87,42 +88,19 @@ está em [`docs/dividas.md`](../dividas.md), seção *"As da entrega de 15/11"*.
 **Sem o back-end não há mais reserva na tela:** o modo demonstração saiu da entrada em
 01/11/2026. A reserva da apresentação passa a ser **o vídeo** (etapa 6).
 
-## O que falta, e onde o time pode ajudar
+## Depois da entrega
 
-**Prazo do time: 12/11/2026** (a entrega do curso é 15/11). Esforço: **P** até meio dia, **M**
-um ou dois dias, **G** três dias ou mais — para uma pessoa que já subiu o projeto. **Peço que
-cada um valide:** a tarefa faz sentido? A melhoria vale o esforço até a entrega? O esforço está
-certo? Quem pega? Escrevam o nome na coluna e abram uma branch por tarefa (README, *"Como
-colaborar"*).
+A entrega está concluída. O que vem a seguir, do mais técnico ao de produto. Esforço: **P** até
+meio dia, **M** um ou dois dias, **G** três dias ou mais.
 
-### Para a entrega
-
-| # | Tarefa | Por quê | Esforço | Quem |
-| --- | --- | --- | --- | --- |
-| 1 | Rodar os testes do Gradle numa máquina com folga de memória, um serviço por vez (`--max-workers=1`) | Os do `identity` passaram em 02/11; falta uma rodada inteira | P | |
-| ~~2~~ | ~~Regenerar os contratos do `merchant`, `catalog` e `identity` e os tipos do front~~ | **Feito** (`a1d2f55` e `5068bae`) | — | |
-| 3 | Contrato OpenAPI e testes de integração do `order` | Os tipos do pedido no front são escritos à mão (`src/api/pedidos.ts`), inclusive as rotas de 02/11 (`pix-check` e o período do fechamento) | M | |
-| ~~4~~ | ~~Passagem completa no navegador~~ | **Feita em 08/11/2026**, da loja nova ao caixa fechado, com o cliente no celular. O roteiro está em [`como-testar.md`](../como-testar.md) | — | |
-| ~~5~~ | ~~Hospedagem de teste pelo túnel da Cloudflare~~ | **Feita em 07/11/2026** | — | |
-| ~~6~~ | ~~Resposta automática do WhatsApp Business com o link do cardápio~~ | **Feita em 08/11/2026** | — | |
-| 7 | Ensaio da apresentação | O roteiro e o vídeo de reserva estão prontos (08/11/2026); falta ensaiar com o tempo | P | |
-| ~~8~~ | ~~Aprovar a ADR-077~~ | **Aceita em 09/11/2026** | — | |
-
-### Melhorias que podem entrar, se sobrar tempo — validem o esforço
-
-| # | Melhoria | Esforço | Observação |
-| --- | --- | --- | --- |
-| 9 | Criar e editar grupos de opções pelo painel | M | Hoje só a semeadura cria grupos; a tela avisa que o servidor não sabe |
-| ~~10~~ | ~~Tirar os botões de Google e Apple~~ | — | **Feito em 02/11/2026:** a entrada é só pelo telefone |
-| ~~11~~ | ~~"Esqueci minha senha" de verdade~~ | — | **Feito em 02/11/2026**, pelo código de verificação. Em produção, depende do envio do código (item 13) |
-| 12 | Declarar `security: []` nas rotas públicas do `identity` | P | Dívida do lint dos contratos (`redocly.yaml`) |
-
-### Depois da entrega
-
-| # | Item | Esforço | Observação |
-| --- | --- | --- | --- |
-| 13 | Enviar o código de verificação | M a G | SMS e mensagem enviada pela empresa no WhatsApp **custam por mensagem**. O caminho gratuito é o cliente **mandar** o código pelo WhatsApp (mensagem do cliente não é cobrada), com a API oficial. Hoje o código aparece na tela, só no teste |
-| 14 | Aviso automático ao cliente a cada mudança de status | G | Precisa da API oficial do WhatsApp (conta Meta Business verificada, número próprio, modelos de mensagem aprovados e endereço público com HTTPS). Hoje a loja clica e o WhatsApp abre com a mensagem pronta |
-| 15 | Hospedagem de produção: servidor, domínio, HTTPS, cópia de segurança | G | A opção gratuita da Oracle serve para teste, sem garantia |
-| 16 | Termos de uso e política de privacidade | M | Pauta em `docs/operacao/revisao-juridica.md` |
-| 17 | Estoque por quantidade (marco 10) e atendimento com IA (marco 9) | G | Planejados na tabela de marcos |
+| Próximo passo | Esforço | Observação |
+| --- | --- | --- |
+| Contrato OpenAPI e testes de integração do `order` | M | Hoje ele tem testes de unidade e o de arquitetura, e os tipos do pedido no front são escritos à mão (`src/api/pedidos.ts`) |
+| Uma rodada dos testes do Gradle de todos os serviços | P | Os do `catalog` passaram em 13/11/2026 e os do `identity` em 02/11; numa máquina com pouca memória, um serviço por vez (`--max-workers=1`) |
+| Criar e editar grupos de opções pelo painel | M | Hoje só a loja de teste cria grupos |
+| Declarar `security: []` nas rotas públicas do `identity` | P | Aviso do lint dos contratos (`redocly.yaml`) |
+| Enviar o código de verificação | M a G | SMS e mensagem enviada pela empresa no WhatsApp **custam por mensagem**. O caminho gratuito é o cliente **mandar** o código pelo WhatsApp, com a API oficial. Hoje o código aparece na tela, só no teste |
+| Aviso automático ao cliente a cada mudança de status | G | Precisa da API oficial do WhatsApp (conta Meta Business verificada, número próprio, modelos de mensagem aprovados e endereço público com HTTPS). Hoje a loja clica e o WhatsApp abre com a mensagem pronta |
+| Hospedagem de produção: servidor, domínio, HTTPS, cópia de segurança | G | A opção gratuita da Oracle serve para teste, sem garantia |
+| Revisão jurídica dos termos de uso e do aviso de privacidade | M | Os textos estão no ar desde 13/11/2026 (`/termos` e `/privacidade`); a pauta está em `docs/operacao/revisao-juridica.md` |
+| Estoque por quantidade (marco 10) e atendimento com IA (marco 9) | G | Planejados na tabela de marcos do README |

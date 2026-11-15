@@ -186,7 +186,7 @@ lugares — o erro que a W-D consertou no `vendavel`.
 declara as zonas aceitas no schema do campo, e o tipo gerado as carrega. A tela as lista a
 partir de um `Record<Fuso, string>` de rótulos, e o `Record` exige do typecheck exatamente
 as chaves da união gerada. **Ler o contrato não é derivar regra** — é o oposto de copiá-la.
-A exceção, escrita no `dividas.md`: as modalidades, que o contrato não nomeia.
+A exceção: as modalidades, que o contrato não nomeia.
 
 **A tela do cardápio compõe duas rotas do mesmo serviço** (ADR-067): as seções e os
 produtos, agrupados no cliente. **É a primeira vista deste front montada com duas
@@ -200,8 +200,7 @@ que a leitura não valida referência; este é o lugar onde essa escolha fica vi
 esconder o produto o tornaria inconsertável.
 
 **O `ordem` do produto é derivado pela tela** — o maior da seção, mais um —, e **isso é
-dívida nossa**: a borda exige um campo que nenhuma pessoa fornece. *Está no `dividas.md`, com
-gatilho.*
+dívida nossa**: a borda exige um campo que nenhuma pessoa fornece.
 ---
 
 ## 4 · O que o front tolera, porque o back mudará
@@ -262,8 +261,8 @@ tela, com o gatilho de cada um.
 | `required` nos esquemas do `catalog` e na `LojaDoUsuario` do `merchant` | Todo campo do tipo gerado é opcional, e a tela precisa tratar ausência que não acontece | a primeira tela que leia produto |
 | O **estado da operação** — a loja está aberta agora? | ~~O seletor não pode mostrar aberta/fechada~~ — **em parte resolvido em 01/11/2026**: a vitrine e Configurações mostram aberta/fechada pela rota pública `GET /api/v1/storefront/{id}/status` do `merchant`, que pergunta ao `Estabelecimento.estaAberta`. O seletor de lojas do painel ainda não mostra | o seletor: a primeira rodada que mexer em "Minhas lojas" |
 | Paginação na tela do cardápio | O cardápio pede a página do teto da rota — 100 — e diz quantos há (W-F); a lista da disponibilidade continua com 20. Quem tiver 200 produtos não alcança o resto | a primeira loja de teste com mais de 100 produtos |
-| ~~Rotas de **pedido**~~ | ~~Painel, vendas, ticket e entregador eram demonstração~~ | **resolvido na entrega de 15/11** — o `order-service` (ADR-077). Os tipos do pedido no front ainda são escritos à mão em `src/api/pedidos.ts`, porque o contrato OpenAPI do `order` não foi gerado (`dividas.md`) |
-| Rota de escrita do catálogo | Criar seção, criar produto e publicar existem desde a W-F (ADR-067). **Editar** produto, despublicar, grupos e opções, renomear e reordenar seção não têm tela — cada um com gatilho no `dividas.md` | a rota de cada um |
+| ~~Rotas de **pedido**~~ | ~~Painel, vendas, ticket e entregador eram demonstração~~ | **resolvido na entrega de 15/11** — o `order-service` (ADR-077). Os tipos do pedido no front ainda são escritos à mão em `src/api/pedidos.ts`, porque o contrato OpenAPI do `order` ainda não é gerado |
+| Rota de escrita do catálogo | Criar seção, criar produto e publicar existem desde a W-F (ADR-067); corrigir o produto, desde 01/11/2026; tirar do cardápio, excluir, o selo e o "pode acabar", desde 13/11/2026. **Grupos e opções**, renomear e reordenar seção ainda não têm tela | a rota de cada um, quando uma tela pedir |
 
 **Enquanto um item desta tabela não tiver rota, a tela que depende dele não é
 escrita** — e não é simulada com valor de configuração temporário. Um

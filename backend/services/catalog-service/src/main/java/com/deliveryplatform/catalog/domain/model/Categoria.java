@@ -24,9 +24,8 @@ import java.util.UUID;
  *
  * <p><b>Ganhou persistência na E-3b</b> (ADR-064): porta, documento, coleção e
  * índice, e duas rotas — criar e listar. {@link #renomear}, {@link #reordenar},
- * {@link #ativar} e {@link #desativar} continuam sem rota, cada um com gatilho no
- * {@code dividas.md}; o {@code reordenar} arrasta o outbox do {@code catalog}, que
- * não existe.
+ * {@link #ativar} e {@link #desativar} continuam sem rota até uma tela pedir; o
+ * {@code reordenar} arrasta o outbox do {@code catalog}, que não existe.
  *
  * <h2>A {@code ordem} não tem regra, e é de propósito</h2>
  *

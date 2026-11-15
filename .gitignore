@@ -6,6 +6,9 @@
 # o exemplo É versionado: contém só nomes de variáveis, sem valores
 !.env.example
 
+# a pasta da chave do login (README, "Como rodar"), inteira
+secrets/
+
 *.pem
 *.key
 *.p12

@@ -46,10 +46,10 @@ sem saber direito quanto vendeu e quanto o entregador tem a acertar.
 
 | Para quem | O que já funciona |
 |---|---|
-| **Dono / administrador** | Cadastro da conta pelo telefone, recuperação de senha pelo código, e uma ou mais lojas, com o passo a passo inicial · cardápio com seções, foto, descrição, opções e publicação · estoque do dia com busca e filtros · horário e loja fechada · equipe com convite e permissões · pedidos do dia, despacho e mensagem pronta para o WhatsApp · sino de notificações · conferência do Pix · dashboard de vendas · fechamento do caixa com histórico, período e CSV · link do cardápio |
+| **Dono / administrador** | Cadastro da conta pelo telefone, recuperação de senha pelo código, e uma ou mais lojas, com o passo a passo inicial · cardápio com seções, foto, descrição, opções, selo e publicação · tirar do cardápio e excluir produto · estoque do dia com busca e filtros · horário e loja fechada · equipe com convite e permissões · pedidos do dia, despacho e mensagem pronta para o WhatsApp · sino de notificações · conferência do Pix · dashboard de vendas · fechamento do caixa com histórico, período e CSV · link do cardápio |
 | **Colaborador** | O painel com o que a permissão dele deixa: pedidos, cardápio, estoque |
 | **Entregador** | Conta própria, "minhas entregas", saída, entrega e registro do recebimento (dinheiro, cartão ou Pix) |
-| **Cliente** | Cardápio pelo link, sem conta · carrinho, entrega ou retirada, troco · acompanhamento do pedido |
+| **Cliente** | Cardápio pelo link, sem conta · carrinho, entrega ou retirada, troco · acompanhamento do pedido · termos de uso e aviso de privacidade |
 
 ---
 
@@ -182,13 +182,13 @@ produção.**
 ## Marcos
 
 A numeração é a do [`docs/PRD.md`](docs/PRD.md) §10, medida pela pergunta *"o comerciante
-consegue?"*. Situação em **08/11/2026**. 🔜 = melhoria planejada, que não é pendência do produto.
+consegue?"*. Situação em **15/11/2026**. 🔜 = melhoria planejada, que não é pendência do produto.
 
 | Marco | O comerciante consegue | Situação |
 |---|---|---|
 | 0 | — (esqueleto: build, módulos, Compose, CI) | ✅ |
-| 1 | Cadastrar a loja e o time, com poderes diferentes | ✅ loja do zero, convite, permissões, sessão de 12 horas. **Falta:** enviar o código de verificação por SMS ou WhatsApp |
-| 2 | Publicar o cardápio e marcar o que acabou | ✅ cardápio com foto, descrição e opções, correção de produto, estoque do dia com busca. **Falta:** criar grupos de opções pelo painel |
+| 1 | Cadastrar a loja e o time, com poderes diferentes | ✅ loja do zero, convite, permissões, sessão de 12 horas. *Para produção:* enviar o código de verificação por SMS ou WhatsApp — no teste, ele aparece na tela |
+| 2 | Publicar o cardápio e marcar o que acabou | ✅ cardápio com foto, descrição e opções, correção de produto, selo, tirar do cardápio e excluir, estoque do dia com busca. *Melhoria:* criar grupos de opções pelo painel — hoje eles vêm da loja de teste |
 | 3 | Receber e acompanhar pedidos numa tela | ✅ o pedido vem do link do cardápio que a conversa do WhatsApp entrega, o painel leva por todos os estados, o cliente acompanha, a loja fechada não recebe, o sino avisa. *Melhoria:* montar o pedido dentro da conversa, com IA |
 | 4 | Registrar como cada pedido foi pago de verdade | ✅ dinheiro com troco, cartão e Pix, registrados no pedido; o Pix informado pelo entregador a loja confere no extrato |
 | 5 | Despachar e saber quem está com cada pedido | ✅ entregador da equipe com conta, despacho e "minhas entregas"; repasse por entrega, igual à taxa de entrega |
@@ -202,23 +202,23 @@ Pagamento e nota fiscal acontecem na loja, e por isso não há marco 8 (PRD §7)
 existe produto completo:** a loja cadastra equipe e cardápio, recebe e prepara pedidos, despacha com
 entregador próprio, registra como cada pedido foi pago e fecha o caixa com extrato.
 
-### O que falta
+### Depois da entrega de 15/11
 
-**Para a entrega de 15/11** — a lista com esforço e responsáveis está em
-[`docs/entrega-15-11/README.md`](docs/entrega-15-11/README.md):
+**A entrega está concluída.** Feitos: a ADR-077 aceita, a passagem completa no navegador e no
+celular, o vídeo da apresentação, a hospedagem de teste pela Cloudflare, a resposta automática do
+WhatsApp Business com o link, os contratos do `identity`, do `merchant` e do `catalog`
+regenerados, os testes do `catalog` rodados em 13/11/2026, os termos de uso e o aviso de
+privacidade, e os ajustes dos testes no celular. O detalhe está em
+[`docs/entrega-15-11/README.md`](docs/entrega-15-11/README.md).
 
-- o contrato OpenAPI e os testes de integração do `order`;
-- o ensaio da apresentação.
-
-Já feitos: a ADR-077 aceita, a passagem completa no navegador e no celular, o vídeo da entrega, a hospedagem de
-teste pela Cloudflare, a resposta automática do WhatsApp Business com o link e os contratos dos
-outros serviços regenerados.
+**Próximo passo técnico:** o contrato OpenAPI e os testes de integração do `order-service`. Hoje
+ele tem testes de unidade e o teste de arquitetura, e os tipos do pedido no front são escritos à
+mão (`frontend/src/api/pedidos.ts`).
 
 **Para vender, depois:** o código de verificação por SMS ou WhatsApp (serve ao cadastro e ao
-"Esqueci minha senha"), grupos de
-opções pelo painel, o aviso automático ao cliente, a hospedagem de produção (domínio, HTTPS e cópia
-de segurança), os termos de uso e a política de privacidade, e os marcos 7, 9, 10 e 11. As dívidas
-assumidas estão em [`docs/dividas.md`](docs/dividas.md).
+"Esqueci minha senha"), grupos de opções pelo painel, o aviso automático ao cliente, a hospedagem
+de produção (domínio, HTTPS e cópia de segurança), a revisão jurídica dos termos de uso e do aviso
+de privacidade, e os marcos 9, 10 e 11.
 
 ---
 
@@ -227,7 +227,7 @@ assumidas estão em [`docs/dividas.md`](docs/dividas.md).
 | Onde | O que responde |
 |---|---|
 | [`docs/PRD.md`](docs/PRD.md) | O produto: para quem, o problema, o escopo, o que fica fora e os marcos |
-| [`docs/entrega-15-11/`](docs/entrega-15-11/README.md) | A entrega de 15/11: o fluxo, as etapas, as rotas do pedido, como testar e o que falta |
+| [`docs/entrega-15-11/`](docs/entrega-15-11/README.md) | A entrega de 15/11: o fluxo, as etapas, as rotas do pedido, como testar e os próximos passos |
 | [`docs/dominio/`](docs/dominio/README.md) | As regras de cada serviço: agregados, invariantes, estados |
 | [`docs/architecture/decisions/`](docs/architecture/decisions/README.md) | As decisões de arquitetura (ADRs), com alternativas e consequências |
 | [`docs/como-testar.md`](docs/como-testar.md) | **Comece aqui para testar:** pelo link, na sua máquina ou pela Cloudflare, e o roteiro do teste |

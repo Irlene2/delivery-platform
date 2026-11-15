@@ -1,13 +1,14 @@
 # CLAUDE.md
 
-Plataforma de delivery para comércio de bairro. Monorepo com 8 microsserviços de
-negócio e um gateway, cada um com processo, banco, migrations, testes, contrato e
-pipeline próprios.
+Plataforma de delivery para comércio de bairro. Monorepo com sete serviços de negócio
+e um gateway, cada um com processo, banco, migrations, testes e pipeline próprios. Na entrega
+de 15/11/2026 rodam quatro (`identity`, `merchant`, `catalog` e `order`); `settlement`,
+`delivery` e `conversation` são esqueleto, para os próximos marcos.
 
 **Contexto de produto:** o cliente é o **comerciante**, não o consumidor. A
 plataforma frequentemente **não custodia o dinheiro** (pagamento na entrega), o
-entregador **pertence ao estabelecimento** e o pedido nasce numa **conversa de
-WhatsApp**. Se uma decisão parecer estranha, confira as premissas em
+entregador **pertence ao estabelecimento** e o pedido nasce pelo **link do cardápio** que a
+conversa do WhatsApp entrega (ADR-077). Se uma decisão parecer estranha, confira as premissas em
 `docs/PRD.md` §5 antes de "corrigir".
 
 ---
@@ -27,7 +28,8 @@ cd backend
 ```
 
 Perfis do Compose: `core` (bancos e brokers) · `services` (aplicações) · `marco2`
-(postgres, mongodb, rabbitmq e os quatro serviços do marco 2 — é o que sobe hoje) · `full`.
+(postgres, mongodb, rabbitmq, gateway, `identity`, `merchant` e `catalog`) · `pedidos` (o
+`order`, somado ao `marco2` — **os dois juntos são o que sobe hoje**) · `full`.
 **Não suba `full` para trabalhar** — são muitos
 containers e você quase nunca precisa deles.
 **Todo serviço tem `profiles:`**, então sem perfil o compose não enxerga
@@ -65,8 +67,15 @@ A duplicação entre modelo de domínio e entidade é intencional.
 
 Estas não são preferências de estilo. Quebrar qualquer uma é defeito.
 
-1. **Nenhuma entrega ou retirada conclui sem liquidação registrada** — método
-   efetivo, valor efetivo e responsável pela custódia. `NAO_LIQUIDADO` é registro
+**São as invariantes do desenho completo do domínio** ([`docs/dominio/`](docs/dominio/README.md)).
+Na entrega de 15/11/2026, o `order` implementa o recorte da ADR-077: o pagamento é registrado
+no próprio pedido, sem jornada nem custódia do entregador, que são do `settlement`. As que falam
+de `Ajuste`, `Devolucao` e liquidação valem quando esses objetos ganharem código.
+
+1. **Nenhuma entrega ou retirada conclui sem o pagamento registrado** — forma e valor
+   efetivos. No `order`, `ENTREGUE` e `RETIRADO` recusam a transição sem ele
+   (`TransicaoInvalida.FALTA_PAGAMENTO`). No desenho completo, a liquidação registra também o
+   responsável pela custódia. `NAO_LIQUIDADO` é registro
    válido; ausência de registro não é.
    A garantia é estrutural porque T16 exige jornada aberta, e não porque alguém
    se lembra de conferir — ver ADR-033, que é o que torna essa guarda exequível.
@@ -85,8 +94,9 @@ Estas não são preferências de estilo. Quebrar qualquer uma é defeito.
    ajustes.delta` é derivado, nunca gravado por cima. Nenhum relatório soma
    `total` para dizer quanto entrou.
 
-6. **Comprovante em imagem não confirma Pix.** Só o webhook do PSP, com `txid`
-   correlacionado ao pedido.
+6. **Comprovante em imagem não confirma Pix, e o Pix informado não é prova.** O produto não
+   recebe pagamento (ADR-023): o Pix que o entregador registra fica **a conferir** até a loja
+   ver no extrato, e o caixa do dia não fecha enquanto houver Pix a conferir.
 
 7. **Quem publica precisa de outbox. Quem consome precisa de
    `processed_messages`** — salvo **duas exceções escritas**, e elas são critério, não
@@ -160,6 +170,11 @@ Estas não são preferências de estilo. Quebrar qualquer uma é defeito.
 ---
 
 ## Configuração de ambiente que funciona (Windows)
+
+> **Para testar, o caminho mais simples é o Docker Desktop**, passo a passo em
+> [`docs/como-testar.md`](docs/como-testar.md). O que vem abaixo é o ambiente de quem começou o
+> projeto, numa máquina gerenciada, com o Docker no WSL2 e sem Docker Desktop. Continua valendo
+> para quem estiver nessa situação.
 
 Verificado em 23/08/2026, build verde de ponta a ponta com o VS Code aberto.
 Se o build quebrar, volte para exatamente isto antes de investigar.
